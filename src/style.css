@@ -1,0 +1,156 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;700&display=swap');
+
+:root {
+  --peach: #FFB5A7;
+  --mint: #A8E6CF;
+  --berry: #FF8B8B;
+  --periwinkle: #B8C0FF;
+  --butter: #FFE484;
+  --bark: #5A3E36;
+  /*text color*/
+  --bark-muted: #8A7268;
+  --paper: #fff;
+  --cream: #FFF7F0;
+  --linen: #F3E3D8;
+  --spring: cubic-bezier(.34, 1.56, .64, 1);
+}
+
+img {
+  height: 100%;
+}
+
+/* =========================================
+   DISPLAY & HEADINGS (Fredoka)
+   ========================================= */
+
+.text-display {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  /* SemiBold */
+  font-size: 48px;
+  line-height: 56px;
+}
+
+h1 {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  /* SemiBold */
+  font-size: 36px;
+  line-height: 44px;
+}
+
+h2 {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  /* SemiBold */
+  font-size: 28px;
+  line-height: 36px;
+}
+
+h3 {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 500;
+  /* Medium */
+  font-size: 22px;
+  line-height: 30px;
+}
+
+/* =========================================
+   UI LABELS & NUMBERS (Fredoka)
+   ========================================= */
+
+.text-button {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  /* SemiBold */
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.text-timer {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 500;
+  /* Medium */
+  font-size: 64px;
+  line-height: 64px;
+  font-variant-numeric: tabular-nums;
+  /* Prevents timer text width from jumping */
+}
+
+.text-stat {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  /* SemiBold */
+  font-size: 28px;
+  line-height: 32px;
+}
+
+/* =========================================
+   BODY TEXT & FIELDS (Nunito)
+   ========================================= */
+
+p {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 400;
+  /* Regular */
+  font-size: 16px;
+  line-height: 26px;
+}
+
+.text-body-strong {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  /* Bold */
+  font-size: 16px;
+  line-height: 26px;
+}
+
+.text-body-small {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 400;
+  /* Regular */
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.text-label-field {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  /* Bold */
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.text-label-caption {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  /* Bold */
+  font-size: 12px;
+  line-height: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  /* +4% */
+}
+
+/* Equip tool cursors: drop PNGs into src/assets/slots/ and point these at them later.
+   e.g. cursor: url('/src/assets/slots/cursor-watering-can.png') 8 8, auto; */
+body.tool-pointer {
+  cursor: default;
+}
+
+body.tool-wateringCan {
+  cursor: copy;
+}
+
+body.tool-shovel {
+  cursor: crosshair;
+}
+
+/* pill with number */
+.counter {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 12px 4px 6px;
+  min-width: 74px; height: 32px;
+  background: var(--cream); border-radius: 999px;
+  font-variant-numeric: tabular-nums; font-weight: 600;
+}
