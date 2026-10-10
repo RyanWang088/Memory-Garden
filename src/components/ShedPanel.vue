@@ -37,7 +37,7 @@ const tabs = [
 </template>
 
 <style scoped>
-.shed { background: var(--mint); color: #fff; display: flex; flex-direction: column; padding: 8px; min-height: 0; }
+.shed { background: var(--mint); color: var(--paper); display: flex; flex-direction: column; padding: 8px; min-height: 0; }
 .shed-tabs { display: flex; gap: 4px; }
 .shed-tab { border: 0; padding: 6px 14px; background: var(--bark-muted); color: var(--cream); border-radius: 6px 6px 0 0; }
 .shed-tab.active { background: var(--bark); color:var(--butter); }

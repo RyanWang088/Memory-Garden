@@ -8,9 +8,9 @@ const route = useRoute()
 const router = useRouter()
 
 const items = [
-  { to: 'journal', label: 'Journal', art: 'nav-journal' },
+  { to: 'journal', label: 'Journal', art: 'journal' },
   { to: 'garden', label: 'Garden', art: 'sprout' },
-  { to: 'pomodoro', label: 'Focus', art: 'nav-focus' },
+  { to: 'pomodoro', label: 'Focus', art: 'focus' },
 ]
 
 const icon = (name) => new URL(`../assets/ui/${name}.svg`, import.meta.url).href
@@ -38,15 +38,16 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
-  <nav class="navbar d-flex align-items-start px-3 pt-4" data-testid="navbar">
+  <nav class="navbar sticky-top d-flex align-items-start px-3 pt-3" data-testid="navbar">
     <!-- left: logo (hidden on mobile)might swap to profile -->
-    <div class="side d-flex justify-content-start">
-      <span class="logo d-none d-md-block">logo?</span>
+    <div class="side d-flex justify-content-start align-items-center">
+      <h2 class=" d-none d-md-block">sproutly</h2>
+      <RouterLink :to="{ name: 'profile' }" class="avatar d-md-none" aria-label="Profile">🙂</RouterLink>
     </div>
 
     <!-- center: peas + L/R chips -->
-    <div class="cluster position-relative">
-      <ul class="peas list-unstyled d-flex align-items-center m-0 p-0">
+    <div class=" position-relative">
+      <ul class="peas list-unstyled d-flex align-items-center mt-3 p-0">
         <RouterLink
           v-for="item in items" :key="item.to" :to="{ name: item.to }"
           custom v-slot="{ href, navigate, isActive }"
@@ -71,9 +72,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
     <!-- right: counters + profile -->
     <div class="side d-flex justify-content-end align-items-center gap-2">
-      <span class="counter" data-testid="nav-streak">🔥 {{ auth.profile?.streak ?? 0 }}</span>
-      <span class="counter" data-testid="nav-coins">🧈 {{ auth.profile?.coins ?? 0 }}</span>
-      <RouterLink :to="{ name: 'profile' }" class="avatar" aria-label="Profile">🙂</RouterLink>
+      <div class="stats d-flex flex-column flex-md-row gap-1 gap-md-2">
+        <span class="counter" data-testid="nav-streak">🔥 {{ auth.profile?.streak ?? 0 }}</span>
+        <span class="counter" data-testid="nav-coins"><img src="../assets/ui/coin.svg" alt=""> {{ auth.profile?.coins ?? 0 }}</span>
+      </div>
+      <RouterLink :to="{ name: 'profile' }" class="avatar d-none d-md-grid" aria-label="Profile">🙂</RouterLink>
     </div>
   </nav>
 </template>
@@ -84,33 +87,17 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 /* equal-width sides = peas dead center */
 .side { flex: 1 1 0; min-width: 0; }
 
-/* shared counter */
-.counter {
-  display: flex; align-items: center; gap: 4px;
-  padding: 4px 12px 4px 6px;
-  min-width: 74px; height: 32px;
-  background: var(--cream); border-radius: 999px;
-  font-variant-numeric: tabular-nums; font-weight: 600;
-}
-.avatar {
-  width: 32px; height: 32px; border-radius: 50%;
-  display: grid; place-items: center;
-  background: var(--berry); text-decoration: none;
-  transition: transform .3s var(--spring);
-}
-.avatar:hover { transform: scale(1.12) rotate(-6deg); }
-
 /* peas */
-.peas { --size: 48px; }
+.peas { --size: 60px; }
 .pea { position: relative; }
-.pea + .pea { margin-left: -12px; }          /* overlap */
+.pea + .pea { margin-left: -6px; }          /* overlap */
 .pea a {
   width: var(--size); height: var(--size);   /* never changes */
   border-radius: 50%; background: var(--linen);
 }
-.pea:hover, .pea.active { z-index: 2; }
 .pea img {
-  width: 26px; height: 26px;
+  width: 35px; height: 35px;
+  z-index: 10;
   transition: transform .35s var(--spring);
 }
 .pea:hover img { transform: scale(1.35) rotate(-6deg); }
@@ -120,7 +107,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 /* label badge: hover shows, active stays */
 .tag {
   position: absolute; left: 50%; top: -14px;
-  background: var(--butter); color: #4a3b1f; font-weight: 600;
+  background: var(--butter); color: var(--bark); font-weight: 600;
   opacity: 0; pointer-events: none;
   transform: translate(-50%, 6px) scale(.6);
   transition: opacity .2s, transform .35s var(--spring);
@@ -130,16 +117,15 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 }
 
 /* L / R */
-button.shift {
-  position: absolute; bottom: -8px; z-index: 3;
-  width: 30px; height: 22px; padding: 0;
+.shift {
+  position: absolute; z-index: 3; bottom:15px;
+  width: 25px; height: 25px; padding: 0;
   background: var(--bark-muted); color: var(--cream);
   border: 3px solid var(--linen);
   font-weight: 700; font-size: .75rem; line-height: 1;
-  transition: transform .25s var(--spring);
 }
-.shift-l { left: -10px;  border-radius: 10px 0 0 0; transform-origin: bottom right; }
-.shift-r { right: -10px; border-radius: 0 10px 0 0; transform-origin: bottom left; }
+.shift-l { left: -15px;  border-radius: 10px 0 0 0;}
+.shift-r { right: -15px; border-radius: 0 10px 0 0;}
 
 @keyframes boing {
   0%   { transform: scale(.8) rotate(-10deg); }
