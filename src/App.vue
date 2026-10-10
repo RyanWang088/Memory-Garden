@@ -3,16 +3,23 @@ import WorldMap from '@/components/world/WorldMap.vue'
 import NavBar from '@/components/ui/NavBar.vue'
 import Joystick from '@/components/ui/Joystick.vue'
 import FeatureHost from '@/components/ui/FeatureHost.vue'
+import AuthGate from '@/features/auth/AuthGate.vue'
+import OnboardingQuestions from '@/features/onboarding/OnboardingQuestions.vue'
 import { useIsTouch } from '@/composables/useInput'
 import { useGameStore } from '@/stores/game'
+import { useAuthStore } from '@/stores/auth'
 
 const store = useGameStore()
+const auth = useAuthStore()
 const isTouch = useIsTouch()
-// Onboarding tour (features/onboarding) and the auth gate (features/auth) mount here later.
+auth.init() // restores a saved session; screens below wait for `auth.ready`
+// Onboarding tour (features/onboarding) mounts here later.
 </script>
 
 <template>
-  <main class="app">
+  <AuthGate v-if="auth.ready && !auth.user" />
+  <OnboardingQuestions v-else-if="auth.ready && !auth.profile?.onboarded" />
+  <main v-else-if="auth.ready" class="app">
     <WorldMap />
     <p v-show="store.mode === 'walking'" class="hint" data-testid="controls-hint">
       <template v-if="isTouch">Joystick to walk · swipe to look around</template>

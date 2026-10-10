@@ -3,8 +3,10 @@
 import { ref, computed } from 'vue'
 
 const props = defineProps({
-  x: { type: Number, default: 0 },
-  y: { type: Number, default: 0 },
+  // Leave x/y unset when a game loop positions this billboard itself (the player).
+  // Vue re-applies bound styles on every re-render, which would snap it back here.
+  x: { type: Number, default: null },
+  y: { type: Number, default: null },
   w: { type: Number, required: true },
   h: { type: Number, required: true },
   lift: { type: Number, default: 0 }, // floats the face above its ground point
@@ -14,6 +16,7 @@ const props = defineProps({
 const el = ref(null)
 defineExpose({ el })
 
+const posStyle = computed(() => (props.x == null || props.y == null ? {} : { '--x': props.x, '--y': props.y }))
 const faceStyle = computed(() => ({
   width: `${props.w}px`,
   height: `${props.h}px`,
@@ -30,7 +33,7 @@ const shadowStyle = computed(() => ({
 </script>
 
 <template>
-  <div ref="el" class="bb" :style="{ '--x': x, '--y': y }">
+  <div ref="el" class="bb" :style="posStyle">
     <span v-if="shadow" class="bb-shadow" :style="shadowStyle" />
     <div class="bb-face" :style="faceStyle"><slot /></div>
   </div>

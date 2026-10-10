@@ -158,7 +158,7 @@ function onDragEnd(e) {
         <Structure v-for="loc in structures" :key="loc.id" :loc="loc" />
         <Tree v-for="t in trees" :key="t.id" :x="t.x" :y="t.y" :scale="t.s" :kind="t.kind" />
         <Fountain />
-        <Billboard ref="playerRef" :x="SPAWN.x" :y="SPAWN.y" :w="44" :h="66" :shadow="36" data-testid="player">
+        <Billboard ref="playerRef" :w="44" :h="66" :shadow="36" data-testid="player">
           <Avatar :walking="walking" :facing="facing" />
         </Billboard>
         <InteractBubble v-if="showBubble" :key="store.nearby.id" :loc="store.nearby" @activate="store.open(store.nearby.id)" />
