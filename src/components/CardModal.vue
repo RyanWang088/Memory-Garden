@@ -28,12 +28,20 @@ const removecard = (idx) =>{
 }
 
 
-watch(() => ui.modal.open, (o) => { if (o) title.value = '' 
-subject.value='' })
+watch(() => ui.modal.open, (o) => { if (o) title.value = '' ;
+subject.value='';
+cards.value=[];
+question.value='';
+answer.value=''; })
 
 async function save() {
-  await garden.plantSeed({ title: title.value || 'Untitled', subject: ui.modal.draft?.subject, cards: cards.value })
-  ui.closeModal()
+try {
+    await garden.plantSeed({ title: title.value || 'Untitled', subject: ui.modal.draft?.subject, cards: cards.value })
+    cards.value=[];
+    ui.closeModal()
+} catch (error) {
+  console.error('saving error',error)
+}
 }
 async function rate(rating) {
   await garden.rateReview(ui.modal.seedId, rating)
@@ -51,8 +59,8 @@ async function rate(rating) {
         <input v-model="subject" class="form-control mb-2" type="text" placeholder="Seed subject" data-testid="seed-subject" />
         <input v-model="question" type="text" class="form-control mb-2" placeholder="Seed question" data-testid="seed-question" />
         <input v-model="answer" type="text" class="form-control mb-2" placeholder="Seed answer" data-testid="seed-answer" />
-        <button @click="addcard">Add card</button>
-        <ul>
+        <button class="btn btn-success" @click="addcard" :disabled="!question||!answer">Add card</button>
+        <ul v-if="cards.length!=0">
           <li v-for="(card,idx) in cards"><span>Question:{{ card.question }} Answer:{{ card.answer }}</span> <span><button @click="removecard(idx)">Remove Card</button></span></li>
         </ul>
 
