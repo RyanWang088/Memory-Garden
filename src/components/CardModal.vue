@@ -10,11 +10,29 @@ import { useGardenStore } from '@/stores/garden'
 const ui = useUiStore()
 const garden = useGardenStore()
 const title = ref('')
+const subject=ref('');
+const tags=ref([]);
+const cards=ref([]);
+const question=ref('');
+const answer=ref('');
+const plot=ref(0);
+const flower=ref('');
+const addcard = () => {
+  const temp = {'question':question.value,'answer':answer.value};
+  cards.value.push(temp)
+  answer.value='';
+  question.value='';
+};
+const removecard = (idx) =>{
+  cards.value.splice(idx,1)
+}
 
-watch(() => ui.modal.open, (o) => { if (o) title.value = '' })
+
+watch(() => ui.modal.open, (o) => { if (o) title.value = '' 
+subject.value='' })
 
 async function save() {
-  await garden.plantSeed({ title: title.value || 'Untitled', subject: ui.modal.draft?.subject, cards: [] })
+  await garden.plantSeed({ title: title.value || 'Untitled', subject: ui.modal.draft?.subject, cards: cards.value })
   ui.closeModal()
 }
 async function rate(rating) {
@@ -30,6 +48,14 @@ async function rate(rating) {
         <h5>New seed</h5>
         <input v-model="title" class="form-control mb-2" placeholder="Topic title" data-testid="seed-title" />
         <p class="small text-muted">TODO: manual card editor + AI generation from uploaded material</p>
+        <input v-model="subject" class="form-control mb-2" type="text" placeholder="Seed subject" data-testid="seed-subject" />
+        <input v-model="question" type="text" class="form-control mb-2" placeholder="Seed question" data-testid="seed-question" />
+        <input v-model="answer" type="text" class="form-control mb-2" placeholder="Seed answer" data-testid="seed-answer" />
+        <button @click="addcard">Add card</button>
+        <ul>
+          <li v-for="(card,idx) in cards"><span>Question:{{ card.question }} Answer:{{ card.answer }}</span> <span><button @click="removecard(idx)">Remove Card</button></span></li>
+        </ul>
+
         <button class="btn btn-success" @click="save" data-testid="seed-save">Plant it</button>
       </template>
 
