@@ -22,10 +22,11 @@ export const useGardenStore = defineStore('garden', () => {
     loaded.value = true
   }
 
-  async function plantSeed({ title, subject, cards }) {
-    const row = await api.createSeed(auth.user.id, { title, subject, cards })
-    seeds.value.push(row)
-    return row
+  async function plantSeed({ title, subject, cards, col, row }) {
+    const seed = await api.createSeed(auth.user.id, { title, subject, cards, col, row })
+    console.log(seed)
+    seeds.value.push(seed)
+    return seed
   }
 
   // rating: 'forgot' | 'hard' | 'easy'. Replace with real spaced-repetition scheduling later.

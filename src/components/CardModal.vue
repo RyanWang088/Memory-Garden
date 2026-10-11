@@ -36,7 +36,13 @@ answer.value=''; })
 
 async function save() {
 try {
-    await garden.plantSeed({ title: title.value || 'Untitled', subject: ui.modal.draft?.subject, cards: cards.value })
+    await garden.plantSeed({
+      title: title.value || 'Untitled',
+      subject: ui.modal.draft?.subject,
+      cards: cards.value,
+      col: ui.modal.draft?.col,
+      row: ui.modal.draft?.row,
+    })
     cards.value=[];
     ui.closeModal()
 } catch (error) {

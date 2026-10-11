@@ -63,9 +63,20 @@ export const mockApi = {
   async listSeeds(userId) { return read(`seeds:${userId}`, []) },
   async createSeed(userId, seed) {
     const row = {
-      id: uid(), user_id: userId, title: seed.title, subject: seed.subject ?? 'General',
-      cards: seed.cards ?? [], mastery: 0, last_reviewed: null, exam_date: seed.exam_date ?? null,
+      id: uid(),
+      user_id: userId,
+      title: seed.title,
+      subject: seed.subject ?? 'General',
+      tags: seed.tags ?? null,
+      cards: seed.cards ?? [],
+      plot: seed.plot ?? null,
+      flower: seed.flower ?? null,
+      mastery: seed.mastery ?? 0,
+      last_reviewed: seed.last_reviewed ?? null,
+      exam_date: seed.exam_date ?? null,
       created_at: new Date().toISOString(),
+      row: seed.row ?? null,
+      col: seed.col ?? null,
     }
     write(`seeds:${userId}`, [...read(`seeds:${userId}`, []), row])
     return row

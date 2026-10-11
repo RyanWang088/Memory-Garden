@@ -28,14 +28,16 @@ async function submit() {
 <template>
   <main class="container py-5" style="max-width: 420px">
     <h2>{{ mode === 'signup' ? 'Create your garden' : 'Welcome back' }}</h2>
-    <div class="mb-2"><input v-model="email" type="email" class="form-control" placeholder="Email" data-testid="auth-email" /></div>
-    <div class="mb-2"><input v-model="password" type="password" class="form-control" placeholder="Password" data-testid="auth-password" /></div>
+    <form @submit.prevent="submit">
+    <div class="mb-2"><input v-model="email" type="email" class="form-control" placeholder="Email" autocomplete="email" required data-testid="auth-email" /></div>
+    <div class="mb-2"><input v-model="password" type="password" class="form-control" placeholder="Password" :autocomplete="mode === 'signup' ? 'new-password' : 'current-password'" required data-testid="auth-password" /></div>
     <div v-if="error" class="text-danger small mb-2" data-testid="auth-error">{{ error }}</div>
-    <button class="btn btn-success w-100" :disabled="busy" @click="submit" data-testid="auth-submit">
+    <button type="submit" class="btn btn-success w-100" :disabled="busy" data-testid="auth-submit">
       {{ mode === 'signup' ? 'Sign up' : 'Log in' }}
     </button>
-    <button class="btn btn-link" @click="mode = mode === 'signup' ? 'login' : 'signup'" data-testid="auth-toggle">
+    <button type="button" class="btn btn-link" @click="mode = mode === 'signup' ? 'login' : 'signup'" data-testid="auth-toggle">
       {{ mode === 'signup' ? 'I already have an account' : 'Create an account' }}
     </button>
+    </form>
   </main>
 </template>

@@ -20,22 +20,31 @@ onMounted(async () => {
   ui.pickDefaultTab(garden.hasPlants)
 })
 </script>
-
 <template>
-  <div class="garden-layout row">
-    <section class="garden-stage" data-testid="garden-stage">
-      <div class="backdrop"><img src="" alt=""></div>
-      <div class="bed-wrap"><GardenBed /></div>
+  <div class="d-flex flex-column flex-md-row overflow-hidden position-fixed top-0 start-0 w-100 h-100">
+    <section class="garden-stage position-relative flex-grow-1" data-testid="garden-stage">
+      <div class="backdrop position-absolute top-0 start-0 w-100 h-100" :class="backdropName"></div>
+
+      <div class="scroller position-absolute top-0 start-0 w-100 h-100 overflow-auto">
+        <div class="intro"></div>
+        <div class="bed-wrap position-sticky bottom-0"><GardenBed /></div>
+      </div>
     </section>
+
     <ShedPanel />
     <CardModal />
   </div>
 </template>
 
 <style scoped>
-.garden-layout { display: grid; grid-template-columns: 1fr 320px; height: calc(100vh - 56px); }
-.garden-stage { position: relative; overflow: hidden; background: var(--sp-sky-day); }
-.backdrop { position: absolute; inset: 0; }
-.bed-wrap { position: absolute; left: 0; right: 0; bottom: 0; }
+.garden-stage { min-width: 0; min-height: 0;background-image: url(https://i.redd.it/rgspv42ys7i41.jpg); }  /* lets flex child shrink. sky pic background temporary */
 
+.backdrop { background: center / cover no-repeat; z-index: 0; }
+
+.scroller { z-index: 1; scrollbar-width: none; overscroll-behavior: contain; }
+.scroller::-webkit-scrollbar { display: none; }
+
+.intro { height: 200%; }                        /* scroll-jack distance, animate against this */
+.bed-wrap { height: 60%; overflow-y: auto; scrollbar-width: none; overscroll-behavior: contain; }
+.bed-wrap::-webkit-scrollbar { display: none; }
 </style>
