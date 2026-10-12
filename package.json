@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:server": "pnpm --filter server dev",
+    "dev:all": "pnpm -r --include-workspace-root --parallel dev",
     "build": "vite build",
     "preview": "vite preview",
     "test:e2e": "playwright test"

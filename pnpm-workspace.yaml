@@ -1,3 +1,7 @@
+packages:
+  - .
+  - server
+
 allowBuilds:
   esbuild: false
   vue-demi: false
