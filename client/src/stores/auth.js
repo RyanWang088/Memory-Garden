@@ -1,6 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { api } from '@/api'
+import { supabase, check } from '@/lib/supabase'
+
+// Login and profiles talk to Supabase directly (Supabase Auth is meant to run in the browser).
+const getProfile = async (userId) =>
+  check(await supabase.from('profiles').select('*').eq('id', userId).single())
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)     // { id, email }
@@ -11,29 +15,33 @@ export const useAuthStore = defineStore('auth', () => {
   // Called by the router guard on every navigation; only does real work once.
   function init() {
     initPromise ??= (async () => {
-      user.value = await api.getSession()
-      if (user.value) profile.value = await api.getProfile(user.value.id)
+      const { data } = await supabase.auth.getSession()
+      const u = data.session?.user
+      user.value = u ? { id: u.id, email: u.email } : null
+      if (user.value) profile.value = await getProfile(user.value.id)
       ready.value = true
     })()
     return initPromise
   }
 
   async function signUp(email, password) {
-    user.value = await api.signUp(email, password)
-    profile.value = await api.getProfile(user.value.id)
+    const { user: u } = check(await supabase.auth.signUp({ email, password }))
+    user.value = { id: u.id, email: u.email } // a DB trigger creates the profiles row
+    profile.value = await getProfile(user.value.id)
   }
   async function signIn(email, password) {
-    user.value = await api.signIn(email, password)
-    profile.value = await api.getProfile(user.value.id)
+    const { user: u } = check(await supabase.auth.signInWithPassword({ email, password }))
+    user.value = { id: u.id, email: u.email }
+    profile.value = await getProfile(user.value.id)
   }
   async function signOut() {
-    await api.signOut()
+    await supabase.auth.signOut()
     user.value = null
     profile.value = null
   }
 
   async function updateProfile(patch) {
-    profile.value = await api.updateProfile(user.value.id, patch)
+    profile.value = check(await supabase.from('profiles').update(patch).eq('id', user.value.id).select().single())
   }
   // Saves onboarding answers + avatar choice and flips `onboarded` so returning users skip it.
   const completeOnboarding = (answers, avatar = null) =>

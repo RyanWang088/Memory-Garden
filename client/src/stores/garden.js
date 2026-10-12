@@ -1,12 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { api } from '@/api'
-import { useAuthStore } from './auth'
+import { apiFetch } from '@/lib/http'
 
 const DAY = 86_400_000
 
 export const useGardenStore = defineStore('garden', () => {
-  const auth = useAuthStore()
   const seeds = ref([])
   const loaded = ref(false)
 
@@ -18,12 +16,12 @@ export const useGardenStore = defineStore('garden', () => {
   const isWilted = (seed) => !!seed.last_reviewed && Date.now() - new Date(seed.last_reviewed) > 3 * DAY
 
   async function fetchSeeds() {
-    seeds.value = await api.listSeeds(auth.user.id)
+    seeds.value = await apiFetch('/api/seeds')
     loaded.value = true
   }
 
   async function plantSeed({ title, subject, cards, col, row }) {
-    const seed = await api.createSeed(auth.user.id, { title, subject, cards, col, row })
+    const seed = await apiFetch('/api/seeds', { method: 'POST', body: { title, subject, cards, col, row } })
     console.log(seed)
     seeds.value.push(seed)
     return seed
@@ -34,7 +32,7 @@ export const useGardenStore = defineStore('garden', () => {
     const delta = { forgot: -5, hard: 5, easy: 12 }[rating]
     const seed = seeds.value.find(s => s.id === seedId)
     const mastery = Math.max(0, Math.min(100, seed.mastery + delta))
-    const updated = await api.updateSeed(auth.user.id, seedId, { mastery, last_reviewed: new Date().toISOString() })
+    const updated = await apiFetch(`/api/seeds/${seedId}`, { method: 'PATCH', body: { mastery, last_reviewed: new Date().toISOString() } })
     Object.assign(seed, updated)
   }
 
