@@ -21,10 +21,11 @@ onMounted(async () => {
 })
 </script>
 <template>
-  <div class="d-flex flex-column flex-md-row overflow-hidden position-fixed top-0 start-0 w-100 h-100">
-    <section class="garden-stage position-relative flex-grow-1" data-testid="garden-stage">
-      <div class="backdrop position-absolute top-0 start-0 w-100 h-100" :class="backdropName"></div>
+  <div class="garden-root d-flex flex-column flex-md-row overflow-hidden position-fixed top-0 start-0 w-100 h-100">
+    <!-- sky now spans the whole screen, so nothing is exposed behind the shed -->
+    <div class="backdrop position-absolute top-0 start-0 w-100 h-100" :class="backdropName"></div>
 
+    <section class="garden-stage position-relative flex-grow-1" data-testid="garden-stage">
       <div class="scroller position-absolute top-0 start-0 w-100 h-100 overflow-auto">
         <div class="intro"></div>
         <div class="bed-wrap position-sticky bottom-0"><GardenBed /></div>
@@ -37,8 +38,8 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.garden-stage { min-width: 0; min-height: 0;background-image: url(https://i.redd.it/rgspv42ys7i41.jpg); }  /* lets flex child shrink. sky pic background temporary */
-
+.garden-root { background: url(https://i.redd.it/rgspv42ys7i41.jpg) center / cover no-repeat; }  /* temp sky */
+.garden-stage { min-width: 0; min-height: 0; z-index: 1; }
 .backdrop { background: center / cover no-repeat; z-index: 0; }
 
 .scroller { z-index: 1; scrollbar-width: none; overscroll-behavior: contain; }

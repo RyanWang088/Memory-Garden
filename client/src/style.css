@@ -13,14 +13,17 @@
   --cream: #FFF7F0;
   --linen: #F3E3D8;
   --spring: cubic-bezier(.34, 1.56, .64, 1);
+  --radius-pill: 10px;
 }
 
 img {
-  height: 100%; 
+  height: 100%;
 }
+
 * {
   font-family: nunito;
 }
+
 /* =========================================
    DISPLAY & HEADINGS (Fredoka)
    ========================================= */
@@ -134,30 +137,103 @@ p {
   /* +4% */
 }
 
-/* Equip tool cursors: drop PNGs into src/assets/slots/ and point these at them later.
-   e.g. cursor: url('/src/assets/slots/cursor-watering-can.png') 8 8, auto; */
-body.tool-pointer {
-  cursor: default;
-}
-
-body.tool-wateringCan {
-  cursor: copy;
-}
-
-body.tool-shovel {
-  cursor: crosshair;
-}
-
 /* pill with number */
 .counter {
-  display: flex; align-items: center; gap: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   padding: 4px 12px 4px 6px;
-  min-width: 74px; height: 32px;
-  background: var(--cream); border-radius: 999px;
-  font-variant-numeric: tabular-nums; font-weight: 600;
+  min-width: 74px;
+  height: 32px;
+  background: var(--cream);
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
 }
+
 .avatar {
-  width: 32px; height: 32px; border-radius: 50%;
-  display: grid; place-items: center;
-  background: var(--periwinkle); text-decoration: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--periwinkle);
+  text-decoration: none;
+}
+
+/* segmented control bar slider pill */
+.segmented-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  width: 100%;
+  max-width: 374px;
+  height: 44px;
+  border-radius: var(--radius-pill);
+  position: relative;
+  user-select: none;
+}
+
+/* Individual tab button */
+.segmented-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: transparent;
+  color: var(--bark);
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 24px;
+  cursor: pointer;
+  transition: color 0.18s ease, transform 0.15s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.segmented-tab:hover {
+  transform: translateY(-1px);
+}
+
+/* Active tab style */
+.segmented-tab.is-active {
+  background-color: var(--paper);
+  box-shadow: var(--shadow-card);
+  font-weight: 600;
+}
+
+
+.btn-primary {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 10px 22px;
+  gap: 8px;
+
+  width: 193px;
+  height: 44px;
+
+  background: var(--peach);
+  box-shadow: 0px 4px 0px var(--berry);
+  border-radius: 999px;
+
+  /* Inside auto layout */
+  flex: none;
+  order: 4;
+  flex-grow: 0;
+
+}
+
+.btn-primary:hover {
+  box-shadow: 0px 6px 0px var(--berry);
+  transform: translateY(-2px);
+}
+
+.btn-primary:active {
+  box-shadow: 0px 2px 0px var(--berry);
+  transform: translateY(2px);
 }

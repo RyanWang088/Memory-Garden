@@ -38,7 +38,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
-  <nav class="navbar sticky-top d-flex align-items-start px-3 pt-3" data-testid="navbar">
+  <nav class="navbar sticky-top d-flex align-items-start px-3 pt-3 pb-0" data-testid="navbar">
     <!-- left: logo (hidden on mobile)might swap to profile -->
     <div class="side d-flex justify-content-start align-items-center">
       <h2 class=" d-none d-md-block">sproutly</h2>
@@ -61,7 +61,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
             >
               <img :src="icon(item.art)" alt="" />
             </a>
-            <span class="tag badge rounded-pill">{{ item.label }}</span>
+            <span class="navlabel badge rounded-pill">{{ item.label }}</span>
           </li>
         </RouterLink>
       </ul>
@@ -105,17 +105,21 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 .pea a:active img { transform: scale(.9); }
 
 /* label badge: hover shows, active stays */
-.tag {
-  position: absolute; left: 50%; top: -14px;
-  background: var(--butter); color: var(--bark); font-weight: 600;
-  opacity: 0; pointer-events: none;
-  transform: translate(-50%, 6px) scale(.6);
-  transition: opacity .2s, transform .35s var(--spring);
-}
 .pea:hover .tag, .pea.active .tag {
   opacity: 1; transform: translate(-50%, -4px) scale(1);
 }
-
+.navlabel {
+  position: absolute;
+  left: 50%;
+  top: -14px;
+  background: var(--butter);
+  color: var(--bark);
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 6px) scale(.6);
+  transition: opacity .2s, transform .35s var(--spring);
+}
 /* L / R */
 .shift {
   position: absolute; z-index: 3; bottom:15px;
@@ -124,8 +128,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   border: 3px solid var(--linen);
   font-weight: 700; font-size: .75rem; line-height: 1;
 }
-.shift-l { left: -15px;  border-radius: 10px 0 0 0;}
-.shift-r { right: -15px; border-radius: 0 10px 0 0;}
+.shift-l { left: -15px;  border-radius: var(--radius-pill) 0 0 0;}
+.shift-r { right: -15px; border-radius: 0 var(--radius-pill) 0 0;}
 
 @keyframes boing {
   0%   { transform: scale(.8) rotate(-10deg); }

@@ -1,14 +1,7 @@
 <script setup>
 import { useUiStore } from '@/stores/ui'
 
-// Tab 1: seed packets. Drag one onto the garden bed (see GardenBed.vue) to open the create-card modal.
-// TODO: replace with real seed types (by subject, or limited editions the user owns).
 const ui = useUiStore()
-const packets = [
-  { id: 'packet-default', subject: 'General' },
-  { id: 'packet-science', subject: 'Science' },
-  { id: 'packet-language', subject: 'Language' },
-]
 
 function onDragStart(e, packet) {
   e.dataTransfer.setData('application/x-sproutly-seed', JSON.stringify(packet))
