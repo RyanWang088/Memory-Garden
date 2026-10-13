@@ -7,7 +7,7 @@ const routes = [
   { path: '/onboarding', name: 'onboarding', component: () => import('@/views/OnboardingView.vue'), meta: { requiresAuth: true } },
   { path: '/garden', name: 'garden', component: () => import('@/views/GardenView.vue'), meta: { requiresAuth: true, showNav: true } },
   { path: '/journal', name: 'journal', component: () => import('@/views/JournalView.vue'), meta: { requiresAuth: true, showNav: true } },
-  { path: '/profile', name: 'profile', component: () => import('@/views/profileView.vue'), meta: { requiresAuth: true, showNav: true } },
+  { path: '/profile', name: 'profile', component: () => import('@/views/ProfileView.vue'), meta: { requiresAuth: true, showNav: true } },
   { path: '/pomodoro', name: 'pomodoro', component: () => import('@/views/PomodoroView.vue'), meta: { requiresAuth: true, showNav: true } },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]

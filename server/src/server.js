@@ -1,6 +1,7 @@
 // Express API for Sproutly. Routes go in src/routes/ and are mounted under /api.
 import express from 'express'
 import cors from 'cors'
+import authRouter from './routes/auth.js'
 import seedsRouter from './routes/seeds.js'
 
 const app = express()
@@ -11,6 +12,7 @@ app.use(express.json())
 
 app.get('/api/health', (req, res) => res.json({ ok: true }))
 
+app.use('/api/auth', authRouter)
 app.use('/api/seeds', seedsRouter)
 // TODO: mount more routers here, e.g. app.use('/api/cards', cardsRouter)
 

@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { supabase, check } from '@/lib/supabase'
+import { apiFetch } from '@/lib/http'
 
 // Login and profiles talk to Supabase directly (Supabase Auth is meant to run in the browser).
+// Registration goes through the Express server (POST /api/auth/register), which validates and creates the account.
 const getProfile = async (userId) =>
   check(await supabase.from('profiles').select('*').eq('id', userId).single())
 
@@ -25,9 +27,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function signUp(email, password) {
-    const { user: u } = check(await supabase.auth.signUp({ email, password }))
-    user.value = { id: u.id, email: u.email } // a DB trigger creates the profiles row
-    profile.value = await getProfile(user.value.id)
+    await apiFetch('/api/auth/register', { method: 'POST', body: { email, password } })
+    await signIn(email, password) // a DB trigger already created the profiles row
   }
   async function signIn(email, password) {
     const { user: u } = check(await supabase.auth.signInWithPassword({ email, password }))
