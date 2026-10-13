@@ -41,10 +41,10 @@ const pathHalfWidth = depth =>                                            // swi
   CELL_SIZE * (1.05 + 0.55 * (0.6 * wave(depth, CELL_SIZE * 4.1, 0.4) + 0.4 * wave(depth, CELL_SIZE * 1.7, 2.2)))
 
 const camera = { viewWidth: 400, viewHeight: 700, scale: 1, contentWidth: 400, frontY: 0, radius: 0, horizonY: 0, scrollPos: 0, panX: 0, centerX: 0 }
-const scrollerEl = ref(null), stageEl = ref(null), canvasEl = ref(null), ghostEl = ref(null)
+const scrollerEl = ref(null), stageEl = ref(null), canvasEl = ref(null)
 const plantElements = new Map()
 const screenPoint = {}               // reused by every projection: no per-frame allocations
-let hoverCell = null, renderQueued = false, resizeObserver
+let renderQueued = false, resizeObserver
 
 const occupiedCells = computed(() => new Set(garden.seeds.map(seed => `${seed.col},${seed.row}`)))
 const registerPlant = (id, el) => (el ? plantElements.set(id, el) : plantElements.delete(id))
@@ -118,7 +118,6 @@ function render() {
     const el = plantElements.get(seed.id)
     if (el) placeSprite(el, seed.col, seed.row, STAGE_SIZE[seed.stage] ?? 1)
   }
-  updateGhost()
 }
 
 function placeSprite(el, col, row, sizeFactor) {
@@ -206,28 +205,25 @@ function onDragOver(e) {
   const view = scrollerEl.value.getBoundingClientRect()          // edge auto-scroll: reach the back / pan sideways
   if (e.clientY - view.top < EDGE_SCROLL_ZONE) scrollerEl.value.scrollTop -= 14
   scrollerEl.value.scrollLeft += 14 * ((e.clientX > view.right - EDGE_SCROLL_ZONE) - (e.clientX < view.left + EDGE_SCROLL_ZONE))
-  hoverCell = cellFromEvent(e)
-  requestRender()
 }
-function onDragLeave(e) { if (!stageEl.value.contains(e.relatedTarget)) clearGhost() }
-function clearGhost() { hoverCell = null; requestRender() }
 
-function updateGhost() {
-  const ghost = ghostEl.value
-  if (!hoverCell) { ghost.style.display = 'none'; return }
-  placeSprite(ghost, hoverCell.col, hoverCell.row, 1)
-  ghost.classList.toggle('blocked', isBlocked(hoverCell.col, hoverCell.row))
+// Tap-to-plant (touch screens): after tapping the seed packet, a click on an empty spot plants it
+function onStageClick(e) {
+  if (!ui.seedPicked) return
+  const cell = cellFromEvent(e)
+  if (!cell || isBlocked(cell.col, cell.row)) return
+  ui.openCreate({ col: cell.col, row: cell.row })
 }
 
 function onDrop(e) {
   const rawSeed = e.dataTransfer.getData(SEED_MIME)
   const cell = cellFromEvent(e)
-  clearGhost()
   if (!rawSeed || !cell || isBlocked(cell.col, cell.row)) return
   ui.openCreate({ ...JSON.parse(rawSeed), col: cell.col, row: cell.row })   // modal collects title + cards, then garden.plantSeed()
 }
 
 function onPlantClick(seed) {
+  if (ui.seedPicked) return          // planting: the stage click handles it
   // Watering can -> open the review modal. Shovel -> TODO: remove plant (confirm first).
   if (ui.activeTool === 'shovel') return
   ui.openReview(seed.id)
@@ -255,8 +251,8 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
         class="stage"
         :data-tool="ui.activeTool"
         @dragover="onDragOver"
-        @dragleave="onDragLeave"
         @drop.prevent="onDrop"
+        @click="onStageClick"
       >
         <canvas ref="canvasEl"></canvas>
 
@@ -269,10 +265,6 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
         >
           <h2 >{{seed.title}}</h2>
           <div class="shadow"></div>
-          <img class="sprite" src="../assets/foliage/tulip.svg" alt="" draggable="false" />
-        </div>
-
-        <div ref="ghostEl" class="plant ghost">
           <img class="sprite" src="../assets/foliage/tulip.svg" alt="" draggable="false" />
         </div>
       </div>
@@ -301,8 +293,5 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   width: calc(var(--sprite-size) / 2.2); height: calc(var(--sprite-size) / 8); border-radius: 50%; background: rgba(0, 0, 0, .2);
 }
 
-.ghost { pointer-events: none; z-index: 9000 !important; }   /* translucent pending plant when dragging across canvasadd */
-.ghost .sprite { opacity: .6; }
-.ghost.blocked .sprite { filter: grayscale(1) sepia(1) hue-rotate(-40deg) saturate(4); }
 
 </style>

@@ -20,9 +20,10 @@ export const useGardenStore = defineStore('garden', () => {
     loaded.value = true
   }
 
-  async function plantSeed({ title, subject, cards, col, row }) {
-    const seed = await apiFetch('/api/seeds', { method: 'POST', body: { title, subject, cards, col, row } })
-    console.log(seed)
+  // The server finds/creates the subject, saves the seed and its cards, and returns
+  // the seed with { subject, cards, mastery, stage } filled in
+  async function plantSeed({ title, subject, tags, cards, col, row }) {
+    const seed = await apiFetch('/api/seeds', { method: 'POST', body: { title, subject, tags, cards, col, row } })
     seeds.value.push(seed)
     return seed
   }
