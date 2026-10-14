@@ -4,33 +4,40 @@ import tulipSvg from '@/assets/foliage/tulip.svg'
 
 const ui = useUiStore()
 
+// 1x1 transparent pixel: replaces the browser's own drag picture, so only the garden's ghost shows
+const blankDragImage = new Image()
+blankDragImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+
 function onDragStart(e) {
   e.dataTransfer.setData('application/x-sproutly-seed', JSON.stringify({ flower: 'tulip' }))
   e.dataTransfer.effectAllowed = 'copy'
-  ui.seedPicked = true // highlights the packet while dragging
+  e.dataTransfer.setDragImage(blankDragImage, 0, 0)
+  ui.seedPicked = true 
 }
 </script>
 
 <template>
   <div data-testid="shed-seeds">
-    <h4 class="seeds-title">Plant a new seed</h4>
+    <h3>Plant a new seed</h3>
     <!-- Touch devices don't fire HTML5 drag events: tap the packet, then tap a spot -->
-    <p class="text-body-small hint">
+    <p class="text-body-small m-0">
       {{ ui.seedPicked ? 'Now tap an empty spot in the garden to plant it.' : 'Drag the seed onto the garden, or tap it then tap a spot.' }}
     </p>
     <button
-      type="button" class="packet" draggable="true" :class="{ picked: ui.seedPicked }"
+      type="button" class="packet" :class="{ picked: ui.seedPicked }"
       :aria-pressed="ui.seedPicked" data-testid="seed-tulip"
-      @dragstart="onDragStart" @dragend="ui.seedPicked = false" @click="ui.seedPicked = !ui.seedPicked"
+      draggable="true"
+      @dragstart="onDragStart" @dragend="ui.seedPicked = false"
     >
-      <img class="packet-art" :src="tulipSvg" alt="" draggable="false" />
+      <img
+        class="packet-art" :src="tulipSvg" alt="" 
+      />
       <span class="text-label-field">Tulip seed</span>
     </button>
   </div>
 </template>
 
 <style scoped>
-.seeds-title { margin: 0 0 4px; font-family: 'Fredoka', sans-serif; font-weight: 500; font-size: 18px; line-height: 24px; }
 .hint { margin: 0 0 12px; color: var(--bark-muted); }
 .packet {
   display: flex;

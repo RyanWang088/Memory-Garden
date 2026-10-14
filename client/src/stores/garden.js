@@ -32,12 +32,14 @@ export const useGardenStore = defineStore('garden', () => {
   async function rateReview(seedId, rating) {
     const delta = { forgot: -5, hard: 5, easy: 12 }[rating]
     const seed = seeds.value.find(s => s.id === seedId)
+    if (!seed) throw new Error('Seed not found. Refresh the garden and try again.')
+    if (delta === undefined) throw new Error('Choose a valid review rating.')
     const mastery = Math.max(0, Math.min(100, seed.mastery + delta))
     const updated = await apiFetch(`/api/seeds/${seedId}`, { method: 'PATCH', body: { mastery, last_reviewed: new Date().toISOString() } })
     Object.assign(seed, updated)
   }
 
-  // Aggregate readiness for the journal (average mastery, optionally per subject)
+  // Aggregate readiness for the planner (average mastery, optionally per subject)
   const readiness = (subject) => {
     const list = subject ? seeds.value.filter(s => s.subject === subject) : seeds.value
     return list.length ? Math.round(list.reduce((n, s) => n + s.mastery, 0) / list.length) : 0

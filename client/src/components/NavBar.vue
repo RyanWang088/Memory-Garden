@@ -8,7 +8,7 @@ const route = useRoute()
 const router = useRouter()
 
 const items = [
-  { to: 'journal', label: 'Journal', art: 'journal' },
+  { to: 'planner', label: 'Planner', art: 'planner' },
   { to: 'garden', label: 'Garden', art: 'sprout' },
   { to: 'pomodoro', label: 'Focus', art: 'focus' },
 ]
@@ -42,7 +42,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
     <!-- left: logo (hidden on mobile)might swap to profile -->
     <div class="side d-flex justify-content-start align-items-center">
       <h2 class=" d-none d-md-block">sproutly</h2>
-      <RouterLink :to="{ name: 'profile' }" class="avatar d-md-none" aria-label="Profile">🙂</RouterLink>
+      <RouterLink :to="{ name: 'profile' }" class="avatar d-md-none" aria-label="Profile">🏡</RouterLink>
     </div>
 
     <!-- center: peas + L/R chips -->
@@ -76,7 +76,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         <span class="counter" data-testid="nav-streak">🔥 {{ auth.profile?.streak ?? 0 }}</span>
         <span class="counter" data-testid="nav-coins"><img src="../assets/ui/coin.svg" alt=""> {{ auth.profile?.coins ?? 0 }}</span>
       </div>
-      <RouterLink :to="{ name: 'profile' }" class="avatar d-none d-md-grid" aria-label="Profile">🙂</RouterLink>
+      <RouterLink :to="{ name: 'profile' }" class="avatar d-none d-md-grid" aria-label="Profile">🏡</RouterLink>
     </div>
   </nav>
 </template>
@@ -105,7 +105,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 .pea a:active img { transform: scale(.9); }
 
 /* label badge: hover shows, active stays */
-.pea:hover .tag, .pea.active .tag {
+.pea:hover .navlabel, .pea.active .navlabel {
   opacity: 1; transform: translate(-50%, -4px) scale(1);
 }
 .navlabel {

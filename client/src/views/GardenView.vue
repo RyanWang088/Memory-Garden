@@ -5,7 +5,6 @@ import { useUiStore } from '@/stores/ui'
 import { useWeatherStore } from '@/stores/weather'
 import GardenBed from '@/components/GardenBed.vue'
 import ShedPanel from '@/components/ShedPanel.vue'
-import CardModal from '@/components/CardModal.vue'
 
 const garden = useGardenStore()
 const ui = useUiStore()
@@ -33,8 +32,8 @@ onMounted(async () => {
     </section>
 
     <ShedPanel />
-    <CardModal />
   </div>
+  <RouterView />
 </template>
 
 <style scoped>

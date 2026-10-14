@@ -14,6 +14,7 @@
   --linen: #F3E3D8;
   --spring: cubic-bezier(.34, 1.56, .64, 1);
   --radius-pill: 10px;
+  --shadow:rgba(39, 49, 30, .48);
 }
 
 img {
@@ -112,10 +113,9 @@ p {
 
 .text-body-small {
   font-family: 'Nunito', sans-serif;
-  font-weight: 400;
-  /* Regular */
   font-size: 14px;
   line-height: 22px;
+  color: var(--bark-muted);
 }
 
 .text-label-field {
@@ -135,6 +135,16 @@ p {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   /* +4% */
+}
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--shadow);
+  backdrop-filter: blur(3px);
 }
 
 /* pill with number */

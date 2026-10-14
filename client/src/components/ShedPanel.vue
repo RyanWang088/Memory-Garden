@@ -78,7 +78,7 @@ const tabs = [
   color: var(--bark);
   background-color: tan;
   border: 2px solid var(--bark);
-  box-shadow: 0px 8px 24px -6px rgba(107, 74, 58, 0.18), 0px 2px 4px rgba(107, 74, 58, 0.08);
+  box-shadow: 0px 8px 24px -6px var(--shadow), 0px 2px 4px rgba(107, 74, 58, 0.08);
   overflow: visible;
   user-select: none;
 

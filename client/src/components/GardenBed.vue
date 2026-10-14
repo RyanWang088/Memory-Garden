@@ -1,10 +1,12 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
 import { useGardenStore } from '@/stores/garden'
 import { useUiStore } from '@/stores/ui'
 
 const garden = useGardenStore()   // garden.seeds: { id, col, row, stage (0 | 1 | 2) }
 const ui = useUiStore()
+const router = useRouter()
 
 /* ---------- constants (world px unless noted) ---------- */
 const CELL_SIZE = 100, GRID_COLS = 15, GRID_ROWS = 20
@@ -14,7 +16,7 @@ const PLOT_SIZE = 150
 const SHADOW_ROOM = 30               // px below a plant's base that stay visible, so its shadow isn't clipped
 const BOTTOM_MARGIN = 24             // gap between the front row and the bottom of the view
 const HALF_PI = Math.PI / 2
-const STAGE_SIZE = [0.55, 0.8, 1]    // sprout / seedling / bloom&
+const STAGE_SIZE = [0.6, 0.8, 1]    // sprout / seedling / bloom
 const SEED_MIME = 'application/x-sproutly-seed'
 const EDGE_SCROLL_ZONE = 90          // dragging within this many px of the view edge auto-scrolls
 
@@ -41,10 +43,10 @@ const pathHalfWidth = depth =>                                            // swi
   CELL_SIZE * (1.05 + 0.55 * (0.6 * wave(depth, CELL_SIZE * 4.1, 0.4) + 0.4 * wave(depth, CELL_SIZE * 1.7, 2.2)))
 
 const camera = { viewWidth: 400, viewHeight: 700, scale: 1, contentWidth: 400, frontY: 0, radius: 0, horizonY: 0, scrollPos: 0, panX: 0, centerX: 0 }
-const scrollerEl = ref(null), stageEl = ref(null), canvasEl = ref(null)
+const scrollerEl = ref(null), stageEl = ref(null), canvasEl = ref(null), ghostEl = ref(null)
 const plantElements = new Map()
 const screenPoint = {}               // reused by every projection: no per-frame allocations
-let renderQueued = false, resizeObserver
+let hoverCell = null, renderQueued = false, resizeObserver
 
 const occupiedCells = computed(() => new Set(garden.seeds.map(seed => `${seed.col},${seed.row}`)))
 const registerPlant = (id, el) => (el ? plantElements.set(id, el) : plantElements.delete(id))
@@ -118,6 +120,7 @@ function render() {
     const el = plantElements.get(seed.id)
     if (el) placeSprite(el, seed.col, seed.row, STAGE_SIZE[seed.stage] ?? 1)
   }
+  updateGhost()
 }
 
 function placeSprite(el, col, row, sizeFactor) {
@@ -205,28 +208,32 @@ function onDragOver(e) {
   const view = scrollerEl.value.getBoundingClientRect()          // edge auto-scroll: reach the back / pan sideways
   if (e.clientY - view.top < EDGE_SCROLL_ZONE) scrollerEl.value.scrollTop -= 14
   scrollerEl.value.scrollLeft += 14 * ((e.clientX > view.right - EDGE_SCROLL_ZONE) - (e.clientX < view.left + EDGE_SCROLL_ZONE))
+  hoverCell = cellFromEvent(e)
+  requestRender()
 }
+function onDragLeave(e) { if (!stageEl.value.contains(e.relatedTarget)) clearGhost() }
+function clearGhost() { hoverCell = null; requestRender() }
 
-// Tap-to-plant (touch screens): after tapping the seed packet, a click on an empty spot plants it
-function onStageClick(e) {
-  if (!ui.seedPicked) return
-  const cell = cellFromEvent(e)
-  if (!cell || isBlocked(cell.col, cell.row)) return
-  ui.openCreate({ col: cell.col, row: cell.row })
+function updateGhost() {
+  const ghost = ghostEl.value
+  if (!hoverCell) { ghost.style.display = 'none'; return }
+  placeSprite(ghost, hoverCell.col, hoverCell.row, 1)
+  ghost.classList.toggle('blocked', isBlocked(hoverCell.col, hoverCell.row))
 }
 
 function onDrop(e) {
   const rawSeed = e.dataTransfer.getData(SEED_MIME)
   const cell = cellFromEvent(e)
+  clearGhost()
   if (!rawSeed || !cell || isBlocked(cell.col, cell.row)) return
-  ui.openCreate({ ...JSON.parse(rawSeed), col: cell.col, row: cell.row })   // modal collects title + cards, then garden.plantSeed()
+  ui.seedPicked = false
+  router.push({ name: 'seed-create', params: { col: cell.col, row: cell.row } })
 }
 
 function onPlantClick(seed) {
-  if (ui.seedPicked) return          // planting: the stage click handles it
-  // Watering can -> open the review modal. Shovel -> TODO: remove plant (confirm first).
+  // Shovel -> TODO: remove plant (confirm first).
   if (ui.activeTool === 'shovel') return
-  ui.openReview(seed.id)
+  router.push({ name: 'seed-review', params: { id: seed.id } })
 }
 
 /* ---------- lifecycle ---------- */
@@ -251,11 +258,10 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
         class="stage"
         :data-tool="ui.activeTool"
         @dragover="onDragOver"
+        @dragleave="onDragLeave"
         @drop.prevent="onDrop"
-        @click="onStageClick"
       >
         <canvas ref="canvasEl"></canvas>
-
         <div
           v-for="seed in garden.seeds"
           :key="seed.id"
@@ -265,6 +271,10 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
         >
           <h2 >{{seed.title}}</h2>
           <div class="shadow"></div>
+          <img class="sprite" src="../assets/foliage/tulip.svg" alt="" draggable="false" />
+        </div>
+
+        <div ref="ghostEl" class="plant ghost">
           <img class="sprite" src="../assets/foliage/tulip.svg" alt="" draggable="false" />
         </div>
       </div>
@@ -290,8 +300,11 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 }
 .shadow {
   position: absolute; left: calc(var(--sprite-size) / -4.5); bottom: -6px;
-  width: calc(var(--sprite-size) / 2.2); height: calc(var(--sprite-size) / 8); border-radius: 50%; background: rgba(0, 0, 0, .2);
+  width: calc(var(--sprite-size) / 2.2); height: calc(var(--sprite-size) / 8); border-radius: 50%; background: var(--shadow);
 }
 
+.ghost { pointer-events: none; z-index: 9000 !important; }   /* translucent pending plant when dragging across canvasadd */
+.ghost .sprite { opacity: .6; }
+.ghost.blocked .sprite { filter: grayscale(1) sepia(1) hue-rotate(-40deg) saturate(4); }
 
 </style>

@@ -39,7 +39,7 @@ const reviewItems = [
     <!-- Heading Section -->
     <header class="d-flex flex-column gap-1">
       <h3 class="m-0">Watering mode is on</h3>
-      <p class="study-desc m-0">Your can is ready. Choose a plant to revise.</p>
+      <p class="text-body-small m-0">Your can is ready. Choose a plant to revise.</p>
     </header>
 
     <!-- Watering Tool Banner -->
@@ -100,12 +100,6 @@ const reviewItems = [
 
 <style scoped>
 /* Heading Typography */
-
-.study-desc {
-  font-size: 14px;
-  line-height: 22px;
-  color: var(--bark-muted);
-}
 
 /* Tool Banner */
 .watering-banner {

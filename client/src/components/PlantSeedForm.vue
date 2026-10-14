@@ -1,6 +1,6 @@
 <script setup>
 // Plant a seed: name the study set, pick a subject and tags, build flashcards by hand,
-// preview them, then save. Shown inside CardModal (mode 'create') after the seed packet is dropped on the garden.
+// preview them, then save. Shown after the seed packet is dropped on the garden.
 // Emits 'save' with { title, subject, tags, cards } and 'cancel'.
 import { computed, ref } from 'vue'
 import { useGardenStore } from '@/stores/garden'
@@ -79,6 +79,15 @@ function save() {
         <p class="text-body-small sub">It will grow into a tulip as you revise.</p>
       </div>
     </header>
+    <!-- Progress -->
+    <section class="p-3 sticky-top gap-1 card-box" data-testid="seed-progress">
+      <div class="progress-head">
+        <strong>Step {{ step }} of 3</strong>
+        <span>{{ Math.round((step / 3) * 100) }}%</span>
+      </div>
+      <div class="track"><div class="bar" :style="{ width: (step / 3) * 100 + '%' }" /></div>
+      <p class="help">{{ stepText[step - 1] }}</p>
+    </section>
 
     <!-- Study Set Details -->
     <section class="card-box">
@@ -165,16 +174,6 @@ function save() {
       <p v-else class="help">Your cards will show here as you write them.</p>
     </section>
 
-    <!-- Progress -->
-    <section class="card-box progress-box" data-testid="seed-progress">
-      <div class="progress-head">
-        <strong>Step {{ step }} of 3</strong>
-        <span>{{ Math.round((step / 3) * 100) }}%</span>
-      </div>
-      <div class="track"><div class="bar" :style="{ width: (step / 3) * 100 + '%' }" /></div>
-      <p class="help">{{ stepText[step - 1] }}</p>
-    </section>
-
     <footer class="foot">
       <p v-if="error" class="error" data-testid="seed-error">{{ error }}</p>
       <button type="button" class="ghost-btn text-button" @click="emit('cancel')">Cancel</button>
@@ -240,7 +239,7 @@ button.tag-pill { cursor: pointer; }
   height: 24px;
   border: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--paper);
   font-weight: 700;
   font-size: 15px;
   line-height: 1;
@@ -298,14 +297,13 @@ button.tag-pill { cursor: pointer; }
 .subject-tag { align-self: flex-start; padding: 2px 10px; border-radius: 999px; background: var(--cream); font-weight: 700; font-size: 12px; }
 .caption { color: var(--bark-muted); }
 
-.progress-box { gap: 8px; }
 .progress-head { display: flex; justify-content: space-between; font-size: 14px; }
 .progress-head span { color: var(--bark-muted); }
 .track { height: 10px; border-radius: 999px; background: var(--linen); overflow: hidden; }
 .bar { height: 100%; border-radius: inherit; background: var(--mint); transition: width 0.3s ease; }
 
 .foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; }
-.error { width: 100%; margin: 0; font-weight: 700; font-size: 14px; color: #a8304a; }
+.error { width: 100%; margin: 0; font-weight: 700; font-size: 14px; color: var(--berry); }
 .plant-btn, .ghost-btn {
   padding: 10px 22px;
   border: 0;
