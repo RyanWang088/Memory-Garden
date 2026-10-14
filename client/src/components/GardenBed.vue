@@ -201,6 +201,21 @@ function cellFromEvent(e) {
   return screenToCell(e.clientX - stage.left, e.clientY - stage.top)
 }
 
+function cellAtPointer(e) {
+  const rect = stageEl.value.getBoundingClientRect()
+  if (e.clientX < rect.left || e.clientX >= rect.right || e.clientY < rect.top || e.clientY >= rect.bottom) return null
+  return cellFromEvent(e)
+}
+
+function dropAt(e) {
+  const cell = cellAtPointer(e)
+  clearGhost()
+  ui.seedPicked = false
+  ui.seedDragPointerId = null
+  if (!cell || isBlocked(cell.col, cell.row)) return
+  router.push({ name: 'seed-create', params: { col: cell.col, row: cell.row } })
+}
+
 function onDragOver(e) {
   if (!e.dataTransfer.types.includes(SEED_MIME)) return
   e.preventDefault()
@@ -223,11 +238,26 @@ function updateGhost() {
 
 function onDrop(e) {
   const rawSeed = e.dataTransfer.getData(SEED_MIME)
-  const cell = cellFromEvent(e)
+  if (rawSeed) dropAt(e)
+}
+
+function onPointerMove(e) {
+  if (e.pointerId !== ui.seedDragPointerId) return
+  e.preventDefault()
+  hoverCell = cellAtPointer(e)
+  requestRender()
+}
+
+function onPointerUp(e) {
+  if (e.pointerId !== ui.seedDragPointerId) return
+  dropAt(e)
+}
+
+function onPointerCancel(e) {
+  if (e.pointerId !== ui.seedDragPointerId) return
   clearGhost()
-  if (!rawSeed || !cell || isBlocked(cell.col, cell.row)) return
   ui.seedPicked = false
-  router.push({ name: 'seed-create', params: { col: cell.col, row: cell.row } })
+  ui.seedDragPointerId = null
 }
 
 function onPlantClick(seed) {
@@ -241,13 +271,21 @@ watch(() => garden.seeds, requestRender, { deep: true, flush: 'post' })
 onMounted(() => {
   resizeObserver = new ResizeObserver(measureView)
   resizeObserver.observe(scrollerEl.value)
+  window.addEventListener('pointermove', onPointerMove, { passive: false })
+  window.addEventListener('pointerup', onPointerUp)
+  window.addEventListener('pointercancel', onPointerCancel)
   measureView()
   scrollerEl.value.scrollTop = SCROLL_RANGE                                        // start at the front edge
   scrollerEl.value.scrollLeft = (camera.contentWidth - camera.viewWidth) / 2      // start centred
   updateScroll()
   render()                                                                         // draw now: no empty first frame
 })
-onBeforeUnmount(() => resizeObserver?.disconnect())
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+  window.removeEventListener('pointermove', onPointerMove)
+  window.removeEventListener('pointerup', onPointerUp)
+  window.removeEventListener('pointercancel', onPointerCancel)
+})
 </script>
 
 <template>

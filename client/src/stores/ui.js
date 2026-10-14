@@ -7,6 +7,7 @@ export const useUiStore = defineStore('ui', () => {
   const shedTab = ref('seeds')        // 'seeds' | 'study' | 'shop'
   const shedOpen = ref(true)          // mobile: collapse/expand the shed
   const seedPicked = ref(false)       // seed packet being dragged, or tapped and waiting for a garden spot
+  const seedDragPointerId = ref(null)
   const modal = ref({ open: false, mode: null, seedId: null, draft: null }) // mode: 'create' | 'review'
 
   function setTool(tool) { activeTool.value = tool }
@@ -19,5 +20,5 @@ export const useUiStore = defineStore('ui', () => {
   function openReview(seedId) { modal.value = { open: true, mode: 'review', seedId, draft: null } }
   function closeModal() { modal.value = { open: false, mode: null, seedId: null, draft: null } }
 
-  return { activeTool, shedTab, shedOpen, seedPicked, modal, setTool, setShedTab, pickDefaultTab, openCreate, openReview, closeModal }
+  return { activeTool, shedTab, shedOpen, seedPicked, seedDragPointerId, modal, setTool, setShedTab, pickDefaultTab, openCreate, openReview, closeModal }
 })
