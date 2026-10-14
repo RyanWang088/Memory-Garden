@@ -61,7 +61,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
             >
               <img :src="icon(item.art)" alt="" />
             </a>
-            <span class="navlabel badge rounded-pill">{{ item.label }}</span>
+            <span class="navlabel text-label-caption text-capitalize badge rounded-pill">{{ item.label }}</span>
           </li>
         </RouterLink>
       </ul>
@@ -112,8 +112,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   position: absolute;
   left: 50%;
   top: -14px;
-  background: var(--butter);
-  color: var(--bark);
   font-weight: 600;
   opacity: 0;
   pointer-events: none;

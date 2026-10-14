@@ -3,6 +3,7 @@
 :root {
   --peach: #FFB5A7;
   --mint: #A8E6CF;
+  --mint-deep:#7FC9A6;
   --berry: #FF8B8B;
   --periwinkle: #B8C0FF;
   --butter: #FFE484;
@@ -246,4 +247,39 @@ p {
 .btn-primary:active {
   box-shadow: 0px 2px 0px var(--berry);
   transform: translateY(2px);
+}
+.progress {
+  width: 100%;
+  height: 12px;
+  background: var(--linen);
+  border-radius: 999px;
+  overflow: hidden;
+}
+ 
+.progress-fill {
+  height: 100%;
+  background: var(--mint);
+  border-radius: 999px;
+}
+
+.tag-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 4px 12px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--butter);
+  color: var(--bark);
+  font-weight: 700;
 }

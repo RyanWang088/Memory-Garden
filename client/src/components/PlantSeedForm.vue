@@ -86,7 +86,7 @@ function save() {
         <strong>Step {{ step }} of 3</strong>
         <span>{{ Math.round((step / 3) * 100) }}%</span>
       </div>
-      <div class="track"><div class="bar" :style="{ width: (step / 3) * 100 + '%' }" /></div>
+      <div class="progress"><div class="progress-fill" :style="{ width: (step / 3) * 100 + '%' }" /></div>
       <p class="help">{{ stepText[step - 1] }}</p>
     </section>
 
@@ -147,7 +147,7 @@ function save() {
         </label>
       </div>
       <p class="count" data-testid="card-count">
-        <span class="badge">NEW</span> {{ cards.length }} {{ cards.length === 1 ? 'card' : 'cards' }} in this set
+        <span class="badge text-label-caption">NEW</span> {{ cards.length }} {{ cards.length === 1 ? 'card' : 'cards' }} in this set
       </p>
       <ol v-if="cards.length" class="card-list">
         <li v-for="(c, i) in cards" :key="c.id">
@@ -221,18 +221,7 @@ input:focus, textarea:focus { border-color: var(--periwinkle); outline: none; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .colours { display: flex; flex-wrap: wrap; gap: 8px; }
-.tag-pill {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  max-width: 100%;
-  padding: 4px 12px;
-  border: 2px solid transparent;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 13px;
-  overflow-wrap: anywhere;
-}
+
 button.tag-pill { cursor: pointer; }
 .chips .tag-pill { padding-right: 4px; }
 .chips button, .card-list button {
@@ -265,7 +254,6 @@ button.tag-pill { cursor: pointer; }
 }
 .plus:disabled { opacity: 0.45; cursor: default; }
 .count { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13px; line-height: 18px; color: var(--bark-muted); }
-.badge { padding: 2px 8px; border-radius: 999px; background: var(--butter); font-size: 11px; font-weight: 700; color: var(--bark); }
 .card-list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .card-list li {
   display: flex;
