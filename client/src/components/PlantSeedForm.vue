@@ -73,7 +73,7 @@ function save() {
 
 <template>
   <form class="plant-form" data-testid="plant-seed-form" @submit.prevent="save">
-    <header class="top">
+    <header class="top mt-3">
       <img class="top-art" :src="tulipSvg" alt="" />
       <div>
         <h3>Plant a new seed</h3>
@@ -81,12 +81,14 @@ function save() {
       </div>
     </header>
     <!-- Progress -->
-    <section class="p-3 sticky-top gap-1 card-box" data-testid="seed-progress">
+    <section class="sticky-top" data-testid="seed-progress">
       <div class="progress-head">
         <strong>Step {{ step }} of 3</strong>
         <span>{{ Math.round((step / 3) * 100) }}%</span>
       </div>
-      <div class="progress"><div class="progress-fill" :style="{ width: (step / 3) * 100 + '%' }" /></div>
+      <div class="progress" role="progressbar">
+        <div class="progress-fill" :style="{ width: (step / 3) * 100 + '%' }" />
+      </div>
       <p class="help">{{ stepText[step - 1] }}</p>
     </section>
 
@@ -290,6 +292,25 @@ button.tag-pill { cursor: pointer; }
 .progress-head span { color: var(--bark-muted); }
 .track { height: 10px; border-radius: 999px; background: var(--linen); overflow: hidden; }
 .bar { height: 100%; border-radius: inherit; background: var(--mint); transition: width 0.3s ease; }
+.plant-form > .sticky-top {
+  top: 0;
+  z-index: 10;
+  margin-inline: -24px;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--linen);
+  background: var(--cream);
+}
+.plant-form > .sticky-top .progress {
+  height: 6px;
+  margin: 8px 0;
+  border-radius: 999px;
+  background: var(--linen);
+}
+.plant-form > .sticky-top .progress-fill {
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+.plant-form > .sticky-top .help { margin: 0; }
 
 .foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; }
 .error { width: 100%; margin: 0; font-weight: 700; font-size: 14px; color: var(--berry); }

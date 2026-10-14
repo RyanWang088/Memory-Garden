@@ -2,11 +2,15 @@
 
 :root {
   --peach: #FFB5A7;
-  --mint: #A8E6CF;
+  --mint: #BFEBD6;
   --mint-deep:#7FC9A6;
-  --berry: #FF8B8B;
-  --periwinkle: #B8C0FF;
+  --berry: #F27A8E;
+  --berry-ink:#A8304A;
+  --periwinkle: #8FA4FF;
+  --peri-soft:#E6EBFF;
+  --lilac:#C7B5FF;
   --butter: #FFE484;
+  --butter-deep:#E0A93A;
   --bark: #5A3E36;
   /*text color*/
   --bark-muted: #8A7268;
@@ -16,6 +20,7 @@
   --spring: cubic-bezier(.34, 1.56, .64, 1);
   --radius-pill: 10px;
   --shadow:rgba(39, 49, 30, .48);
+  --shadow-card:rgba(107, 74, 58, 0.18);
 }
 
 img {
@@ -136,6 +141,9 @@ p {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   /* +4% */
+}
+.text-danger {
+  color:var(--berry-ink);
 }
 .overlay {
   position: fixed;
@@ -282,4 +290,138 @@ p {
   background: var(--butter);
   color: var(--bark);
   font-weight: 700;
+}
+
+/*  shop cards */
+.product-card {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 212px;
+  border: 1px solid var(--linen);
+  border-radius: 16px;
+  background: var(--paper);
+  box-shadow: 0 8px 24px -6px var(--shadow-card), 0 2px 4px var(--shadow-card);
+  color: var(--bark);
+}
+
+button.product-card {
+  cursor: grab;
+  touch-action: none;
+  transition: transform 0.18s var(--spring), box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+button.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 26px -6px var(--shadow-card), 0 3px 6px var(--shadow-card);
+}
+
+button.product-card:focus-visible,
+.seed-buy:focus-visible {
+  outline: 3px solid var(--periwinkle);
+  outline-offset: 3px;
+}
+
+button.product-card:active {
+  cursor: grabbing;
+  transform: translateY(1px);
+}
+
+button.product-card.is-picked {
+  background: var(--paper);
+  border-color: var(--peach);
+}
+
+.product-art {
+  position: relative;
+  flex: 0 0 96px;
+  width: 100%;
+  border-radius: 10px;
+  background: var(--cream);
+  overflow: hidden;
+}
+
+.packet-art {
+  display: block;
+  width: auto;
+  max-width: 76%;
+  height: 80px;
+  object-fit: contain;
+}
+
+.product-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-locked .packet-art {
+  opacity: 0.72;
+  filter: grayscale(1);
+}
+
+.seed-buy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 96px;
+  min-height: 40px;
+  padding: 7px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--butter);
+  box-shadow: 0 4px 0 var(--butter-deep);
+  color: var(--bark);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.seed-buy:hover:not(:disabled) {
+  background: var(--butter);
+  box-shadow: 0 6px 0 var(--butter-deep);
+  color: var(--bark);
+  transform: translateY(-2px);
+}
+
+.seed-buy:active:not(:disabled) {
+  box-shadow: 0 2px 0 var(--butter-deep);
+  transform: translateY(2px);
+}
+
+.seed-buy:disabled {
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.product-empty {
+  border: 1px dashed var(--linen);
+  border-radius: 16px;
+  background: var(--paper);
+}
+
+/* scrollbar style */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: var(--linen);
+  border-radius: var(--radius-pill);
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: var(--peach);
+  border-radius: var(--radius-pill);
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: var(--berry);
+}
+::selection {
+  background-color: var(--peri-soft);
 }

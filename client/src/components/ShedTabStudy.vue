@@ -51,7 +51,7 @@ const results = computed(() => (isSearching.value ? matches.value : recommended.
     <div v-if="results.length" class="d-flex flex-column align-items-start gap-3">
       <SeedCard v-for="seed in results" :key="seed.id" :seed="seed" @select="emit('select', $event)" />
     </div>
-    <p v-else class="alert alert-light border text-body-small mb-0">
+    <p v-else class="text-danger border-0 text-body-small mb-0">
       {{ isSearching ? `No seeds match "${query}".` : 'No seeds yet. Plant one in your garden to start studying.' }}
     </p>
   </section>

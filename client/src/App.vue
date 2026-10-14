@@ -3,6 +3,7 @@ import { watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
 import NavBar from '@/components/NavBar.vue'
+import ToastHost from '@/components/ToastHost.vue'
 
 const route = useRoute()
 const ui = useUiStore()
@@ -17,4 +18,5 @@ watchEffect(() => {
 <template>
   <NavBar v-if="route.meta.showNav" />
   <RouterView />
+  <ToastHost />
 </template>

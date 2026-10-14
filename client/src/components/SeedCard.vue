@@ -6,7 +6,7 @@ const props = defineProps({
   seed: { type: Object, required: true },
 })
 defineEmits(['select'])
-
+//delete below when backend done
 const DAY = 86400000
 const REVIEW_EVERY_DAYS = 3 // next review = last review + 3 days
 const WILT_AFTER_DAYS = 7 // overdue this long = wilting
@@ -45,19 +45,23 @@ const flowerImage = computed(() =>
 </script>
 
 <template>
-  <button class="seed-card d-flex align-items-center gap-3 bg-white text-start" @click="$emit('select', seed)">
-    <div class="bg rounded-3">
-      <img class="img-fluid w-100 h-75" :src="flowerImage" :alt="`${seed.flower || 'tulip'} flower`" />
+  <button
+    class="seed-card d-flex align-items-center gap-3 bg-white text-start"
+    @click="$emit('select', seed)"
+  >
+    <div class="bg rounded-3 flex-shrink-0">
+      <img class="img-fluid w-100 h-75 object-fit-contain" :src="flowerImage" :alt="`${seed.flower || 'tulip'} flower`" />
     </div>
-    <div class="align-self-stretch d-flex flex-grow-1 flex-column gap-1">
+
+    <div class="d-flex flex-grow-1 flex-column gap-1 overflow-hidden">
       <div class="d-flex align-items-center gap-1">
-        <span v-if="seed.subject" class="tag-pill text-label-field text-truncate" :style="tagStyle('peri')">{{ seed.subject }}</span>
+        <span v-if="seed.subject" class="tag-pill" :style="tagStyle('peri')">{{ seed.subject }}</span>
         <span class="badge text-label-caption flex-shrink-0" :class="`status-badge--${status}`">
           {{ LABELS[status] }}
         </span>
       </div>
 
-      <span class="text-body-strong d-block text-wrap text-break ">{{ seed.title }}</span>
+      <span class="text-body-strong d-block text-break">{{ seed.title }}</span>
       <span class="text-body-small d-block text-truncate">{{ nextReview }}</span>
 
       <div class="progress w-100 flex-shrink-0" role="progressbar" :aria-valuenow="mastery" aria-valuemin="0" aria-valuemax="100">
@@ -71,7 +75,7 @@ const flowerImage = computed(() =>
 .seed-card {
   box-sizing: border-box;
   width: min(340px, 100%);
-  height: 126px;
+  min-height: 126px; /* was height: grows with long titles */
   padding: 12px 16px 12px 12px;
   border: 2px solid var(--linen);
   border-radius: 16px;
@@ -89,5 +93,4 @@ const flowerImage = computed(() =>
   overflow: hidden;
   background-color: var(--linen);
 }
-
 </style>

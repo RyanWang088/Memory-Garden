@@ -54,7 +54,7 @@ function cancel() {
 
 <template>
   <main class="overlay">
-    <section class="seed-panel">
+    <section class="seed-panel pt-0">
       <p v-if="loading" role="status">Loading your garden…</p>
       <template v-else-if="error && !validLocation">
         <p class="text-danger" role="alert">{{ error }}</p>

@@ -22,13 +22,13 @@ const tabs = [
           :class="{ 'is-active': ui.shedTab === t.id }"
           :aria-selected="ui.shedTab === t.id"
           :data-testid="`shed-tab-${t.id}`"
-          @click="ui.setShedTab(t.id); ui.shedOpen = true"   <!-- tabs also reopen the shed -->
+          @click="ui.setShedTab(t.id); ui.shedOpen = true" 
         >
           <span class="tab-label">{{ t.label }}</span>
         </button>
       </nav>    <!-- Shed Header -->
     <header class="d-flex flex-row justify-content-between">
-      <h3>The garden shed</h3>
+      <h3>Garden Shed</h3>
       <button 
         class="shed-close-btn" 
         aria-label="Toggle shed"
@@ -73,12 +73,12 @@ const tabs = [
   padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
   min-height: 0;
   color: var(--bark);
   background-color: tan;
   border: 2px solid var(--bark);
-  box-shadow: 0px 8px 24px -6px var(--shadow), 0px 2px 4px rgba(107, 74, 58, 0.08);
+  box-shadow: 0px 8px 24px -6px var(--shadow), 0px 2px 4px var(--shadow);
   overflow: visible;
   user-select: none;
 
@@ -111,13 +111,7 @@ const tabs = [
   line-height: 20px;
   color: var(--cream);
   cursor: pointer;
-  box-shadow: -4px 4px 8px rgba(107, 74, 58, 0.12);
-  transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
-  white-space: nowrap;
-}
-
-.overhang-tab:hover {
-  transform: translateX(-7px) scale(1.1); /* Cute Animal Crossing "peek" hover */
+  box-shadow: -4px 4px 8px var(--shadow-card);
 }
 
 .overhang-tab.is-active {
@@ -125,7 +119,7 @@ const tabs = [
   color: var(--bark);
   border-color: var(--bark-muted);
   font-weight: 600;
-  box-shadow: -6px 6px 14px rgba(107, 74, 58, 0.16);
+  box-shadow: -6px 6px 14px var(--shadow-card);
   z-index: 6;
 }
 
@@ -136,10 +130,6 @@ const tabs = [
   cursor: pointer;
   padding: 4px;
   color: var(--bark);
-}
-
-.shed-close-btn:hover {
-  background: rgba(90, 62, 54, 0.08);
 }
 
 /* --- NOTEBOOK PAGE --- */
@@ -180,14 +170,12 @@ const tabs = [
   }
 
   .overhang-tab {
-    border-bottom: none;
     border-radius: 14px 14px 0 0;
     padding: 8px 14px;
   }
 
   .overhang-tab.is-active {
-    transform: translateY(-4px);
-    border-bottom: 2px solid var(--cream);
+    border-bottom: 2px solid var(--butter);
   }
 }
 </style>
