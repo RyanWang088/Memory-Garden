@@ -42,12 +42,13 @@ const question = ref('')
 const answer = ref('')
 const cards = ref([])
 const canAddCard = computed(() => question.value.trim() && answer.value.trim())
-
+const id = ref(0)
 function addCard() {
   if (!canAddCard.value) return
-  cards.value.push({ question: question.value.trim(), answer: answer.value.trim() })
+  cards.value.push({ id:id.value, question: question.value.trim(), answer: answer.value.trim() })
   question.value = ''
   answer.value = ''
+  id.value++
 }
 
 // Preview: the card being typed, otherwise the last one added
@@ -149,7 +150,7 @@ function save() {
         <span class="badge">NEW</span> {{ cards.length }} {{ cards.length === 1 ? 'card' : 'cards' }} in this set
       </p>
       <ol v-if="cards.length" class="card-list">
-        <li v-for="(c, i) in cards" :key="i">
+        <li v-for="(c, i) in cards" :key="c.id">
           <span class="q">{{ c.question }}</span>
           <button type="button" :aria-label="`Remove card ${i + 1}`" @click="cards.splice(i, 1)">×</button>
         </li>
