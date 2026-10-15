@@ -1,7 +1,12 @@
-// Generates flashcards from document text with OpenRouter (OPENROUTER_API_KEY / OPENROUTER_MODEL in .env).
+// Generates flashcards from document text with an AI chat API.
+// Providers are tried in the order of AI_PROVIDERS (default: openrouter,groq), skipping any without a key,
+// so if one fails (dead key, no credit, rate limit, outage) the next one answers. 
 // Short documents go in one request so the model sees everything before choosing. Long ones are split
 // into parts that each suggest candidates, then one final request picks a non-overlapping, mixed set.
-const API_URL = 'https://openrouter.ai/api/v1/chat/completions'
+const PROVIDERS = {
+  openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', model: 'openai/gpt-4.1' },
+  groq: { url: 'https://api.groq.com/openai/v1/chat/completions', model: 'openai/gpt-oss-120b' },
+}
 const SINGLE_LIMIT = 400_000 // characters sent in one request (~100k tokens)
 const PART_SIZE = 200_000
 const MAX_TEXT = 2_000_000 // anything past this is ignored
@@ -48,13 +53,24 @@ const RULES = `Rules:
 
 const norm = (s) => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim()
 
-async function chat(messages, schema, signal) {
-  if (!process.env.OPENROUTER_API_KEY) throw new Error('The AI service is not set up on the server (missing OPENROUTER_API_KEY).')
-  const res = await fetch(API_URL, {
+function providers() {
+  return (process.env.AI_PROVIDERS || 'openrouter,groq').split(',')
+    .map((name) => name.trim().toLowerCase())
+    .filter((name) => PROVIDERS[name] && process.env[`${name.toUpperCase()}_API_KEY`])
+    .map((name) => ({
+      name,
+      url: PROVIDERS[name].url,
+      key: process.env[`${name.toUpperCase()}_API_KEY`],
+      model: process.env[`${name.toUpperCase()}_MODEL`] || PROVIDERS[name].model,
+    }))
+}
+
+async function ask(provider, messages, schema, signal) {
+  const res = await fetch(provider.url, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${provider.key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: process.env.OPENROUTER_MODEL || 'openai/gpt-4.1',
+      model: provider.model,
       messages,
       temperature: 0.3,
       response_format: { type: 'json_schema', json_schema: { name: 'result', strict: true, schema } },
@@ -63,15 +79,31 @@ async function chat(messages, schema, signal) {
   })
   const json = await res.json().catch(() => null)
   if (!res.ok) {
-    console.error('OpenRouter error', res.status, json?.error)
-    throw new Error(res.status === 429 ? 'The AI service is busy. Try again in a minute.' : 'The AI service could not generate cards. Try again.')
+    const detail = JSON.stringify(json?.error ?? json)?.slice(0, 300)
+    throw Object.assign(new Error(`HTTP ${res.status} ${detail}`), { status: res.status })
   }
   const content = json?.choices?.[0]?.message?.content ?? ''
-  try {
-    return JSON.parse(content.slice(content.indexOf('{'), content.lastIndexOf('}') + 1))
-  } catch {
-    throw new Error('The AI returned an unreadable answer. Try again.')
+  return JSON.parse(content.slice(content.indexOf('{'), content.lastIndexOf('}') + 1))
+}
+
+// Any failure moves on to the next provider (providers differ in what they accept, so even a 400 may be
+// specific to one of them). Only a cancelled request stops early.
+async function chat(messages, schema, signal) {
+  const list = providers()
+  if (!list.length) throw new Error('The AI service is not set up on the server (no AI API keys in .env).')
+  let busy = false
+  for (const provider of list) {
+    try {
+      const result = await ask(provider, messages, schema, signal)
+      if (provider !== list[0]) console.warn(`AI: answered by fallback provider ${provider.name}`)
+      return result
+    } catch (err) {
+      if (signal?.aborted) throw err
+      console.error(`AI: ${provider.name} (${provider.model}) failed:`, err.message)
+      if (err.status === 429) busy = true
+    }
   }
+  throw new Error(busy ? 'The AI service is busy. Try again in a minute.' : 'The AI service could not generate cards. Try again.')
 }
 
 const avoidList = (questions) =>

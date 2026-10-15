@@ -2,11 +2,13 @@
 // Plant a seed: name the study set, pick a subject and tags, build flashcards by hand or upload a
 // document for the AI to turn into flashcards, browse/edit them in the preview, then save.
 // Shown after the seed packet is dropped on the garden.
-// Emits 'save' with { title, subject, tags, cards } and 'cancel'.
+// Emits 'save' with { title, subject, exam_date, tags, cards } and 'cancel'.
 import { computed, markRaw, onBeforeUnmount, ref, watch } from 'vue'
 import { useGardenStore } from '@/stores/garden'
 import { apiFetch } from '@/lib/http'
 import { tagColors, tagStyle } from '@/lib/tagColors'
+import { VueDatePicker } from '@vuepic/vue-datepicker'
+import '@vuepic/vue-datepicker/dist/main.css'
 import tulipSvg from '@/assets/foliage/tulip.svg'
 
 const props = defineProps({
@@ -30,6 +32,26 @@ const tags = ref([]) // [{ name, color }]
 const tagInput = ref('')
 const tagColor = ref(tagColors[0].id) // colour for the next tag
 const knownSubjects = computed(() => [...new Set(garden.seeds.map((s) => s.subject).filter(Boolean))]) // suggestions only
+
+// Exam date (optional) belongs to the subject. An existing subject's upcoming date is filled in; a past one is not,
+// so it can't block planting. Leaving it blank keeps whatever the subject already has.
+// Shown as DD-MM-YYYY, stored as YYYY-MM-DD.
+const examDate = ref(null) // YYYY-MM-DD
+const now = new Date()
+const minExamDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()) // start of today, local
+const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+const savedExamDate = computed(() => {
+  const date = garden.seeds.find((s) => s.subject === subject.value.trim() && s.exam_date)?.exam_date
+  return date && date >= today ? date : ''
+})
+watch(savedExamDate, (date) => { examDate.value = date || null })
+const examPast = computed(() => !!examDate.value && examDate.value < today)
+const examHelp = computed(() => {
+  const name = subject.value.trim()
+  if (savedExamDate.value && examDate.value === savedExamDate.value) return `Saved for all your ${name} seeds.`
+  if (savedExamDate.value) return `This changes the exam date for all your ${name} seeds.`
+  return name ? `When is your ${name} exam? Optional.` : 'Optional.'
+})
 
 function addTag() {
   const name = tagInput.value.trim()
@@ -216,18 +238,19 @@ const step = computed(() => (!hasDetails.value ? 1 : !hasCards.value ? 2 : 3))
 const stepText = ['Name your study set and subject.', 'Add at least one flashcard or upload a study document.', 'Review your cards, then plant it.']
 
 const plantNote = computed(() => {
+  if (examPast.value) return { error: true, text: 'Pick an exam date from today onwards, or leave it blank.' }
   if (overBy.value > 0) return { error: true, text: `Delete ${overBy.value} ${overBy.value === 1 ? 'card' : 'cards'} to plant. A seed can have at most ${MAX_CARDS}.` }
   if (generating.value) return { error: false, text: 'Wait until your file finishes generating, then plant it.' }
   return null
 })
-const canPlant = computed(() => step.value === 3 && !props.busy && !generating.value && overBy.value <= 0)
+const canPlant = computed(() => step.value === 3 && !props.busy && !generating.value && overBy.value <= 0 && !examPast.value)
 
 function save() {
   if (!canPlant.value) return
   addCard() // a filled-in card that wasn't added with + yet is kept, not lost
   addTag() // same for a typed tag that wasn't added with Enter
   const cards = [...typedCards.value, ...aiCards.value].map(({ question, answer }) => ({ question, answer }))
-  emit('save', { title: title.value.trim(), subject: subject.value.trim(), tags: tags.value, cards })
+  emit('save', { title: title.value.trim(), subject: subject.value.trim(), exam_date: examDate.value || undefined, tags: tags.value, cards })
 }
 </script>
 
@@ -266,6 +289,16 @@ function save() {
           <option v-for="s in knownSubjects" :key="s" :value="s" />
         </datalist>
       </label>
+      <div class="field">
+        <label class="text-label-field" for="seed-exam-date">Exam date</label>
+        <VueDatePicker
+          v-model="examDate" model-type="yyyy-MM-dd" :formats="{ input: 'dd-MM-yyyy' }"
+          :text-input="{ format: 'dd-MM-yyyy' }" placeholder="DD-MM-YYYY" :min-date="minExamDate"
+          :time-config="{ enableTimePicker: false }" auto-apply teleport
+          :ui="{ input: 'exam-input' }" :input-attrs="{ id: 'seed-exam-date' }" data-testid="seed-exam-date"
+        />
+        <span class="help" data-testid="seed-exam-help">{{ examHelp }}</span>
+      </div>
       <label class="field">
         <span class="text-label-field">Tags</span>
         <input
@@ -715,4 +748,23 @@ button.tag-pill { cursor: pointer; }
 @media (max-width: 575.98px) {
   .qa, .flash { grid-template-columns: 1fr; }
 }
+</style>
+
+<style>
+/* Exam date picker (@vuepic/vue-datepicker) in the form's colours. Not scoped: the calendar menu is teleported to <body>. */
+:root .dp--theme-light {
+  --dp-font-family: nunito, sans-serif;
+  --dp-font-size: 15px;
+  --dp-border-radius: 10px;
+  --dp-input-padding: 10px 30px 10px 12px;
+  --dp-background-color: var(--paper);
+  --dp-text-color: var(--bark);
+  --dp-border-color: var(--linen);
+  --dp-border-color-hover: var(--linen);
+  --dp-border-color-focus: var(--periwinkle);
+  --dp-menu-border-color: var(--linen);
+  --dp-primary-color: var(--periwinkle);
+  --dp-icon-color: var(--bark-muted);
+}
+.dp--input.exam-input { border-width: 2px; }
 </style>

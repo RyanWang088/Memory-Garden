@@ -1,17 +1,21 @@
 // Controller: handles seed requests, calls the model, sends the JSON response.
 import { SeedModel } from '../models/seedModel.js'
 import { ACCEPTED_TYPES, extOf, extractText } from '../lib/extractText.js'
-import { generateCards } from '../lib/openrouter.js'
+import { generateCards } from '../lib/ai.js'
 
 const MAX_AI_CARDS = 50 // per uploaded file
 
 const text = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 const isCell = (v) => Number.isInteger(v) && v >= 0 && v < 1000
+// A real YYYY-MM-DD date, today or later. Compared with yesterday in UTC so a user ahead of UTC can still pick their today.
+const isUpcomingDate = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v))
+  && new Date(v).toISOString().slice(0, 10) === v && v >= new Date(Date.now() - 86_400_000).toISOString().slice(0, 10)
 
 // Keeps only the fields a new seed may set. Returns an error message string if the body is invalid.
 function cleanSeed(body = {}) {
   const title = text(body.title, 80)
   const subject = text(body.subject, 60)
+  const exam_date = text(body.exam_date, 10) // optional
   const cards = (Array.isArray(body.cards) ? body.cards : [])
     .map(c => ({ question: text(c?.question, 500), answer: text(c?.answer, 500) }))
     .filter(c => c.question && c.answer)
@@ -21,11 +25,12 @@ function cleanSeed(body = {}) {
 
   if (!title) return 'Give your study set a name.'
   if (!subject) return 'Pick a subject.'
+  if (exam_date && !isUpcomingDate(exam_date)) return 'Pick an exam date from today onwards.'
   if (!cards.length) return 'Add at least one flashcard.'
   if (cards.length > 200) return 'A study set can have at most 200 cards.'
   if (!isCell(body.col) || !isCell(body.row)) return 'Pick a spot in the garden.'
 
-  return { title, subject, tags, cards, col: body.col, row: body.row, flower: 'tulip' }
+  return { title, subject, exam_date: exam_date || undefined, tags, cards, col: body.col, row: body.row, flower: 'tulip' }
 }
 
 export const seedsController = {
@@ -36,7 +41,7 @@ export const seedsController = {
     } catch (err) { next(err) }
   },
 
-  // POST /api/seeds  body: { title, subject, tags, cards: [{ question, answer }], col, row }
+  // POST /api/seeds  body: { title, subject, exam_date?, tags, cards: [{ question, answer }], col, row }
   async create(req, res, next) {
     try {
       const seed = cleanSeed(req.body)
