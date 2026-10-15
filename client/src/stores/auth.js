@@ -8,6 +8,8 @@ import { apiFetch } from '@/lib/http'
 const getProfile = async (userId) =>
   check(await supabase.from('profiles').select('*').eq('id', userId).single())
 
+const dayOf = (d) => new Date(d).toLocaleDateString('en-SG')
+
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)     // { id, email }
   const profile = ref(null)  // row from `profiles`
@@ -20,7 +22,10 @@ export const useAuthStore = defineStore('auth', () => {
       const { data } = await supabase.auth.getSession()
       const u = data.session?.user
       user.value = u ? { id: u.id, email: u.email } : null
-      if (user.value) profile.value = await getProfile(user.value.id)
+      if (user.value) {
+        profile.value = await getProfile(user.value.id)
+        await tendStreak()
+      }
       ready.value = true
     })()
     return initPromise
@@ -34,6 +39,7 @@ export const useAuthStore = defineStore('auth', () => {
     const { user: u } = check(await supabase.auth.signInWithPassword({ email, password }))
     user.value = { id: u.id, email: u.email }
     profile.value = await getProfile(user.value.id)
+    await tendStreak()
   }
   async function signOut() {
     await supabase.auth.signOut()
@@ -44,6 +50,16 @@ export const useAuthStore = defineStore('auth', () => {
   async function updateProfile(patch) {
     profile.value = check(await supabase.from('profiles').update(patch).eq('id', user.value.id).select().single())
   }
+  
+  // Daily streak per calendar day: visited yesterday -> +1, missed a day -> 1, already visited today -> no change.
+  async function tendStreak() {
+    const { streak, last_tended } = profile.value
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1)
+    if (last_tended && dayOf(last_tended) === dayOf(Date.now())) return
+    const newStreak = last_tended && dayOf(last_tended) === dayOf(yesterday) ? streak + 1 : 1
+    await updateProfile({ streak: newStreak, last_tended: new Date().toISOString() }).catch(console.error)
+  }
+
   // Saves onboarding answers + avatar choice and flips `onboarded` so returning users skip it.
   const completeOnboarding = (answers, avatar = null) =>
     updateProfile({ onboarding_answers: answers, avatar, onboarded: true })

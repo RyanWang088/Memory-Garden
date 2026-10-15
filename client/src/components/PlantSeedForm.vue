@@ -359,9 +359,6 @@ function save() {
         class="dropzone" :class="{ dragging: dragging && !isFull, full: isFull }" data-testid="file-dropzone"
         @dragover.prevent="dragging = true" @dragleave="dragging = false" @drop.prevent="onDrop"
       >
-        <svg class="drop-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9.5a4 4 0 0 1-1 8.5" /><path d="M12 12v8" /><path d="m9 15 3-3 3 3" />
-        </svg>
         <template v-if="isFull">
           <p class="drop-title">This seed is full ({{ MAX_CARDS }} cards)</p>
           <p class="help">Delete some cards to upload another file.</p>
@@ -583,7 +580,6 @@ button.tag-pill { cursor: pointer; }
 }
 .dropzone.dragging { border-color: var(--periwinkle); background: var(--peri-soft); }
 .dropzone.full { background: var(--cream); color: var(--bark-muted); }
-.drop-icon { margin-bottom: 4px; }
 .drop-title { margin: 0; font-weight: 700; font-size: 15px; }
 .dropzone .ghost-btn { margin-top: 8px; }
 .dropzone .ghost-btn:disabled { opacity: 0.5; cursor: default; }
