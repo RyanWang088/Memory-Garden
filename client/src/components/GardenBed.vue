@@ -332,9 +332,24 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   position: absolute; left: 0; top: 0; width: 0; height: 0; display: none; will-change: transform;
   clip-path: inset(-1000px -1000px var(--clipped, 0px) -1000px);
 }
+@keyframes plantSway {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(3deg);
+  }
+  75% {
+    transform: rotate(-3deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
 .sprite {
   position: absolute; left: calc(var(--sprite-size) / -2); bottom: 0; width: var(--sprite-size); height: var(--sprite-size);
   transform-origin: 50% 100%; cursor: pointer; transition: filter .3s, transform .3s;
+  animation: plantSway 5s ease-in-out infinite;
 }
 .shadow {
   position: absolute; left: calc(var(--sprite-size) / -4.5); bottom: -6px;

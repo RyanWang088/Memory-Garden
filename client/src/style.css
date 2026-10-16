@@ -291,6 +291,17 @@ p {
   color: var(--bark);
   font-weight: 700;
 }
+.navlabel {
+  position: absolute;
+  left: 50%;
+  top: -14px;
+  font-weight: 600;
+  background-color: var(--butter);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 6px) scale(.6);
+  transition: opacity .2s, transform .35s var(--spring);
+}
 
 /*  shop cards */
 .product-card {
