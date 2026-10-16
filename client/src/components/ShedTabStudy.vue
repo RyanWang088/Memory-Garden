@@ -7,7 +7,7 @@ const emit = defineEmits(['close', 'select'])
 const garden = useGardenStore()
 
 const query = ref('')
-
+const libraryView = ref('recommended')
 // Oldest-reviewed first; never reviewed seeds (date 0) come first
 const recommended = computed(() =>
   [...garden.seeds]
@@ -15,40 +15,69 @@ const recommended = computed(() =>
     .slice(0, 6)
 )
 
-const matches = computed(() => {
+const isSearching = computed(() => query.value.trim() !== '')
+const baseSeeds = computed(() => libraryView.value === 'recommended' ? recommended.value : garden.seeds)
+const results = computed(() => {
   const q = query.value.trim().toLowerCase()
-  return garden.seeds.filter((seed) => {
+  if (!q) return baseSeeds.value
+  return baseSeeds.value.filter((seed) => {
     const tags = Array.isArray(seed.tags) ? seed.tags.join(' ') : seed.tags || ''
     return `${seed.title} ${tags}`.toLowerCase().includes(q)
   })
 })
 
-const isSearching = computed(() => query.value.trim() !== '')
-const results = computed(() => (isSearching.value ? matches.value : recommended.value))
+function setLibraryView(view) {
+  libraryView.value = view
+}
+
 </script>
 
 <template>
-  <section class="d-flex flex-column gap-3">
-    <header class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-      <h3 class="m-0">{{ isSearching ? 'Search results' : 'Recommended' }}</h3>
+  <section
+    class="study-library d-flex flex-column gap-3"
+  >
+    <header class="study-library-header mb-1">
+      <h3 class="m-0">Library</h3>
       <p class="text-body-small m-0">
-        {{ isSearching ? `${results.length} seeds found` : 'These seeds need water the most.' }}
+        {{ libraryView === 'recommended'
+          ? 'These seeds need water the most.'
+          : "All the seeds you've planted so far." }} Study them now by clicking on the topic of your choice.
       </p>
-    <span class="badge text-label-caption flex-shrink-0">{{ results.length }}</span>
     </header>
 
+    <div class="segmented-control w-100 d-flex justify-content-center" role="group" aria-label="Choose seeds to browse">
+      <button
+        type="button"
+        class="segmented-tab w-50"
+        :class="{ 'is-active': libraryView === 'all' }"
+        :aria-pressed="libraryView === 'all'"
+        @click="setLibraryView('all')"
+      >All</button>
+      <button
+        type="button"
+        class="segmented-tab w-50"
+        :class="{ 'is-active': libraryView === 'recommended' }"
+        :aria-pressed="libraryView === 'recommended'"
+        @click="setLibraryView('recommended')"
+      >Recommended</button>
+    </div>
+
     <label class="visually-hidden" for="study-seed-search">Search seeds</label>
-    <div class="input-group sticky-top">
-      <input id="study-seed-search" v-model="query" class="form-control text-body-strong" type="search"
-        placeholder="Search seeds" />
-      <span class="input-group-text" aria-hidden="true">🔍</span>
+    <div class="input-group shadow-sm">
+      <input id="study-seed-search" v-model="query" class="form-control border-0 text-body-strong" type="search"
+        placeholder="Search planted seeds" />
+      <span class="input-group-text border-0" aria-hidden="true">🔍</span>
     </div>
 
     <div v-if="results.length" class="d-flex flex-column align-items-start gap-3">
       <SeedCard v-for="seed in results" :key="seed.id" :seed="seed" @select="emit('select', $event)" />
     </div>
     <p v-else class="text-danger border-0 text-body-small mb-0">
-      {{ isSearching ? `No seeds match "${query}".` : 'No seeds yet. Plant one in your garden to start studying.' }}
+      {{ isSearching
+        ? `No seeds match "${query}" in ${libraryView === 'recommended' ? 'recommended seeds' : 'all seeds'}.`
+        : libraryView === 'recommended'
+          ? 'No seeds need review right now.'
+          : 'No seeds yet. Plant one in your garden to start studying.' }}
     </p>
   </section>
 </template>

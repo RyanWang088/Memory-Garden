@@ -23,7 +23,7 @@ function selectTab(tabId) {
     ui.shedOpen=false
     toast.show({
       type: 'success',
-      title: 'Weed Out Old Plants',
+      title: 'Shovel Equipped',
       message: 'Hover over or tap a plant to delete the flashcards.',
     })
     return
@@ -157,7 +157,6 @@ function selectTab(tabId) {
   flex: 1;
   min-height: 0;
   background: var(--cream);
-  border: 1px solid var(--linen);
   border-radius: var(--radius-page, 12px);
   padding: 20px;
   overflow-y: auto; /* Inner page still scrolls cleanly */
@@ -184,7 +183,7 @@ function selectTab(tabId) {
     top: 0;
     left: 50%;
     right: auto;
-    transform: translate(-50%, -100%);
+    transform: translate(-50%, -99%);
     flex-direction: row;
     gap: 8px;
   }
