@@ -80,7 +80,7 @@ onMounted(() => shop.load())
             In bag: {{ item.qty }}
           </span>
           <button
-            class="btn seed-buy text-button"
+            class="btn btn-secondary text-button"
             type="button"
             :disabled="shop.buying !== null"
             :aria-label="`Buy ${item.name} for ${item.price} coins`"

@@ -343,7 +343,7 @@ button.product-card:hover {
 }
 
 button.product-card:focus-visible,
-.seed-buy:focus-visible {
+.btn-secondary:focus-visible {
   outline: 3px solid var(--periwinkle);
   outline-offset: 3px;
 }
@@ -388,7 +388,7 @@ button.product-card.is-picked {
   filter: grayscale(1);
 }
 
-.seed-buy {
+.btn-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -404,19 +404,19 @@ button.product-card.is-picked {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.seed-buy:hover:not(:disabled) {
+.btn-secondary:hover:not(:disabled) {
   background: var(--butter);
   box-shadow: 0 6px 0 var(--butter-deep);
   color: var(--bark);
   transform: translateY(-2px);
 }
 
-.seed-buy:active:not(:disabled) {
+.btn-secondary:active:not(:disabled) {
   box-shadow: 0 2px 0 var(--butter-deep);
   transform: translateY(2px);
 }
 
-.seed-buy:disabled {
+.btn-secondary:disabled {
   box-shadow: none;
   cursor: not-allowed;
   opacity: 0.55;

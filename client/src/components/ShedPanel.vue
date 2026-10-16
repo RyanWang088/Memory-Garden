@@ -138,7 +138,7 @@ function selectTab(tabId) {
   object-fit: contain;
   transition: transform .35s var(--spring);
 }
-
+.overhang-tab.is-active {background-color: var(--cream);}
 .overhang-tab:hover img { transform: scale(1.35) rotate(-6deg); }
 .overhang-tab.is-active img { transform: scale(1.3); animation: boing .5s var(--spring); }
 .overhang-tab:active img { transform: scale(.9); }

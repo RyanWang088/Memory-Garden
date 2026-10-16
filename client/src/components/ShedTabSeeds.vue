@@ -133,7 +133,7 @@ onMounted(() => flower.load())
           </div>
           <span class="text-label-field product-name">{{ seed.name }} seed</span>
           <button
-            class="btn seed-buy text-button"
+            class="btn btn-secondary text-button"
             type="button"
             :disabled="flower.buying !== null"
             :aria-label="`Buy ${seed.name} for ${seed.price} coins`"

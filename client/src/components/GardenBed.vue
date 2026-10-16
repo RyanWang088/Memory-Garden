@@ -371,7 +371,7 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.scroller { height: 100%; overflow: auto; overscroll-behavior: contain; }
+.scroller { height: 100%; overflow: auto; overscroll-behavior: contain;scrollbar-width: none; }
 .track { width: var(--content-width); height: calc(var(--view-height) + var(--scroll-range)); }
 .stage { position: sticky; top: 0; left: 0; width: var(--view-width); height: var(--view-height); overflow: hidden; user-select: none; }
 canvas { position: absolute; inset: 0; width: 100%; height: 100%; }

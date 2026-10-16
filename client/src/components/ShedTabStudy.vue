@@ -38,7 +38,7 @@ const results = computed(() => (isSearching.value ? matches.value : recommended.
     </header>
 
     <label class="visually-hidden" for="study-seed-search">Search seeds</label>
-    <div class="input-group">
+    <div class="input-group sticky-top">
       <input id="study-seed-search" v-model="query" class="form-control text-body-strong" type="search"
         placeholder="Search seeds" />
       <span class="input-group-text" aria-hidden="true">🔍</span>

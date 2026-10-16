@@ -61,7 +61,7 @@ function cancel() {
             <p v-if="error" class="alert alert-danger py-2 mt-3 mb-0" role="alert">{{ error }}</p>
           </div>
           <footer class="modal-footer border-0 p-0 justify-content-center gap-2">
-            <button type="button" class="seed-buy text-button" :disabled="busy" @click="cancel">
+            <button type="button" class="btn-secondary text-button" :disabled="busy" @click="cancel">
               Cancel
             </button>
             <button
