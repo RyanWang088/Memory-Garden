@@ -87,7 +87,7 @@ onMounted(() => flower.load())
     <header class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
       <h3 class="m-0">Plant a new seed</h3>
       <p class="text-body-small m-0">
-        {{ ui.seedPicked ? 'Drag the seed onto an empty garden spot.' : 'Choose a seed to grow in your garden.' }}
+        Drag a plant to the field to create a new deck of flashcards
       </p>
     </header>
 

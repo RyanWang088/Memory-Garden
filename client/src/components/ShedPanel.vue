@@ -1,25 +1,40 @@
 <script setup>
 import { useUiStore } from '@/stores/ui'
+import { useToastStore } from '@/stores/toast'
 import ShedTabSeeds from './ShedTabSeeds.vue'
 import ShedTabStudy from './ShedTabStudy.vue'
 import ShedTabShop from './ShedTabShop.vue'
 
 const ui = useUiStore()
+const toast = useToastStore()
 
 const tabs = [
   { id: 'seeds', label: 'Seeds', img: 'seed' },
   { id: 'study', label: 'Study', img: 'wateringCanIcon' },
-  { id: 'shop', label: 'Equipment', img: 'shop' },
+  { id: 'shop', label: 'Supplies', img: 'shop' },
+  { id: 'weed', label: 'Weed', img: 'shovel', action: true },
 ]
 
 const icon = (name) => new URL(`../assets/ui/${name}.svg`, import.meta.url).href
 
 function selectTab(tabId) {
-  if (tabId === ui.shedTab) {
+  if (tabId==='weed') {
+    ui.setTool('shovel')
+    ui.shedOpen=false
+    toast.show({
+      type: 'success',
+      title: 'Weed Out Old Plants',
+      message: 'Hover over or tap a plant to delete the flashcards.',
+    })
+    return
+  }
+
+  const isCurrentTab = tabId === ui.shedTab
+  ui.setShedTab(tabId)
+  if (isCurrentTab) {
     ui.shedOpen = !ui.shedOpen
     return
   }
-  ui.setShedTab(tabId)
   ui.shedOpen = true
 }
 </script>
@@ -29,9 +44,10 @@ function selectTab(tabId) {
     <aside class="shed-panel" :class="{ 'is-collapsed': !ui.shedOpen }" data-testid="shed">
       <nav class="shed-overhang-tabs" role="tablist">
         <button
-          v-for="t in tabs" :key="t.id" role="tab" class="overhang-tab justify-content-center"
-          :class="{ 'is-active': ui.shedTab === t.id }"
-          :aria-selected="ui.shedTab === t.id"
+          v-for="t in tabs" :key="t.id" class="overhang-tab justify-content-center"
+          :class="{ 'is-active': t.action ? ui.activeTool === 'shovel' : ui.shedTab === t.id }"
+          :role="t.action ? 'button' : 'tab'"
+          :aria-selected="t.action ? undefined : ui.shedTab === t.id"
           :aria-label="t.label"
           :data-testid="`shed-tab-${t.id}`"
           @click="selectTab(t.id)"
@@ -97,7 +113,7 @@ function selectTab(tabId) {
   transform: translateX(100%);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 30px;
   z-index: 5;
 }
 
@@ -160,17 +176,17 @@ function selectTab(tabId) {
   }
   .shed-slot { flex: 0 0 0; width: 0; transition: none; }
   .shed-panel.is-collapsed {
-    transform: translateY(calc(100% - 56px));
+    transform: translateY(100%);
   }
 
   /* On mobile, move tabs from the side to overhang on TOP of the drawer */
   .shed-overhang-tabs {
     top: 0;
-    left: 20px;
+    left: 50%;
     right: auto;
-    transform: translateY(-100%);
+    transform: translate(-50%, -100%);
     flex-direction: row;
-    gap: 10px;
+    gap: 8px;
   }
   .overhang-tab {
     border-radius: 100px 100px 0 0;

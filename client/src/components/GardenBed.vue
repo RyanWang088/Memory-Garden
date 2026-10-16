@@ -3,10 +3,16 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGardenStore } from '@/stores/garden'
 import { useUiStore } from '@/stores/ui'
+import { useToastStore } from '@/stores/toast'
+import Modal from './Modal.vue'
 
 const garden = useGardenStore()   // garden.seeds: { id, col, row, stage (0 | 1 | 2) }
 const ui = useUiStore()
 const router = useRouter()
+const toast = useToastStore()
+const seedToDelete = ref(null)
+const deletingSeed = ref(false)
+const deleteError = ref('')
 
 /* ---------- constants (world px unless noted) ---------- */
 const CELL_SIZE = 100, GRID_COLS = 15, GRID_ROWS = 20
@@ -47,6 +53,7 @@ const scrollerEl = ref(null), stageEl = ref(null), canvasEl = ref(null), ghostEl
 const plantElements = new Map()
 const screenPoint = {}               // reused by every projection: no per-frame allocations
 let hoverCell = null, renderQueued = false, resizeObserver
+let scrollIdleTimer
 
 const occupiedCells = computed(() => new Set(garden.seeds.map(seed => `${seed.col},${seed.row}`)))
 const registerPlant = (id, el) => (el ? plantElements.set(id, el) : plantElements.delete(id))
@@ -77,6 +84,9 @@ function updateScroll() {
   camera.scrollPos = Math.min(SCROLL_RANGE, Math.max(0, SCROLL_RANGE - scrollTop))   // scroll up = travel forward
   camera.panX = scrollLeft - (camera.contentWidth - camera.viewWidth) / 2           // 0 when centred
   camera.centerX = GRID_WIDTH / 2 + camera.panX / camera.scale                     // world x at the middle of the view
+  scrollerEl.value.classList.add('is-scrolling')
+  clearTimeout(scrollIdleTimer)
+  scrollIdleTimer = setTimeout(() => scrollerEl.value?.classList.remove('is-scrolling'), 120)
   requestRender()
 }
 
@@ -135,7 +145,7 @@ function placeSprite(el, col, row, sizeFactor) {
 
 function drawFloor() {
   const canvas = canvasEl.value, { viewWidth, viewHeight, radius, horizonY, scale, scrollPos, centerX } = camera
-  const pixelRatio = window.devicePixelRatio || 1
+  const pixelRatio = Math.min(window.devicePixelRatio || 1, 2)
   if (canvas.width !== viewWidth * pixelRatio || canvas.height !== viewHeight * pixelRatio) {
     canvas.width = viewWidth * pixelRatio
     canvas.height = viewHeight * pixelRatio
@@ -261,9 +271,38 @@ function onPointerCancel(e) {
 }
 
 function onPlantClick(seed) {
-  // Shovel -> TODO: remove plant (confirm first).
-  if (ui.activeTool === 'shovel') return
+  if (ui.activeTool === 'shovel') {
+    seedToDelete.value = seed
+    deleteError.value = ''
+    return
+  }
   router.push({ name: 'seed-review', params: { id: seed.id } })
+}
+
+function cancelDelete() {
+  if (deletingSeed.value) return
+  seedToDelete.value = null
+  deleteError.value = ''
+}
+
+async function confirmDelete() {
+  if (!seedToDelete.value || deletingSeed.value) return
+  deletingSeed.value = true
+  deleteError.value = ''
+  try {
+    const title = seedToDelete.value.title
+    await garden.deleteSeed(seedToDelete.value.id)
+    seedToDelete.value = null
+    toast.show({
+      type: 'success',
+      title: 'Plant removed',
+      message: `${title} and its flashcards were deleted.`,
+    })
+  } catch (error) {
+    deleteError.value = error instanceof Error ? error.message : String(error)
+  } finally {
+    deletingSeed.value = false
+  }
 }
 
 /* ---------- lifecycle ---------- */
@@ -282,6 +321,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()
+  clearTimeout(scrollIdleTimer)
   window.removeEventListener('pointermove', onPointerMove)
   window.removeEventListener('pointerup', onPointerUp)
   window.removeEventListener('pointercancel', onPointerCancel)
@@ -318,6 +358,16 @@ onBeforeUnmount(() => {
       </div>
     </div>
   </div>
+  <Modal
+    :open="seedToDelete !== null"
+    :title="`Delete ${seedToDelete?.title ?? 'plant'}?`"
+    message="This permanently removes the plant and all of its flashcards."
+    confirm-text="Delete plant"
+    :busy="deletingSeed"
+    :error="deleteError"
+    @confirm="confirmDelete"
+    @cancel="cancelDelete"
+  />
 </template>
 
 <style scoped>
@@ -349,8 +399,9 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .sprite {
   position: absolute; left: calc(var(--sprite-size) / -2); bottom: 0; width: var(--sprite-size); height: var(--sprite-size);
   transform-origin: 50% 100%; cursor: pointer; transition: filter .3s, transform .3s;
-  animation: plantSway 5s ease-in-out infinite;
+  animation: plantSway 4s ease-in-out infinite;
 }
+.scroller.is-scrolling .sprite { animation-play-state: paused; }
 .shadow {
   position: absolute; left: calc(var(--sprite-size) / -4.5); bottom: -6px;
   width: calc(var(--sprite-size) / 2.2); height: calc(var(--sprite-size) / 8); border-radius: 50%; background: var(--shadow);

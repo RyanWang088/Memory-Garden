@@ -54,4 +54,13 @@ export const seedsController = {
       res.json(await SeedModel.update(req.user.id, req.params.id, { mastery, last_reviewed }))
     } catch (err) { next(err) }
   },
+
+  // DELETE /api/seeds/:id
+  async remove(req, res, next) {
+    try {
+      const deleted = await SeedModel.delete(req.user.id, req.params.id)
+      if (!deleted) return res.status(404).json({ error: 'Study set not found.' })
+      res.status(204).end()
+    } catch (err) { next(err) }
+  },
 }

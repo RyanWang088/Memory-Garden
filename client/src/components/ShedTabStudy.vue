@@ -29,17 +29,13 @@ const results = computed(() => (isSearching.value ? matches.value : recommended.
 
 <template>
   <section class="d-flex flex-column gap-3">
-    <header class="d-flex align-items-start justify-content-between gap-2">
-      <div>
-        <h3 class="mb-1">{{ isSearching ? 'Search results' : 'Recommended' }}</h3>
-        <p class="text-body-small mb-0">
-          {{ isSearching ? `${results.length} seeds found` : 'These seeds need water the most.' }}
-        </p>
-      </div>
-      <span class="badge text-label-caption flex-shrink-0">{{ results.length }}</span>
+    <header class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+      <h3 class="m-0">{{ isSearching ? 'Search results' : 'Recommended' }}</h3>
+      <p class="text-body-small m-0">
+        {{ isSearching ? `${results.length} seeds found` : 'These seeds need water the most.' }}
+      </p>
+    <span class="badge text-label-caption flex-shrink-0">{{ results.length }}</span>
     </header>
-
-    <hr class="my-0" />
 
     <label class="visually-hidden" for="study-seed-search">Search seeds</label>
     <div class="input-group">

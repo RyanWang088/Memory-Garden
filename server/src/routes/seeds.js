@@ -9,5 +9,6 @@ router.use(requireAuth)
 router.get('/', seedsController.list)
 router.post('/', seedsController.create)
 router.patch('/:id', seedsController.update)
+router.delete('/:id', seedsController.remove)
 
 export default router

@@ -12,6 +12,7 @@
   --butter: #FFE484;
   --butter-deep:#E0A93A;
   --bark: #5A3E36;
+  --bs-body-color: var(--bark);
   /*text color*/
   --bark-muted: #8A7268;
   --paper: #fff;
@@ -29,6 +30,20 @@ img {
 
 * {
   font-family: nunito;
+}
+
+body {
+  color: var(--bark);
+}
+
+body.tool-shovel .garden-stage,
+body.tool-shovel .garden-stage * {
+  cursor: url('./assets/ui/shovel.png') 16 44, auto;
+}
+
+body.tool-wateringCan .garden-stage,
+body.tool-wateringCan .garden-stage * {
+  cursor: url('./assets/ui/wateringcan.png') 4 32, auto;
 }
 
 /* =========================================
@@ -244,6 +259,7 @@ p {
   flex: none;
   order: 4;
   flex-grow: 0;
+  color: var(--berry-ink);
 
 }
 
