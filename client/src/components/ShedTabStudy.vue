@@ -2,9 +2,11 @@
 import { ref, computed } from 'vue'
 import { useGardenStore } from '@/stores/garden' // garden.seeds = seeds the user currently has
 import SeedCard from './SeedCard.vue'
+import { useRouter } from 'vue-router';
 
 const emit = defineEmits(['close', 'select'])
 const garden = useGardenStore()
+const router = useRouter()
 
 const query = ref('')
 const libraryView = ref('recommended')
@@ -30,6 +32,13 @@ function setLibraryView(view) {
   libraryView.value = view
 }
 
+// const isSearching = computed(() => query.value.trim() !== '')
+// const results = computed(() => (isSearching.value ? matches.value : recommended.value))
+
+
+const onTabClick = (seed) =>{
+  router.push({name: 'seed-review', params:{id: seed.id}})
+}
 </script>
 
 <template>
@@ -70,7 +79,7 @@ function setLibraryView(view) {
     </div>
 
     <div v-if="results.length" class="d-flex flex-column align-items-start gap-3">
-      <SeedCard v-for="seed in results" :key="seed.id" :seed="seed" @select="emit('select', $event)" />
+      <SeedCard v-for="seed in results" :key="seed.id" :seed="seed" @select="onTabClick(seed)" />
     </div>
     <p v-else class="text-danger border-0 text-body-small mb-0">
       {{ isSearching
