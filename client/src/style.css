@@ -12,6 +12,7 @@
   --butter: #FFE484;
   --butter-deep:#E0A93A;
   --bark: #5A3E36;
+  --bs-body-color: var(--bark);
   /*text color*/
   --bark-muted: #8A7268;
   --paper: #fff;
@@ -29,6 +30,20 @@ img {
 
 * {
   font-family: nunito;
+}
+
+body {
+  color: var(--bark);
+}
+
+body.tool-shovel .garden-stage,
+body.tool-shovel .garden-stage * {
+  cursor: url('./assets/ui/shovel.png') 16 44, auto;
+}
+
+body.tool-wateringCan .garden-stage,
+body.tool-wateringCan .garden-stage * {
+  cursor: url('./assets/ui/wateringcan.png') 4 32, auto;
 }
 
 /* =========================================
@@ -185,6 +200,7 @@ p {
   display: flex;
   align-items: center;
   gap: 4px;
+  background-color: var(--linen);
   padding: 4px;
   width: 100%;
   max-width: 374px;
@@ -244,6 +260,7 @@ p {
   flex: none;
   order: 4;
   flex-grow: 0;
+  color: var(--berry-ink);
 
 }
 
@@ -291,6 +308,17 @@ p {
   color: var(--bark);
   font-weight: 700;
 }
+.navlabel {
+  position: absolute;
+  left: 50%;
+  top: -14px;
+  font-weight: 600;
+  background-color: var(--butter);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 6px) scale(.6);
+  transition: opacity .2s, transform .35s var(--spring);
+}
 
 /*  shop cards */
 .product-card {
@@ -316,7 +344,7 @@ button.product-card:hover {
 }
 
 button.product-card:focus-visible,
-.seed-buy:focus-visible {
+.btn-secondary:focus-visible {
   outline: 3px solid var(--periwinkle);
   outline-offset: 3px;
 }
@@ -361,7 +389,7 @@ button.product-card.is-picked {
   filter: grayscale(1);
 }
 
-.seed-buy {
+.btn-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -377,19 +405,19 @@ button.product-card.is-picked {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.seed-buy:hover:not(:disabled) {
+.btn-secondary:hover:not(:disabled) {
   background: var(--butter);
   box-shadow: 0 6px 0 var(--butter-deep);
   color: var(--bark);
   transform: translateY(-2px);
 }
 
-.seed-buy:active:not(:disabled) {
+.btn-secondary:active:not(:disabled) {
   box-shadow: 0 2px 0 var(--butter-deep);
   transform: translateY(2px);
 }
 
-.seed-buy:disabled {
+.btn-secondary:disabled {
   box-shadow: none;
   cursor: not-allowed;
   opacity: 0.55;

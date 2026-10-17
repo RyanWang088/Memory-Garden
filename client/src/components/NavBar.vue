@@ -39,9 +39,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
 <template>
   <nav class="navbar sticky-top d-flex align-items-start px-3 pt-3 pb-0" data-testid="navbar">
-    <!-- left: logo (hidden on mobile)might swap to profile -->
+    <!-- left: profile on mobile -->
     <div class="side d-flex justify-content-start align-items-center">
-      <h2 class=" d-none d-md-block">sproutly</h2>
       <RouterLink :to="{ name: 'profile' }" class="avatar d-md-none" aria-label="Profile">🏡</RouterLink>
     </div>
 
@@ -107,16 +106,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 /* label badge: hover shows, active stays */
 .pea:hover .navlabel, .pea.active .navlabel {
   opacity: 1; transform: translate(-50%, -4px) scale(1);
-}
-.navlabel {
-  position: absolute;
-  left: 50%;
-  top: -14px;
-  font-weight: 600;
-  opacity: 0;
-  pointer-events: none;
-  transform: translate(-50%, 6px) scale(.6);
-  transition: opacity .2s, transform .35s var(--spring);
 }
 /* L / R */
 .shift {

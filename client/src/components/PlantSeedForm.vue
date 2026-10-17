@@ -256,7 +256,7 @@ function save() {
 
 <template>
   <form class="plant-form" data-testid="plant-seed-form" @submit.prevent="save">
-    <header class="top mt-3">
+    <header class="top mt-4">
       <img class="top-art" :src="tulipSvg" alt="" />
       <div>
         <h3>Plant a new seed</h3>

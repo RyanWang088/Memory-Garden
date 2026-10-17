@@ -11,10 +11,13 @@ export const useUiStore = defineStore('ui', () => {
   const modal = ref({ open: false, mode: null, seedId: null, draft: null }) // mode: 'create' | 'review'
 
   function setTool(tool) { activeTool.value = tool }
-  function setShedTab(tab) { shedTab.value = tab }
+  function setShedTab(tab) {
+    shedTab.value = tab
+    activeTool.value = tab === 'study' ? 'wateringCan' : 'pointer'
+  }
 
   // Tab 1 when the garden is empty, otherwise tab 2 (study mode)
-  function pickDefaultTab(hasPlants) { shedTab.value = hasPlants ? 'study' : 'seeds' }
+  function pickDefaultTab(hasPlants) { setShedTab(hasPlants ? 'study' : 'seeds') }
 
   function openCreate(draft) { seedPicked.value = false; modal.value = { open: true, mode: 'create', seedId: null, draft } }
   function openReview(seedId) { modal.value = { open: true, mode: 'review', seedId, draft: null } }

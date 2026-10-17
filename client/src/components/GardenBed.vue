@@ -3,10 +3,16 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGardenStore } from '@/stores/garden'
 import { useUiStore } from '@/stores/ui'
+import { useToastStore } from '@/stores/toast'
+import Modal from './Modal.vue'
 
 const garden = useGardenStore()   // garden.seeds: { id, col, row, stage (0 | 1 | 2) }
 const ui = useUiStore()
 const router = useRouter()
+const toast = useToastStore()
+const seedToDelete = ref(null)
+const deletingSeed = ref(false)
+const deleteError = ref('')
 
 /* ---------- constants (world px unless noted) ---------- */
 const CELL_SIZE = 100, GRID_COLS = 15, GRID_ROWS = 20
@@ -45,11 +51,29 @@ const pathHalfWidth = depth =>                                            // swi
 const camera = { viewWidth: 400, viewHeight: 700, scale: 1, contentWidth: 400, frontY: 0, radius: 0, horizonY: 0, scrollPos: 0, panX: 0, centerX: 0 }
 const scrollerEl = ref(null), stageEl = ref(null), canvasEl = ref(null), ghostEl = ref(null)
 const plantElements = new Map()
+const plantInfoElements = new Map()
+const hoveredPlantInfoId = ref(null), focusedPlantInfoId = ref(null)
 const screenPoint = {}               // reused by every projection: no per-frame allocations
 let hoverCell = null, renderQueued = false, resizeObserver
+let scrollIdleTimer
 
 const occupiedCells = computed(() => new Set(garden.seeds.map(seed => `${seed.col},${seed.row}`)))
 const registerPlant = (id, el) => (el ? plantElements.set(id, el) : plantElements.delete(id))
+const registerPlantInfo = (id, el) => (el ? plantInfoElements.set(id, el) : plantInfoElements.delete(id))
+const isPlantInfoVisible = id =>
+  hoveredPlantInfoId.value === id || focusedPlantInfoId.value === id
+
+function onPlantPointerEnter(id, event) {
+  if (event.pointerType !== 'touch') hoveredPlantInfoId.value = id
+}
+
+function onPlantPointerLeave(id) {
+  if (hoveredPlantInfoId.value === id) hoveredPlantInfoId.value = null
+}
+
+function onPlantFocusOut() {
+  focusedPlantInfoId.value = null
+}
 
 /* 1 at the front of the field, easing to `farValue` at the horizon */
 const shrinkTo = (farValue, angle) => farValue + (1 - farValue) * Math.max(0, Math.cos(angle))
@@ -77,6 +101,9 @@ function updateScroll() {
   camera.scrollPos = Math.min(SCROLL_RANGE, Math.max(0, SCROLL_RANGE - scrollTop))   // scroll up = travel forward
   camera.panX = scrollLeft - (camera.contentWidth - camera.viewWidth) / 2           // 0 when centred
   camera.centerX = GRID_WIDTH / 2 + camera.panX / camera.scale                     // world x at the middle of the view
+  scrollerEl.value.classList.add('is-scrolling')
+  clearTimeout(scrollIdleTimer)
+  scrollIdleTimer = setTimeout(() => scrollerEl.value?.classList.remove('is-scrolling'), 120)
   requestRender()
 }
 
@@ -118,7 +145,9 @@ function render() {
   drawFloor()
   for (const seed of garden.seeds) {
     const el = plantElements.get(seed.id)
+    const infoEl = plantInfoElements.get(seed.id)
     if (el) placeSprite(el, seed.col, seed.row, STAGE_SIZE[seed.stage] ?? 1)
+    if (infoEl) placePlantInfo(infoEl, seed.col, seed.row, STAGE_SIZE[seed.stage] ?? 1)
   }
   updateGhost()
 }
@@ -129,13 +158,24 @@ function placeSprite(el, col, row, sizeFactor) {
   if (!visible) return
   const { x, y, scale, clipped, zIndex } = screenPoint
   el.style.transform = `translate3d(${x}px,${y}px,0) scale(${scale})`
+  el.style.setProperty('--inverse-plant-scale', String(1 / scale))
+  el.style.setProperty('--plant-label-gap', `${8 / scale}px`)
   el.style.zIndex = zIndex
   el.style.setProperty('--clipped', clipped + 'px')   // CSS clips whatever is still behind the horizon
 }
 
+function placePlantInfo(el, col, row, sizeFactor) {
+  const visible = worldToScreen((col + 0.5) * CELL_SIZE, (row + 0.5) * CELL_SIZE, sizeFactor)
+  el.style.display = visible ? 'flex' : 'none'
+  if (!visible) return
+  const { x, y } = screenPoint
+  el.style.transform = `translate3d(${x}px,${y + 8}px,0) translateX(-50%)`
+  el.style.zIndex = 10000
+}
+
 function drawFloor() {
   const canvas = canvasEl.value, { viewWidth, viewHeight, radius, horizonY, scale, scrollPos, centerX } = camera
-  const pixelRatio = window.devicePixelRatio || 1
+  const pixelRatio = Math.min(window.devicePixelRatio || 1, 2)
   if (canvas.width !== viewWidth * pixelRatio || canvas.height !== viewHeight * pixelRatio) {
     canvas.width = viewWidth * pixelRatio
     canvas.height = viewHeight * pixelRatio
@@ -261,9 +301,38 @@ function onPointerCancel(e) {
 }
 
 function onPlantClick(seed) {
-  // Shovel -> TODO: remove plant (confirm first).
-  if (ui.activeTool === 'shovel') return
+  if (ui.activeTool === 'shovel') {
+    seedToDelete.value = seed
+    deleteError.value = ''
+    return
+  }
   router.push({ name: 'seed-review', params: { id: seed.id } })
+}
+
+function cancelDelete() {
+  if (deletingSeed.value) return
+  seedToDelete.value = null
+  deleteError.value = ''
+}
+
+async function confirmDelete() {
+  if (!seedToDelete.value || deletingSeed.value) return
+  deletingSeed.value = true
+  deleteError.value = ''
+  try {
+    const title = seedToDelete.value.title
+    await garden.deleteSeed(seedToDelete.value.id)
+    seedToDelete.value = null
+    toast.show({
+      type: 'success',
+      title: 'Plant removed',
+      message: `${title} and its flashcards were deleted.`,
+    })
+  } catch (error) {
+    deleteError.value = error instanceof Error ? error.message : String(error)
+  } finally {
+    deletingSeed.value = false
+  }
 }
 
 /* ---------- lifecycle ---------- */
@@ -282,6 +351,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()
+  clearTimeout(scrollIdleTimer)
   window.removeEventListener('pointermove', onPointerMove)
   window.removeEventListener('pointerup', onPointerUp)
   window.removeEventListener('pointercancel', onPointerCancel)
@@ -305,11 +375,45 @@ onBeforeUnmount(() => {
           :key="seed.id"
           :ref="el => registerPlant(seed.id, el)"
           class="plant"
+          role="button"
+          tabindex="0"
+          :aria-label="`Open ${seed.title}`"
+          @pointerenter="onPlantPointerEnter(seed.id, $event)"
+          @pointerleave="onPlantPointerLeave(seed.id)"
+          @focusin="focusedPlantInfoId = seed.id"
+          @focusout="onPlantFocusOut"
           @click="onPlantClick(seed)"
+          @keydown.enter.space.prevent="onPlantClick(seed)"
         >
-          <h2 >{{seed.title}}</h2>
           <div class="shadow"></div>
           <img class="sprite" src="../assets/foliage/tulip.svg" alt="" draggable="false" />
+        </div>
+
+        <div
+          v-for="seed in garden.seeds"
+          :key="`info-${seed.id}`"
+          :ref="el => registerPlantInfo(seed.id, el)"
+          class="plant-info"
+          :class="{ 'is-visible': isPlantInfoVisible(seed.id) }"
+        >
+          <div class="plant-info-details" :aria-hidden="!isPlantInfoVisible(seed.id)">
+            <h2 class="text-body-strong">{{ seed.title }}</h2>
+            <div
+              class="plant-progress-row"
+              role="progressbar"
+              :aria-label="`${seed.title} mastery`"
+              :aria-valuenow="seed.mastery ?? 0"
+              aria-valuemin="0"
+              aria-valuemax="100"
+            >
+              <span class="plant-progress-seed" aria-hidden="true">
+                <img src="../assets/ui/seed.svg" alt="" draggable="false" />
+              </span>
+              <div class="progress plant-progress">
+                <div class="progress-fill" :style="{ width: (seed.mastery ?? 0) + '%' }"></div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div ref="ghostEl" class="plant ghost">
@@ -318,10 +422,20 @@ onBeforeUnmount(() => {
       </div>
     </div>
   </div>
+  <Modal
+    :open="seedToDelete !== null"
+    :title="`Delete ${seedToDelete?.title ?? 'plant'}?`"
+    message="This permanently removes the plant and all of its flashcards."
+    confirm-text="Delete plant"
+    :busy="deletingSeed"
+    :error="deleteError"
+    @confirm="confirmDelete"
+    @cancel="cancelDelete"
+  />
 </template>
 
 <style scoped>
-.scroller { height: 100%; overflow: auto; overscroll-behavior: contain; }
+.scroller { height: 100%; overflow: auto; overscroll-behavior: contain;scrollbar-width: none; }
 .track { width: var(--content-width); height: calc(var(--view-height) + var(--scroll-range)); }
 .stage { position: sticky; top: 0; left: 0; width: var(--view-width); height: var(--view-height); overflow: hidden; user-select: none; }
 canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -332,14 +446,53 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   position: absolute; left: 0; top: 0; width: 0; height: 0; display: none; will-change: transform;
   clip-path: inset(-1000px -1000px var(--clipped, 0px) -1000px);
 }
+@keyframes plantSway {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(3deg);
+  }
+  75% {
+    transform: rotate(-3deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
 .sprite {
   position: absolute; left: calc(var(--sprite-size) / -2); bottom: 0; width: var(--sprite-size); height: var(--sprite-size);
   transform-origin: 50% 100%; cursor: pointer; transition: filter .3s, transform .3s;
+  animation: plantSway 4s ease-in-out infinite;
 }
+.scroller.is-scrolling .sprite { animation-play-state: paused; }
 .shadow {
   position: absolute; left: calc(var(--sprite-size) / -4.5); bottom: -6px;
   width: calc(var(--sprite-size) / 2.2); height: calc(var(--sprite-size) / 8); border-radius: 50%; background: var(--shadow);
 }
+.plant-info {
+  position: absolute; top: 0; left: 0; width: 148px; display: flex;
+  flex-direction: column; align-items: center; pointer-events: none;
+}
+.plant-info-details {
+  position: absolute; top: 10px; left: 0; width: 100%; display: flex;
+  flex-direction: column; align-items: center; gap: 2px; padding: 4px 7px;
+  border: 1px solid var(--linen); border-radius: 8px; background: var(--paper);
+  box-shadow: 0 2px 6px var(--shadow-card); opacity: 0; visibility: hidden;
+}
+.plant-info.is-visible .plant-info-details { opacity: 1; visibility: visible; }
+.plant-info h2 {
+  max-width: 100%; margin: 0; overflow: hidden; color: var(--bark);
+  text-overflow: ellipsis; white-space: nowrap; font-size: 14px; line-height: 18px;
+}
+.plant-progress-row { display: flex; align-items: center; width: 100%; }
+.plant-progress-seed {
+  display: flex; flex: 0 0 20px; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border: 10px solid var(--mint); border-radius: 50% 50% 0px 50%;
+  transform: rotate(-43deg);
+}
+.plant-progress-seed img { width: 9px; height: 13px; transform: rotate(35deg); }
+.plant-progress { flex: 1; min-width: 0; height: 8px; }
 
 .ghost { pointer-events: none; z-index: 9000 !important; }   /* translucent pending plant when dragging across canvasadd */
 .ghost .sprite { opacity: .6; }

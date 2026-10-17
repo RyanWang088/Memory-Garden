@@ -64,4 +64,13 @@ export const SeedModel = {
     }
     return getOne(userId, seedId)
   },
+
+  async delete(userId, seedId) {
+    const deleted = check(await supabase.from('seeds')
+      .delete()
+      .eq('id', seedId)
+      .eq('user_id', userId)
+      .select('id'))
+    return deleted.length > 0
+  },
 }

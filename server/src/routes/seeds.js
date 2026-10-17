@@ -18,5 +18,6 @@ router.get('/', seedsController.list)
 router.post('/', seedsController.create)
 router.post('/generate', uploadFile, seedsController.generate)
 router.patch('/:id', seedsController.update)
+router.delete('/:id', seedsController.remove)
 
 export default router

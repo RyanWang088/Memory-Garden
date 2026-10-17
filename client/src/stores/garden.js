@@ -41,11 +41,16 @@ export const useGardenStore = defineStore('garden', () => {
     Object.assign(seed, updated)
   }
 
+  async function deleteSeed(seedId) {
+    await apiFetch(`/api/seeds/${encodeURIComponent(seedId)}`, { method: 'DELETE' })
+    seeds.value = seeds.value.filter(seed => seed.id !== seedId)
+  }
+
   // Aggregate readiness for the planner (average mastery, optionally per subject)
   const readiness = (subject) => {
     const list = subject ? seeds.value.filter(s => s.subject === subject) : seeds.value
     return list.length ? Math.round(list.reduce((n, s) => n + s.mastery, 0) / list.length) : 0
   }
 
-  return { seeds, loaded, hasPlants, stageOf, isWilted, fetchSeeds, plantSeed, rateReview, readiness }
+  return { seeds, loaded, hasPlants, stageOf, isWilted, fetchSeeds, plantSeed, rateReview, deleteSeed, readiness }
 })
