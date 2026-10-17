@@ -19,12 +19,13 @@ export const RATING_RULES = {
 }
 
 // seed row + joined subject/cards -> the flat shape the client uses
-// exam_date belongs to the subject (shared by all its seeds); stage: 0 sprout, 1 seedling, 2 bloom
+// exam_date belongs to the subject (shared by all its seeds). The plant's stage is worked out on the client
+// (client/src/lib/plantStage.js) because it changes with time since last_reviewed.
 function shape({ subjects, cards = [], ...seed }) {
   const mastery = cards.length ? Math.round(cards.reduce((n, c) => n + c.card_mastery, 0) / cards.length) : 0
   return {
     ...seed, subject: subjects?.name ?? '', exam_date: subjects?.exam_date ?? null,
-    cards, mastery, stage: mastery < 34 ? 0 : mastery < 67 ? 1 : 2,
+    cards, mastery,
   }
 }
 

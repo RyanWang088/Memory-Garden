@@ -6,7 +6,7 @@ import { useUiStore } from '@/stores/ui'
 import { useToastStore } from '@/stores/toast'
 import Modal from './Modal.vue'
 
-const garden = useGardenStore()   // garden.seeds: { id, col, row, stage (0 | 1 | 2) }
+const garden = useGardenStore()   // garden.seeds: { id, col, row, mastery, last_reviewed }
 const ui = useUiStore()
 const router = useRouter()
 const toast = useToastStore()
@@ -22,7 +22,9 @@ const PLOT_SIZE = 150
 const SHADOW_ROOM = 30               // px below a plant's base that stay visible, so its shadow isn't clipped
 const BOTTOM_MARGIN = 24             // gap between the front row and the bottom of the view
 const HALF_PI = Math.PI / 2
-const STAGE_SIZE = [0.6, 0.8, 1]    // sprout / seedling / bloom
+// sprite size per stage (lib/plantStage.js): seed, sprout, bud, bloom, drooping, bent, fallen, stub
+const STAGE_SIZE = { 1: 0.5, 2: 0.6, 3: 0.8, 4: 1, 5: 1, 6: 0.9, 7: 0.8, 8: 0.5 }
+const stageSprite = stage => new URL(`../assets/foliage/stages/plant-stage-${stage}.svg`, import.meta.url).href
 const SEED_MIME = 'application/x-sproutly-seed'
 const EDGE_SCROLL_ZONE = 90          // dragging within this many px of the view edge auto-scrolls
 
@@ -146,8 +148,9 @@ function render() {
   for (const seed of garden.seeds) {
     const el = plantElements.get(seed.id)
     const infoEl = plantInfoElements.get(seed.id)
-    if (el) placeSprite(el, seed.col, seed.row, STAGE_SIZE[seed.stage] ?? 1)
-    if (infoEl) placePlantInfo(infoEl, seed.col, seed.row, STAGE_SIZE[seed.stage] ?? 1)
+    const size = STAGE_SIZE[garden.stageOf(seed)] ?? 1
+    if (el) placeSprite(el, seed.col, seed.row, size)
+    if (infoEl) placePlantInfo(infoEl, seed.col, seed.row, size)
   }
   updateGhost()
 }
@@ -375,6 +378,8 @@ onBeforeUnmount(() => {
           :key="seed.id"
           :ref="el => registerPlant(seed.id, el)"
           class="plant"
+          :data-stage="garden.stageOf(seed)"
+          :data-wilting="garden.isWilted(seed) || undefined"
           role="button"
           tabindex="0"
           :aria-label="`Open ${seed.title}`"
@@ -386,7 +391,7 @@ onBeforeUnmount(() => {
           @keydown.enter.space.prevent="onPlantClick(seed)"
         >
           <div class="shadow"></div>
-          <img class="sprite" src="../assets/foliage/tulip.svg" alt="" draggable="false" />
+          <img class="sprite" :src="stageSprite(garden.stageOf(seed))" alt="" draggable="false" />
         </div>
 
         <div
@@ -494,6 +499,8 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .plant-progress-seed img { width: 9px; height: 13px; transform: rotate(35deg); }
 .plant-progress { flex: 1; min-width: 0; height: 8px; }
 
+/* a wilting sprout keeps the stage 2 sprite with brown leaves */
+.plant[data-stage="2"][data-wilting] .sprite { filter: sepia(.8) saturate(.7); }
 .ghost { pointer-events: none; z-index: 9000 !important; }   /* translucent pending plant when dragging across canvasadd */
 .ghost .sprite { opacity: .6; }
 .ghost.blocked .sprite { filter: grayscale(1) sepia(1) hue-rotate(-40deg) saturate(4); }

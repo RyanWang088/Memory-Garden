@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { tagStyle } from '@/lib/tagColors'
+import { isWilting } from '@/lib/plantStage'
 
 const props = defineProps({
   seed: { type: Object, required: true },
@@ -9,7 +10,6 @@ defineEmits(['select'])
 //delete below when backend done
 const DAY = 86400000
 const REVIEW_EVERY_DAYS = 3 // next review = last review + 3 days
-const WILT_AFTER_DAYS = 7 // overdue this long = wilting
 
 const LABELS = {
   new: 'New',
@@ -28,7 +28,7 @@ const daysSinceReview = computed(() =>
 const status = computed(() => {
   if (mastery.value >= 100) return 'mastered'
   if (!props.seed.last_reviewed) return 'new'
-  if (daysSinceReview.value >= WILT_AFTER_DAYS) return 'wilting'
+  if (isWilting(props.seed)) return 'wilting'
   if (daysSinceReview.value >= REVIEW_EVERY_DAYS) return 'due'
   return 'growing'
 })
