@@ -41,6 +41,15 @@ export const useGardenStore = defineStore('garden', () => {
     Object.assign(seed, updated)
   }
 
+  // Saves a review session card by card. ratings: [{ card_id, rating }]
+  // rating: forgot | hard | easy (Flexible Deck) or correct | wrong (Structured Quiz)
+  async function saveReview(seedId, ratings) {
+    const seed = seeds.value.find(s => s.id === seedId)
+    if (!seed) throw new Error('Seed not found. Refresh the garden and try again.')
+    const updated = await apiFetch(`/api/seeds/${encodeURIComponent(seedId)}/reviews`, { method: 'POST', body: { ratings } })
+    Object.assign(seed, updated)
+  }
+
   async function deleteSeed(seedId) {
     await apiFetch(`/api/seeds/${encodeURIComponent(seedId)}`, { method: 'DELETE' })
     seeds.value = seeds.value.filter(seed => seed.id !== seedId)
@@ -52,5 +61,5 @@ export const useGardenStore = defineStore('garden', () => {
     return list.length ? Math.round(list.reduce((n, s) => n + s.mastery, 0) / list.length) : 0
   }
 
-  return { seeds, loaded, hasPlants, stageOf, isWilted, fetchSeeds, plantSeed, rateReview, deleteSeed, readiness }
+  return { seeds, loaded, hasPlants, stageOf, isWilted, fetchSeeds, plantSeed, rateReview, saveReview, deleteSeed, readiness }
 })

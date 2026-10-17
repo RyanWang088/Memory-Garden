@@ -4,6 +4,19 @@
 import { supabase, check } from '../lib/supabase.js'
 
 const SEED_WITH_RELATIONS = '*, subjects(name, exam_date), cards(id, question, answer, card_mastery, next_review)'
+const DAY = 86_400_000
+
+// How each rating changes ONE card:
+//   points = added to card_mastery (kept between 0 and 100)
+//   days   = card is due again in this many days (no days = next_review is left as it is)
+// forgot / hard / easy come from Flexible Deck Mode, correct / wrong from Structured Quiz Mode.
+export const RATING_RULES = {
+  forgot: { points: -5, days: 0 },
+  hard: { points: 5, days: 1 },
+  easy: { points: 12, days: 3 },
+  correct: { points: 5 },
+  wrong: { points: -5, days: 0 },
+}
 
 // seed row + joined subject/cards -> the flat shape the client uses
 // exam_date belongs to the subject (shared by all its seeds); stage: 0 sprout, 1 seedling, 2 bloom
@@ -62,6 +75,27 @@ export const SeedModel = {
     if (last_reviewed !== undefined) {
       check(await supabase.from('seeds').update({ last_reviewed }).eq('id', seedId).eq('user_id', userId))
     }
+    return getOne(userId, seedId)
+  },
+
+  // Saves one review session. ratings: [{ card_id, rating }], e.g. { card_id: '...', rating: 'easy' }.
+  // Each card changes on its own (see RATING_RULES). Setting last_reviewed waters the plant.
+  // Returns null if the seed doesn't exist for this user.
+  async review(userId, seedId, ratings) {
+    const cards = check(await supabase.from('cards').select('id, card_mastery').eq('seed_id', seedId).eq('user_id', userId))
+    if (!cards.length) return null
+
+    for (const { card_id, rating } of ratings) {
+      const card = cards.find(c => c.id === card_id)
+      if (!card) continue // not a card of this seed
+
+      const rule = RATING_RULES[rating]
+      const changes = { card_mastery: Math.max(0, Math.min(100, card.card_mastery + rule.points)) }
+      if (rule.days !== undefined) changes.next_review = new Date(Date.now() + rule.days * DAY).toISOString()
+      check(await supabase.from('cards').update(changes).eq('id', card.id).eq('user_id', userId))
+    }
+
+    check(await supabase.from('seeds').update({ last_reviewed: new Date().toISOString() }).eq('id', seedId).eq('user_id', userId))
     return getOne(userId, seedId)
   },
 

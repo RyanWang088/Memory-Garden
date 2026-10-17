@@ -1,11 +1,12 @@
 // Controller: handles seed requests, calls the model, sends the JSON response.
-import { SeedModel } from '../models/seedModel.js'
+import { SeedModel, RATING_RULES } from '../models/seedModel.js'
 import { ACCEPTED_TYPES, extOf, extractText } from '../lib/extractText.js'
 import { generateCards } from '../lib/ai.js'
 
 const MAX_AI_CARDS = 50 // per uploaded file
 
 const text = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
+const isUuid = (v) => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)
 const isCell = (v) => Number.isInteger(v) && v >= 0 && v < 1000
 // A real YYYY-MM-DD date, today or later. Compared with yesterday in UTC so a user ahead of UTC can still pick their today.
 const isUpcomingDate = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v))
@@ -92,6 +93,26 @@ export const seedsController = {
         return res.status(400).json({ error: 'last_reviewed must be a date.' })
       }
       res.json(await SeedModel.update(req.user.id, req.params.id, { mastery, last_reviewed }))
+    } catch (err) { next(err) }
+  },
+
+  // POST /api/seeds/:id/reviews  body: { ratings: [{ card_id, rating }] }
+  // rating: forgot | hard | easy (Flexible Deck) or correct | wrong (Structured Quiz)
+  async review(req, res, next) {
+    try {
+      const ratings = req.body?.ratings
+      if (!Array.isArray(ratings) || ratings.length === 0 || ratings.length > 200) {
+        return res.status(400).json({ error: 'Send between 1 and 200 card ratings.' })
+      }
+      const allowed = Object.keys(RATING_RULES)
+      for (const r of ratings) {
+        if (!isUuid(r?.card_id) || !allowed.includes(r.rating)) {
+          return res.status(400).json({ error: `Each rating needs a card_id and one of: ${allowed.join(', ')}.` })
+        }
+      }
+      const seed = await SeedModel.review(req.user.id, req.params.id, ratings)
+      if (!seed) return res.status(404).json({ error: 'Study set not found.' })
+      res.json(seed)
     } catch (err) { next(err) }
   },
 
