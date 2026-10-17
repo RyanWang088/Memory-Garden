@@ -8,6 +8,7 @@ export const useUiStore = defineStore('ui', () => {
   const shedOpen = ref(true)          // mobile: collapse/expand the shed
   const seedPicked = ref(false)       // seed packet being dragged, or tapped and waiting for a garden spot
   const seedDragPointerId = ref(null)
+  const selectedGardenSeedId = ref(null)
   const modal = ref({ open: false, mode: null, seedId: null, draft: null }) // mode: 'create' | 'review'
 
   function setTool(tool) { activeTool.value = tool }
@@ -18,10 +19,16 @@ export const useUiStore = defineStore('ui', () => {
 
   // Tab 1 when the garden is empty, otherwise tab 2 (study mode)
   function pickDefaultTab(hasPlants) { setShedTab(hasPlants ? 'study' : 'seeds') }
+  function selectGardenSeed(seedId) { selectedGardenSeedId.value = seedId }
+  function clearGardenSeedSelection() { selectedGardenSeedId.value = null }
 
   function openCreate(draft) { seedPicked.value = false; modal.value = { open: true, mode: 'create', seedId: null, draft } }
   function openReview(seedId) { modal.value = { open: true, mode: 'review', seedId, draft: null } }
   function closeModal() { modal.value = { open: false, mode: null, seedId: null, draft: null } }
 
-  return { activeTool, shedTab, shedOpen, seedPicked, seedDragPointerId, modal, setTool, setShedTab, pickDefaultTab, openCreate, openReview, closeModal }
+  return {
+    activeTool, shedTab, shedOpen, seedPicked, seedDragPointerId, selectedGardenSeedId, modal,
+    setTool, setShedTab, pickDefaultTab, selectGardenSeed, clearGardenSeedSelection,
+    openCreate, openReview, closeModal,
+  }
 })

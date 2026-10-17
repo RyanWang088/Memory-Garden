@@ -46,8 +46,11 @@ async function subjectIdFor(userId, name, exam_date) {
 
 export const SeedModel = {
   async list(userId) {
-    const rows = check(await supabase.from('seeds').select(SEED_WITH_RELATIONS).eq('user_id', userId).order('created_at'))
-    return rows.map(shape)
+    const rows = check(await supabase.from('seeds').select(SEED_WITH_RELATIONS).eq('user_id', userId))
+    return rows
+      .sort((a, b) => Date.parse(b.last_reviewed ?? b.created_at) - Date.parse(a.last_reviewed ?? a.created_at)
+        || Date.parse(b.created_at) - Date.parse(a.created_at))
+      .map(shape)
   },
 
   // seed: { title, subject, exam_date?, tags, cards: [{ question, answer }], col, row, flower }

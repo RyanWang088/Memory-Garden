@@ -37,6 +37,11 @@ function selectTab(tabId) {
   }
   ui.shedOpen = true
 }
+
+function onSeedSelect(seed) {
+  if (window.matchMedia('(max-width: 767.98px)').matches) ui.shedOpen = false
+  ui.selectGardenSeed(seed.id)
+}
 </script>
 
 <template>
@@ -60,7 +65,7 @@ function selectTab(tabId) {
     <!-- Inner Cream Notebook Card -->
     <main class="shed-notebook-page" role="tabpanel">
       <ShedTabSeeds v-if="ui.shedTab === 'seeds'" />
-      <ShedTabStudy v-else-if="ui.shedTab === 'study'" />
+      <ShedTabStudy v-else-if="ui.shedTab === 'study'" @select="onSeedSelect" />
       <ShedTabShop v-else />
     </main>
   </aside>

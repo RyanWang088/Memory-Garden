@@ -54,7 +54,7 @@ const camera = { viewWidth: 400, viewHeight: 700, scale: 1, contentWidth: 400, f
 const scrollerEl = ref(null), stageEl = ref(null), canvasEl = ref(null), ghostEl = ref(null)
 const plantElements = new Map()
 const plantInfoElements = new Map()
-const hoveredPlantInfoId = ref(null), focusedPlantInfoId = ref(null)
+const hoveredPlantInfoId = ref(null)
 const screenPoint = {}               // reused by every projection: no per-frame allocations
 let hoverCell = null, renderQueued = false, resizeObserver
 let scrollIdleTimer
@@ -63,18 +63,14 @@ const occupiedCells = computed(() => new Set(garden.seeds.map(seed => `${seed.co
 const registerPlant = (id, el) => (el ? plantElements.set(id, el) : plantElements.delete(id))
 const registerPlantInfo = (id, el) => (el ? plantInfoElements.set(id, el) : plantInfoElements.delete(id))
 const isPlantInfoVisible = id =>
-  hoveredPlantInfoId.value === id || focusedPlantInfoId.value === id
+  hoveredPlantInfoId.value === id || ui.selectedGardenSeedId === id
 
-function onPlantPointerEnter(id, event) {
-  if (event.pointerType !== 'touch') hoveredPlantInfoId.value = id
+function onPlantPointerEnter(id) {
+  hoveredPlantInfoId.value = id
 }
 
 function onPlantPointerLeave(id) {
   if (hoveredPlantInfoId.value === id) hoveredPlantInfoId.value = null
-}
-
-function onPlantFocusOut() {
-  focusedPlantInfoId.value = null
 }
 
 /* 1 at the front of the field, easing to `farValue` at the horizon */
@@ -174,6 +170,18 @@ function placePlantInfo(el, col, row, sizeFactor) {
   const { x, y } = screenPoint
   el.style.transform = `translate3d(${x}px,${y + 8}px,0) translateX(-50%)`
   el.style.zIndex = 10000
+}
+
+function scrollToSeed(seedId) {
+  const seed = garden.seeds.find(item => item.id === seedId)
+  if (!seed || !scrollerEl.value || camera.radius <= 0) return
+
+  const targetY = camera.viewHeight * 0.68
+  const sine = Math.max(-1, Math.min(1, (camera.frontY - targetY) / camera.radius))
+  const angle = Math.asin(sine)
+  const depth = (seed.row + 0.5) * CELL_SIZE
+  const targetScrollPos = Math.max(0, Math.min(SCROLL_RANGE, depth - (angle * camera.radius) / camera.scale))
+  scrollerEl.value.scrollTo({ top: SCROLL_RANGE - targetScrollPos, behavior: 'smooth' })
 }
 
 function drawFloor() {
@@ -303,7 +311,8 @@ function onPointerCancel(e) {
   ui.seedDragPointerId = null
 }
 
-function onPlantClick(seed) {
+function onPlantClick(seed, event) {
+  if (event && !event.target.closest('.sprite')) return
   if (ui.activeTool === 'shovel') {
     seedToDelete.value = seed
     deleteError.value = ''
@@ -340,6 +349,7 @@ async function confirmDelete() {
 
 /* ---------- lifecycle ---------- */
 watch(() => garden.seeds, requestRender, { deep: true, flush: 'post' })
+watch(() => ui.selectedGardenSeedId, scrollToSeed, { flush: 'post' })
 onMounted(() => {
   resizeObserver = new ResizeObserver(measureView)
   resizeObserver.observe(scrollerEl.value)
@@ -376,18 +386,18 @@ onBeforeUnmount(() => {
         <div
           v-for="seed in garden.seeds"
           :key="seed.id"
+          :id="seed.id"
           :ref="el => registerPlant(seed.id, el)"
           class="plant"
+          :class="{ 'is-highlighted': ui.selectedGardenSeedId === seed.id }"
           :data-stage="garden.stageOf(seed)"
           :data-wilting="garden.isWilted(seed) || undefined"
           role="button"
           tabindex="0"
           :aria-label="`Open ${seed.title}`"
-          @pointerenter="onPlantPointerEnter(seed.id, $event)"
+          @pointerenter="onPlantPointerEnter(seed.id)"
           @pointerleave="onPlantPointerLeave(seed.id)"
-          @focusin="focusedPlantInfoId = seed.id"
-          @focusout="onPlantFocusOut"
-          @click="onPlantClick(seed)"
+          @click="onPlantClick(seed, $event)"
           @keydown.enter.space.prevent="onPlantClick(seed)"
         >
           <div class="shadow"></div>
@@ -399,25 +409,9 @@ onBeforeUnmount(() => {
           :key="`info-${seed.id}`"
           :ref="el => registerPlantInfo(seed.id, el)"
           class="plant-info"
-          :class="{ 'is-visible': isPlantInfoVisible(seed.id) }"
         >
-          <div class="plant-info-details" :aria-hidden="!isPlantInfoVisible(seed.id)">
-            <h2 class="text-body-strong">{{ seed.title }}</h2>
-            <div
-              class="plant-progress-row"
-              role="progressbar"
-              :aria-label="`${seed.title} mastery`"
-              :aria-valuenow="seed.mastery ?? 0"
-              aria-valuemin="0"
-              aria-valuemax="100"
-            >
-              <span class="plant-progress-seed" aria-hidden="true">
-                <img src="../assets/ui/seed.svg" alt="" draggable="false" />
-              </span>
-              <div class="progress plant-progress">
-                <div class="progress-fill" :style="{ width: (seed.mastery ?? 0) + '%' }"></div>
-              </div>
-            </div>
+          <div class="plant-info-details" :class="{ 'is-visible': isPlantInfoVisible(seed.id) }" :aria-hidden="!isPlantInfoVisible(seed.id)">
+            <p class="p-1 text-body-strong text-center my-auto">{{ seed.title }}</p>
           </div>
         </div>
 
@@ -451,6 +445,10 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   position: absolute; left: 0; top: 0; width: 0; height: 0; display: none; will-change: transform;
   clip-path: inset(-1000px -1000px var(--clipped, 0px) -1000px);
 }
+.plant::before {
+  position: absolute; bottom: -40px; left: -130px; width: 300px; height: 300px;
+  content: ''; cursor: pointer; pointer-events: auto;
+}
 @keyframes plantSway {
   0% {
     transform: rotate(0deg);
@@ -476,32 +474,29 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   width: calc(var(--sprite-size) / 2.2); height: calc(var(--sprite-size) / 8); border-radius: 50%; background: var(--shadow);
 }
 .plant-info {
-  position: absolute; top: 0; left: 0; width: 148px; display: flex;
-  flex-direction: column; align-items: center; pointer-events: none;
+  position: absolute; top: 0; left: 0; pointer-events: none;
 }
 .plant-info-details {
-  position: absolute; top: 10px; left: 0; width: 100%; display: flex;
-  flex-direction: column; align-items: center; gap: 2px; padding: 4px 7px;
-  border: 1px solid var(--linen); border-radius: 8px; background: var(--paper);
-  box-shadow: 0 2px 6px var(--shadow-card); opacity: 0; visibility: hidden;
+  position: absolute; top: 0; left: 50%; width: max-content; max-width: 200px;
+  padding: 6px 12px; border-radius: 999px; background: var(--cream);
+  opacity: 0; visibility: hidden; transform: translate(-50%, -6px);
+  transition: opacity .2s ease, transform .35s var(--spring), visibility 0s linear .35s;
 }
-.plant-info.is-visible .plant-info-details { opacity: 1; visibility: visible; }
-.plant-info h2 {
-  max-width: 100%; margin: 0; overflow: hidden; color: var(--bark);
-  text-overflow: ellipsis; white-space: nowrap; font-size: 14px; line-height: 18px;
+.plant-info-details.is-visible {
+  opacity: 1; visibility: visible; transform: translate(-50%, 0);
+  transition: opacity .2s ease, transform .35s var(--spring), visibility 0s;
 }
-.plant-progress-row { display: flex; align-items: center; width: 100%; }
-.plant-progress-seed {
-  display: flex; flex: 0 0 20px; align-items: center; justify-content: center;
-  width: 20px; height: 20px; border: 10px solid var(--mint); border-radius: 50% 50% 0px 50%;
-  transform: rotate(-43deg);
+.plant-info-details::after {
+  position: absolute; top: -7px; left: 50%; width: 0; height: 0;
+  border-bottom: 8px solid var(--cream);
+  border-right: 8px solid transparent; border-left: 8px solid transparent;
+  content: ''; transform: translateX(-50%);
 }
-.plant-progress-seed img { width: 9px; height: 13px; transform: rotate(35deg); }
-.plant-progress { flex: 1; min-width: 0; height: 8px; }
 
 /* a wilting sprout keeps the stage 2 sprite with brown leaves */
 .plant[data-stage="2"][data-wilting] .sprite { filter: sepia(.8) saturate(.7); }
 .ghost { pointer-events: none; z-index: 9000 !important; }   /* translucent pending plant when dragging across canvasadd */
+.ghost::before { pointer-events: none; }
 .ghost .sprite { opacity: .6; }
 .ghost.blocked .sprite { filter: grayscale(1) sepia(1) hue-rotate(-40deg) saturate(4); }
 
