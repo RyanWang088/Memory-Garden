@@ -6,6 +6,16 @@ import { generateCards } from '../lib/ai.js'
 const MAX_AI_CARDS = 50 // per uploaded file
 
 const text = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
+const same = (a, b) => a.toLowerCase() === b.toLowerCase()
+// A card's trap answers for the quiz: strings only, trimmed to 500, no blanks, none equal to the answer,
+// no repeats (case-insensitive), at most 3. Missing or invalid -> [].
+function cleanTraps(list, answer) {
+  const kept = []
+  for (const t of (Array.isArray(list) ? list : []).map(v => text(v, 500))) {
+    if (t && !same(t, answer) && !kept.some(k => same(k, t))) kept.push(t)
+  }
+  return kept.slice(0, 3)
+}
 const isUuid = (v) => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)
 const isCell = (v) => Number.isInteger(v) && v >= 0 && v < 1000
 const SEED_COLORS = ['red', 'white', 'purple', 'yellow', 'pink']
@@ -20,7 +30,10 @@ function cleanSeed(body = {}) {
   const color = text(body.color || 'red', 20)
   const exam_date = text(body.exam_date, 10) // optional
   const cards = (Array.isArray(body.cards) ? body.cards : [])
-    .map(c => ({ question: text(c?.question, 500), answer: text(c?.answer, 500) }))
+    .map(c => {
+      const answer = text(c?.answer, 500)
+      return { question: text(c?.question, 500), answer, wrong_options: cleanTraps(c?.wrong_options, answer) }
+    })
     .filter(c => c.question && c.answer)
   const tags = (Array.isArray(body.tags) ? body.tags : []).slice(0, 8)
     .map(t => ({ name: text(t?.name, 20), color: text(t?.color, 20) }))
@@ -45,7 +58,7 @@ export const seedsController = {
     } catch (err) { next(err) }
   },
 
-  // POST /api/seeds  body: { title, subject, exam_date?, tags, cards: [{ question, answer }], col, row, color? }
+  // POST /api/seeds  body: { title, subject, exam_date?, tags, cards: [{ question, answer, wrong_options? }], col, row, color? }
   async create(req, res, next) {
     try {
       const seed = cleanSeed(req.body)

@@ -8,10 +8,12 @@ const garden = useGardenStore()
 
 const query = ref('')
 const libraryView = ref('recommended')
-// Oldest-reviewed first; never reviewed seeds (date 0) come first
+// Highest priority first (deadline + progress, scored by the server), so these match the "!" seeds in the garden.
+// Ties: oldest-reviewed first; never reviewed seeds (date 0) come first
 const recommended = computed(() =>
   [...garden.seeds]
-    .sort((a, b) => new Date(a.last_reviewed || 0) - new Date(b.last_reviewed || 0))
+    .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0)
+      || new Date(a.last_reviewed || 0) - new Date(b.last_reviewed || 0))
     .slice(0, 6)
 )
 
@@ -21,8 +23,8 @@ const results = computed(() => {
   const q = query.value.trim().toLowerCase()
   if (!q) return baseSeeds.value
   return baseSeeds.value.filter((seed) => {
-    const tags = Array.isArray(seed.tags) ? seed.tags.join(' ') : seed.tags || ''
-    return `${seed.title} ${tags}`.toLowerCase().includes(q)
+    const tags = Array.isArray(seed.tags) ? seed.tags.map(t => t.name).join(' ') : ''
+    return `${seed.title} ${seed.subject} ${tags}`.toLowerCase().includes(q)
   })
 })
 

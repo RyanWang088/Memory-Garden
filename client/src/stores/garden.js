@@ -18,6 +18,20 @@ export const useGardenStore = defineStore('garden', () => {
     loaded.value = true
   }
 
+  // priority/alert (the "!" on the top 6 seeds to revise) compare all seeds, so only GET /api/seeds has them.
+  // Re-read them after any change; a failure just leaves the old "!" marks.
+  async function refreshPriority() {
+    try {
+      const latest = new Map((await apiFetch('/api/seeds')).map(s => [s.id, s]))
+      for (const seed of seeds.value) {
+        const fresh = latest.get(seed.id)
+        if (fresh) Object.assign(seed, { priority: fresh.priority, alert: fresh.alert })
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   // The server finds/creates the subject, saves the seed and its cards, and returns
   // the seed with { subject, exam_date, cards, mastery } filled in
   async function plantSeed({ title, subject, exam_date, tags, cards, col, row, color = 'red' }) {
@@ -25,6 +39,7 @@ export const useGardenStore = defineStore('garden', () => {
     // the exam date belongs to the subject, so the subject's other seeds get the same one
     for (const s of seeds.value) if (s.subject === seed.subject) s.exam_date = seed.exam_date
     seeds.value.push(seed)
+    refreshPriority()
     return seed
   }
 
@@ -37,6 +52,7 @@ export const useGardenStore = defineStore('garden', () => {
     const mastery = Math.max(0, Math.min(100, seed.mastery + delta))
     const updated = await apiFetch(`/api/seeds/${seedId}`, { method: 'PATCH', body: { mastery, last_reviewed: new Date().toISOString() } })
     Object.assign(seed, updated)
+    refreshPriority()
   }
 
   // Saves a review session card by card. ratings: [{ card_id, rating }]
@@ -46,11 +62,13 @@ export const useGardenStore = defineStore('garden', () => {
     if (!seed) throw new Error('Seed not found. Refresh the garden and try again.')
     const updated = await apiFetch(`/api/seeds/${encodeURIComponent(seedId)}/reviews`, { method: 'POST', body: { ratings } })
     Object.assign(seed, updated)
+    refreshPriority()
   }
 
   async function deleteSeed(seedId) {
     await apiFetch(`/api/seeds/${encodeURIComponent(seedId)}`, { method: 'DELETE' })
     seeds.value = seeds.value.filter(seed => seed.id !== seedId)
+    refreshPriority()
   }
 
   // Aggregate readiness for the planner (average mastery, optionally per subject)

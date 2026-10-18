@@ -1,20 +1,22 @@
 <script setup>
 import { computed } from 'vue'
 
-const props = defineProps(['stage', 'flower', 'wilting', 'ghost', 'blocked','color'])
+const props = defineProps(['stage', 'flower', 'wilting', 'ghost', 'blocked','color','alert'])
 
 const sprites = import.meta.glob('../assets/foliage/*.svg', { eager: true, query: '?url', import: 'default' })
 const url = name => sprites[`../assets/foliage/${name}.svg`]
 
 // shared by every plant type: 1 seed, 2 sprout, 8 stub.  Per flower: 3-7 (tulip-4, tulip-yellow-4 ...)
 const SHARED = { 1: 'seed', 2: 'sprout', 8: 'stub' }
-const spriteName = (stage, flower,color) => SHARED[stage] ?? `${flower}-${color}-${stage}`
+const spriteName = (stage, flower = 'tulip', color) =>
+  SHARED[stage] ?? `${flower}${color ? `-${color}` : ''}-${stage}`
 
-const src = computed(() =>
-  props.ghost
-    ? url('seed')
-    : url(spriteName(props.stage, props.flower,props.color)) ?? url(spriteName(props.stage, 'tulip')) // missing art -> tulip, never a broken image
-)
+const src = computed(() => {
+  if (props.ghost) return url('seed')
+  return url(spriteName(props.stage, props.flower, props.color))
+    ?? url(spriteName(props.stage, 'tulip'))
+    ?? url('seed')
+})
 </script>
 
 <template>
@@ -33,6 +35,7 @@ const src = computed(() =>
         <img :key="src" class="art" :class="ghost ? '' : `st-${stage}`" :src="src" alt="" draggable="false" />
       </Transition>
     </div>
+    <span v-if="alert && !ghost" class="alert-mark text-center text-stat" title="Revise this soon" data-testid="plant-alert">!</span>
   </div>
 </template>
 
@@ -77,10 +80,21 @@ const src = computed(() =>
   position: absolute; left: -33.33px; bottom: -6px;
   width: 68.18px; height: 18.75px; border-radius: 50%; background: var(--shadow);
 }
-
-/* a wilting sprout never moves to a new stage: it just turns brown. Tune the filter to taste. */
 .plant[data-stage="2"][data-wilting] .sprite { filter: sepia(1) saturate(.75) brightness(.88); }
-
+.plant[data-stage="3"][data-wilting] .sprite { filter: sepia(.5) saturate(1.6) hue-rotate(-25deg) brightness(1.08); }
+/* "!" bubble, sitting just above the top of each stage's sprite */
+.alert-mark {
+  position: absolute; left: -20px; bottom: 150px; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--peach); color: var(--berry-ink); box-shadow: 0 2px 4px var(--shadow-card);
+  animation: alertBob 1.6s ease-in-out infinite;
+}
+.plant[data-stage="1"] .alert-mark { bottom: 40px; }
+.plant[data-stage="2"] .alert-mark { bottom: 65px; }
+.plant[data-stage="3"] .alert-mark { bottom: 105px; }
+@keyframes alertBob {
+  50% { transform: translateY(-4px); }
+}
+:global(.is-scrolling) .alert-mark { animation-play-state: paused; }
 .ghost { pointer-events: none; z-index: 9000 !important; }
 .ghost::before { pointer-events: none; }
 .ghost .sprite { opacity: .6; }

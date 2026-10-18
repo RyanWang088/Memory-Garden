@@ -241,6 +241,7 @@ onBeforeUnmount(() => {
           :flower="seed.flower"
           :color="seed.color"
           :wilting="garden.isWilted(seed)"
+          :alert="seed.alert"
           :class="{ 'is-highlighted': ui.selectedGardenSeedId === seed.id }"
           role="button" tabindex="0" :aria-label="`Open ${seed.title}`"
           @pointerenter="onPlantPointerEnter(seed.id)"
@@ -253,7 +254,7 @@ onBeforeUnmount(() => {
           :key="`info-${seed.id}`"
           :ref="el => registerPlantInfo(seed.id, el)"
           class="plant-info"
-        >{{ seed.color }}
+        >
           <div class="plant-info-details" :class="{ 'is-visible': isPlantInfoVisible(seed.id) }" :aria-hidden="!isPlantInfoVisible(seed.id)">
             <p class="p-1 text-body-strong text-center my-auto">{{ seed.title }}</p>
           </div>
