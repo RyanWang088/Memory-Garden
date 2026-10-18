@@ -3,10 +3,18 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PlantSeedForm from '@/components/PlantSeedForm.vue'
 import { useGardenStore } from '@/stores/garden'
+import { useUiStore } from '@/stores/ui'
+import { SEED_COLORS } from '@/lib/tagColors'
 
 const route = useRoute()
 const router = useRouter()
 const garden = useGardenStore()
+const ui = useUiStore()
+const selectedColor = computed(() =>
+  typeof route.query.color === 'string' && SEED_COLORS.includes(route.query.color)
+    ? route.query.color
+    : ui.selectedSeedColor,
+)
 const saving = ref(false)
 const loading = ref(true)
 const error = ref('')
@@ -38,7 +46,7 @@ async function save(details) {
   saving.value = true
   error.value = ''
   try {
-    await garden.plantSeed({ ...details, col: col.value, row: row.value })
+    await garden.plantSeed({ ...details, col: col.value, row: row.value, color: selectedColor.value })
     await router.push({ name: 'garden' })
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e)

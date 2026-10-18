@@ -27,7 +27,11 @@ export function useSeedDrag({ scrollerEl, stageEl, ghostRef, ghostBlocked, scree
     ui.seedPicked = false
     ui.seedDragPointerId = null
     if (!cell || isBlocked(cell.col, cell.row)) return
-    router.push({ name: 'seed-create', params: { col: cell.col, row: cell.row } })
+    router.push({
+      name: 'seed-create',
+      params: { col: cell.col, row: cell.row },
+      query: { color: ui.selectedSeedColor },
+    })
   }
 
   function onDragOver(e) {

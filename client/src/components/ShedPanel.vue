@@ -165,7 +165,6 @@ function onSeedSelect(seed) {
   flex: 1;
   min-height: 0;
   background: var(--cream);
-  border-radius: var(--radius-page, 12px);
   padding: 20px;
   overflow-y: auto; /* Inner page still scrolls cleanly */
 }

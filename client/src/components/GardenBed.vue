@@ -7,11 +7,11 @@ import { useToastStore } from '@/stores/toast'
 import { CELL_SIZE, isOnPath } from '@/lib/floorLayout'
 import { createGardenCamera, SCROLL_RANGE } from '@/lib/gardenCamera'
 import { drawMeadow } from '@/lib/meadowRenderer'
-import { loadBackdrop } from '@/lib/meadowBackdrop'
 import { loadLogSprite } from '@/lib/logSprite'
 import PlantSprite from './PlantSprite.vue'
 import Modal from './Modal.vue'
 import { useSeedDrag } from '@/composables/useSeedDrag'
+// import backdropUrl from '@/assets/backdrop.png'
 
 const garden = useGardenStore()   // garden.seeds: { id, col, row, mastery, last_reviewed }
 const ui = useUiStore()
@@ -35,8 +35,8 @@ const ghostBlocked = ref(false)
 let renderQueued = false, resizeObserver
 let scrollIdleTimer
 
-// meadow art: backdrop is a stub (see lib/meadowBackdrop.js), the log is an SVG sprite
-const meadowAssets = { backdrop: loadBackdrop(() => requestRender()), logImg: loadLogSprite(() => requestRender()) }
+// meadow art: the backdrop sits behind the canvas; the log is drawn as a sprite
+const meadowAssets = { logImg: loadLogSprite(() => requestRender()) }
 
 const occupiedCells = computed(() => new Set(garden.seeds.map(seed => `${seed.col},${seed.row}`)))
 const registerPlant = (id, el) => (el ? plantElements.set(id, el) : plantElements.delete(id))
@@ -58,6 +58,7 @@ function measureView() {
   const cssVars = {
     '--view-width': viewWidth, '--view-height': viewHeight,
     '--content-width': camera.contentWidth, '--scroll-range': SCROLL_RANGE,
+    '--horizon-y': camera.horizonY,
   }
   for (const [name, px] of Object.entries(cssVars)) scrollerEl.value.style.setProperty(name, px + 'px')
   updateScroll()
@@ -228,6 +229,7 @@ onBeforeUnmount(() => {
         @dragleave="onDragLeave"
         @drop.prevent="onDrop"
       >
+        <!-- <img class="backdrop" :src="backdropUrl" alt="" draggable="false" /> -->
         <canvas ref="canvasEl"></canvas>
 
         <PlantSprite
@@ -237,6 +239,7 @@ onBeforeUnmount(() => {
           :ref="c => registerPlant(seed.id, c?.$el)"
           :stage="stageById.get(seed.id)"
           :flower="seed.flower"
+          :color="seed.color"
           :wilting="garden.isWilted(seed)"
           :class="{ 'is-highlighted': ui.selectedGardenSeedId === seed.id }"
           role="button" tabindex="0" :aria-label="`Open ${seed.title}`"
@@ -245,13 +248,12 @@ onBeforeUnmount(() => {
           @click="onPlantClick(seed, $event)"
           @keydown.enter.space.prevent="onPlantClick(seed)"
         />
-
         <div
           v-for="seed in garden.seeds"
           :key="`info-${seed.id}`"
           :ref="el => registerPlantInfo(seed.id, el)"
           class="plant-info"
-        >
+        >{{ seed.color }}
           <div class="plant-info-details" :class="{ 'is-visible': isPlantInfoVisible(seed.id) }" :aria-hidden="!isPlantInfoVisible(seed.id)">
             <p class="p-1 text-body-strong text-center my-auto">{{ seed.title }}</p>
           </div>
@@ -277,6 +279,10 @@ onBeforeUnmount(() => {
 .scroller { height: 100%; overflow: auto; overscroll-behavior: contain;scrollbar-width: none; }
 .track { width: var(--content-width); height: calc(var(--view-height) + var(--scroll-range)); }
 .stage { position: sticky; top: 0; left: 0; width: var(--view-width); height: var(--view-height); overflow: hidden; user-select: none; }
+/* .backdrop {
+  position: absolute; left: 0; bottom: calc(100% - var(--horizon-y)); width: 100%; height: auto;
+  pointer-events: none;
+} */
 canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .plant-info {
   position: absolute; top: 0; left: 0; pointer-events: none;

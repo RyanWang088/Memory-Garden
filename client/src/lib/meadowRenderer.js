@@ -4,21 +4,18 @@ import {
   fogColor, hillEdgeDepth, pathCenterX, pathHalfWidth,
 } from './floorLayout.js'
 import { HALF_PI, BOTTOM_MARGIN, FAR_SPREAD, FAR_SIZE } from './gardenCamera.js'
-import { drawBackdrop } from './meadowBackdrop.js'
 import { drawLog } from './logSprite.js'
 
 const TAU = Math.PI * 2
 
 // Draws the whole meadow. The caller has already set the DPR transform and cleared the canvas.
 //   cam    = createGardenCamera() result
-//   assets = { backdrop: Image|null, logImg: Image|null }
+//   assets = { logImg: Image|null }
 export function drawMeadow(ctx, cam, assets = {}) {
   const { camera, depthToAngle } = cam
   const { viewWidth, viewHeight, radius, horizonY, frontY, scale, scrollPos, centerX } = camera
   const span = frontY - horizonY
   const floorAngle = depth => Math.min(HALF_PI, depthToAngle(depth))
-
-  drawBackdrop(ctx, camera, assets.backdrop)
 
   // far-distance base colour: the pale end of the ramp
   ctx.fillStyle = fogColor(0)

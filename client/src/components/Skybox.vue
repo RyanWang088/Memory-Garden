@@ -100,24 +100,22 @@ onMounted(async () => { await nextTick(); requestAnimationFrame(() => (ready.val
 
 /* ---- PHASES: palette vars only ---- */
 .sky[data-phase='day'] {
-  --sky-top:color-mix(#6EC1EE,var(--periwinkle)) ; --sky-bot: #CFEFFC; --ground: var(--mint);
+  --sky-top:color-mix(#6EC1EE,var(--periwinkle)) ; --sky-bot: #CFEFFC; --ground: #A9D466;
   --body: var(--cream); --glow: var(--paper); --cloud: var(--paper);
   --glow-o: .0; --star-o: 0; --body-scale: 1;
 }
 .sky[data-phase='dawn'] {
-  --sky-top: #6EC1EE; --sky-bot: var(--peach); --ground: var(--mint);
+  --sky-top: #6EC1EE; --sky-bot: var(--peach); --ground: #A9D466;
   --body: var(--butter); --glow: #FFCC85; --cloud: var(--peri-soft);
   --glow-o: 1; --star-o: .3; --body-scale: 1.5;
 }
 .sky[data-phase='dusk'] {
-  --sky-top: #EF95B7; --sky-bot: #FFCC85;
-  --ground: color-mix(in srgb, var(--mint) 55%, var(--bark));
+  --sky-top: #EF95B7; --sky-bot: #FFCC85; --ground: #A9D466;
   --body: var(--cream); --glow: var(--linen); --cloud: var(--peri-soft);
   --glow-o: 1; --star-o: .5; --body-scale: 1.5;
 }
 .sky[data-phase='night'] {
-  --sky-top: #1C2355; --sky-bot: color-mix(in srgb, #6EC1EE 30%, #1C2355);
-  --ground: color-mix(in srgb, var(--mint) 25%, var(--bark));
+  --sky-top: #1C2355; --sky-bot: color-mix(in srgb, #6EC1EE 30%, #1C2355); --ground: #A9D466;
   --body: var(--cream); --glow: #6EC1EE; --cloud: var(--shadow-card);
   --glow-o: .25; --star-o: 1; --body-scale: .8;
 }

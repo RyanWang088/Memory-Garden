@@ -9,7 +9,7 @@ export const RIM_COLOR = 'rgba(255,252,222,.4)'  // faint light line on each cre
 
 // pale yellow (far) -> deep green (near)
 const FOG_STOPS = [
-  [0, '#76DB63'], [0.17, '#2EE171'], [0.44, '#30BD49'], [0.72, '#2DB162'], [1, '#0F8134'],
+  [0, '#CFE27F'], [0.17, '#A9D466'], [0.44, '#A2D263'], [0.72, '#86C150'], [1, '#6CAE45'],
 ].map(([t, hex]) => [t, [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16))])
 
 export function fogColor(t) {

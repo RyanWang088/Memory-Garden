@@ -53,11 +53,11 @@ export const SeedModel = {
       .map(shape)
   },
 
-  // seed: { title, subject, exam_date?, tags, cards: [{ question, answer }], col, row, flower }
-  async create(userId, { title, subject, exam_date, tags, cards, col, row, flower }) {
+  // seed: { title, subject, exam_date?, tags, cards: [{ question, answer }], col, row, flower, color }
+  async create(userId, { title, subject, exam_date, tags, cards, col, row, flower, color }) {
     const subject_id = await subjectIdFor(userId, subject, exam_date)
     const seed = check(await supabase.from('seeds')
-      .insert({ user_id: userId, subject_id, title, tags, col, row, flower })
+      .insert({ user_id: userId, subject_id, title, tags, col, row, flower, color })
       .select('id').single())
 
     const { error } = await supabase.from('cards')

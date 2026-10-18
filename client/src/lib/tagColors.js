@@ -14,3 +14,4 @@ export const tagStyle = (id, selected = false) => {
   const c = tagColorById(id)
   return { background: c.bg, color: c.text, borderColor: selected ? c.border : 'transparent' }
 }
+export const SEED_COLORS = ['red', 'white', 'purple', 'yellow', 'pink']

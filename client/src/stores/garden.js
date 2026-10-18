@@ -20,8 +20,8 @@ export const useGardenStore = defineStore('garden', () => {
 
   // The server finds/creates the subject, saves the seed and its cards, and returns
   // the seed with { subject, exam_date, cards, mastery } filled in
-  async function plantSeed({ title, subject, exam_date, tags, cards, col, row }) {
-    const seed = await apiFetch('/api/seeds', { method: 'POST', body: { title, subject, exam_date, tags, cards, col, row } })
+  async function plantSeed({ title, subject, exam_date, tags, cards, col, row, color = 'red' }) {
+    const seed = await apiFetch('/api/seeds', { method: 'POST', body: { title, subject, exam_date, tags, cards, col, row, color } })
     // the exam date belongs to the subject, so the subject's other seeds get the same one
     for (const s of seeds.value) if (s.subject === seed.subject) s.exam_date = seed.exam_date
     seeds.value.push(seed)
