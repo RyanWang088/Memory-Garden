@@ -55,8 +55,8 @@ const ringOffset = computed(() => RING_LENGTH * (1 - accuracy.value / 100))
 
 const norm = (text) => text.trim().toLowerCase()
 
-// Weakest cards first (random among equals). Wrong options are other cards' answers:
-// from this seed first, then seeds of the same subject, then any seed.
+// Weakest cards first (random among equals). Wrong options are the card's own trap answers (wrong_options,
+// typed when planting) first, then other cards' answers: from this seed, then seeds of the same subject, then any seed.
 function buildQuiz(target, allSeeds) {
   const picked = shuffle(target.cards).sort((a, b) => a.card_mastery - b.card_mastery).slice(0, MAX_QUESTIONS)
   const others = allSeeds.filter(s => s.id !== target.id)
@@ -69,7 +69,7 @@ function buildQuiz(target, allSeeds) {
   return shuffle(picked).map((card) => {
     const seen = new Set([norm(card.answer)])
     const wrong = []
-    for (const pool of pools) {
+    for (const pool of [card.wrong_options ?? [], ...pools]) {
       for (const answer of shuffle(pool)) {
         if (wrong.length === LETTERS.length - 1) break
         if (seen.has(norm(answer))) continue

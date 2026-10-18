@@ -2,8 +2,9 @@
 // Schema (supabase/setup.sql): subjects -> seeds -> cards. Mastery lives on cards only,
 // so a seed's mastery is the average card_mastery, calculated here.
 import { supabase, check } from '../lib/supabase.js'
+import { markTopPriority } from '../lib/priority.js'
 
-const SEED_WITH_RELATIONS = '*, subjects(name, exam_date), cards(id, question, answer, card_mastery, next_review)'
+const SEED_WITH_RELATIONS = '*, subjects(name, exam_date), cards(id, question, answer, wrong_options, card_mastery, next_review)'
 const DAY = 86_400_000
 
 // How each rating changes ONE card:
@@ -45,15 +46,17 @@ async function subjectIdFor(userId, name, exam_date) {
 }
 
 export const SeedModel = {
+  // Every seed also gets priority + alert (top 6 to revise next, see lib/priority.js). The ranking compares
+  // all seeds, so it is only worked out here; single-seed responses don't carry it.
   async list(userId) {
     const rows = check(await supabase.from('seeds').select(SEED_WITH_RELATIONS).eq('user_id', userId))
-    return rows
+    return markTopPriority(rows
       .sort((a, b) => Date.parse(b.last_reviewed ?? b.created_at) - Date.parse(a.last_reviewed ?? a.created_at)
         || Date.parse(b.created_at) - Date.parse(a.created_at))
-      .map(shape)
+      .map(shape))
   },
 
-  // seed: { title, subject, exam_date?, tags, cards: [{ question, answer }], col, row, flower }
+  // seed: { title, subject, exam_date?, tags, cards: [{ question, answer, wrong_options }], col, row, flower }
   async create(userId, { title, subject, exam_date, tags, cards, col, row, flower }) {
     const subject_id = await subjectIdFor(userId, subject, exam_date)
     const seed = check(await supabase.from('seeds')
@@ -61,7 +64,7 @@ export const SeedModel = {
       .select('id').single())
 
     const { error } = await supabase.from('cards')
-      .insert(cards.map(c => ({ user_id: userId, seed_id: seed.id, question: c.question, answer: c.answer })))
+      .insert(cards.map(c => ({ user_id: userId, seed_id: seed.id, question: c.question, answer: c.answer, wrong_options: c.wrong_options })))
     if (error) {
       // no transactions over the REST API: undo the seed so no empty plant is left behind
       await supabase.from('seeds').delete().eq('id', seed.id)

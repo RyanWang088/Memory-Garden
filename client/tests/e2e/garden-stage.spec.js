@@ -16,7 +16,7 @@ test('Garden plant stage updates when the seed changes', async ({ page }) => {
       cards: [],
       col: 3,
       row: 4,
-      mastery: 10,
+      mastery: 30,
       last_reviewed: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
     }]
 
@@ -79,5 +79,5 @@ test('Garden plant stage updates when the seed changes', async ({ page }) => {
     seed.last_reviewed = new Date(Date.now() - 3 * 86_400_000).toISOString()
   })
 
-  await expect(plant).toHaveAttribute('data-stage', '8')
+  await expect(plant).toHaveAttribute('data-stage', '5')
 })

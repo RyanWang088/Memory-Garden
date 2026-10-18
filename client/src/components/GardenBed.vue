@@ -238,6 +238,7 @@ onBeforeUnmount(() => {
           :stage="stageById.get(seed.id)"
           :flower="seed.flower"
           :wilting="garden.isWilted(seed)"
+          :alert="seed.alert"
           :class="{ 'is-highlighted': ui.selectedGardenSeedId === seed.id }"
           role="button" tabindex="0" :aria-label="`Open ${seed.title}`"
           @pointerenter="onPlantPointerEnter(seed.id)"
