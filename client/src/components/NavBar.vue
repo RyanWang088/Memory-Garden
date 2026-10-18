@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import MusicToggle from '@/components/MusicToggle.vue'
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -75,6 +76,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         <span class="counter" data-testid="nav-streak">🔥 {{ auth.profile?.streak ?? 0 }}</span>
         <span class="counter" data-testid="nav-coins"><img src="../assets/ui/coin.svg" alt=""> {{ auth.profile?.coins ?? 0 }}</span>
       </div>
+      <MusicToggle />
       <RouterLink :to="{ name: 'profile' }" class="avatar d-none d-md-grid" aria-label="Profile">🏡</RouterLink>
     </div>
   </nav>

@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { supabase, check } from '@/lib/supabase'
 import { apiFetch } from '@/lib/http'
+import { usePomodoroStore } from './pomodoro' // pomodoro imports this store too; fine, as both are only used inside functions
+import { useMusicStore } from './music'
 
 // Login and profiles talk to Supabase directly (Supabase Auth is meant to run in the browser).
 // Registration goes through the Express server (POST /api/auth/register), which validates and creates the account.
@@ -42,6 +44,8 @@ export const useAuthStore = defineStore('auth', () => {
     await tendStreak()
   }
   async function signOut() {
+    usePomodoroStore().endSession() // stops the timer and clears the saved session, so the next user doesn't get it
+    useMusicStore().pause()         // the login page has no music button to stop it with
     await supabase.auth.signOut()
     user.value = null
     profile.value = null
