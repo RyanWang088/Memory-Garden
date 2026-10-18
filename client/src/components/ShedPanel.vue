@@ -1,4 +1,5 @@
 <script setup>
+import { useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
 import { useToastStore } from '@/stores/toast'
 import ShedTabSeeds from './ShedTabSeeds.vue'
@@ -7,6 +8,7 @@ import ShedTabShop from './ShedTabShop.vue'
 
 const ui = useUiStore()
 const toast = useToastStore()
+const router = useRouter()
 
 const tabs = [
   { id: 'seeds', label: 'Seeds', img: 'seed' },
@@ -41,6 +43,7 @@ function selectTab(tabId) {
 function onSeedSelect(seed) {
   if (window.matchMedia('(max-width: 767.98px)').matches) ui.shedOpen = false
   ui.selectGardenSeed(seed.id)
+  router.push({ name: 'garden', query: { scrollTo: seed.id } })
 }
 </script>
 

@@ -1,5 +1,5 @@
 <script setup>
-defineProps(['stage', 'flower', 'wilting', 'ghost', 'blocked'])
+defineProps({ stage: Number, flower: String, wilting: Boolean, ghost: Boolean, blocked: Boolean })
 const sprites = import.meta.glob('../assets/foliage/*.svg', { eager: true, query: '?url', import: 'default' })
 const sprite = (stage, flower) => {
   const name = stage === 1 ? 'seed' : stage === 2 ? 'sprout' : `${flower || 'tulip'}-${stage}`
@@ -28,7 +28,6 @@ const ghostSprite = sprites['../assets/foliage/seed.svg']
 }
 .plant::before {
   position: absolute; bottom: -40px; left: -130px; width: 300px; height: 300px;
-  content: ''; cursor: pointer; pointer-events: auto;
 }
 @keyframes plantSway {
   0% {

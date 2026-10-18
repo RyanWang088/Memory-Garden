@@ -173,7 +173,7 @@ async function claim() {
       title: reward.value ? `+${reward.value} coins` : 'Session saved',
       message: reward.value ? `You scored ${accuracy.value}% on ${seed.value.title}.` : `${seed.value.title} got a little water.`,
     })
-    await router.push({ name: 'garden' })
+    await router.push({ name: 'garden', query: { scrollTo: seed.value.id } })
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e)
   } finally {

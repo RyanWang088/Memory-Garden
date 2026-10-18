@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useGardenStore } from '@/stores/garden'
 import { useUiStore } from '@/stores/ui'
 import { useToastStore } from '@/stores/toast'
@@ -15,6 +15,7 @@ import { useSeedDrag } from '@/composables/useSeedDrag'
 
 const garden = useGardenStore()   // garden.seeds: { id, col, row, mastery, last_reviewed }
 const ui = useUiStore()
+const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 const seedToDelete = ref(null)
@@ -109,7 +110,10 @@ function placePlantInfo(el, col, row) {
   el.style.zIndex = 10000
 }
 
-function scrollToSeed(seedId) {
+function scrollToSeed() {
+  const seedId = route.query.scrollTo
+  if (typeof seedId !== 'string') return
+
   const seed = garden.seeds.find(item => item.id === seedId)
   if (!seed || !scrollerEl.value || camera.radius <= 0) return
 
@@ -119,6 +123,10 @@ function scrollToSeed(seedId) {
   const depth = (seed.row + 0.5) * CELL_SIZE
   const targetScrollPos = Math.max(0, Math.min(SCROLL_RANGE, depth - (angle * camera.radius) / camera.scale))
   scrollerEl.value.scrollTo({ top: SCROLL_RANGE - targetScrollPos, behavior: 'smooth' })
+  ui.selectGardenSeed(seedId)
+  const query = { ...route.query }
+  delete query.scrollTo
+  router.replace({ name: 'garden', query })
 }
 
 function drawFloor() {
@@ -188,8 +196,11 @@ async function confirmDelete() {
   }
 }
 
-watch(() => garden.seeds, requestRender, { deep: true, flush: 'post' })
-watch(() => ui.selectedGardenSeedId, scrollToSeed, { flush: 'post' })
+watch(() => garden.seeds, () => {
+  requestRender()
+  scrollToSeed()
+}, { deep: true, flush: 'post' })
+watch(() => route.query.scrollTo, scrollToSeed, { flush: 'post' })
 onMounted(() => {
   resizeObserver = new ResizeObserver(measureView)
   resizeObserver.observe(scrollerEl.value)
@@ -198,6 +209,7 @@ onMounted(() => {
   scrollerEl.value.scrollLeft = (camera.contentWidth - camera.viewWidth) / 2
   updateScroll()
   render()
+  scrollToSeed()
 })
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()

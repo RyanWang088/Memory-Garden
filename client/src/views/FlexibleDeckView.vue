@@ -120,7 +120,7 @@ async function finishSession() {
     for (const [card_id, rating] of firstRatings) ratings.push({ card_id, rating })
     await garden.saveReview(seed.value.id, ratings)
     toast.show({ type: 'success', title: 'Session saved', message: `You went through ${totalCards.value} cards of ${seed.value.title}.` })
-    await router.push({ name: 'garden' })
+    await router.push({ name: 'garden', query: { scrollTo: seed.value.id } })
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e)
   } finally {
