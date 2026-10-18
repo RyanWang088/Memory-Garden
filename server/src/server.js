@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import authRouter from './routes/auth.js'
 import seedsRouter from './routes/seeds.js'
+import weatherRouter from './routes/weather.js'
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -14,6 +15,7 @@ app.get('/api/health', (req, res) => res.json({ ok: true }))
 
 app.use('/api/auth', authRouter)
 app.use('/api/seeds', seedsRouter)
+app.use('/api/weather', weatherRouter)
 // TODO: mount more routers here, e.g. app.use('/api/cards', cardsRouter)
 
 // Errors from controllers (next(err)) are sent back as JSON for the client to show

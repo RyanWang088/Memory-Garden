@@ -31,15 +31,32 @@ onMounted(async () => { await nextTick(); requestAnimationFrame(() => (ready.val
     </svg>
 
     <div class="veil"></div>
+    <div class="lightning"></div>
   </div>
   <Teleport to="#sky-front" defer>
     <div class="front" :data-phase="ready ? phase : 'night'" :data-weather="condition">
+      <div class="field-snow"></div>
       <div class="field-tint"></div>
+      <div class="field-wx"></div>
       <div class="rain">
         <i
-          v-for="n in 24"
+          v-for="n in 40"
           :key="n"
+          :class="{ extra: n > 24 }"
           :style="{ left: `${(n * 37) % 100}%`, animationDelay: `${(n % 7) * -0.2}s` }"
+        ></i>
+      </div>
+      <div class="snow">
+        <i
+          v-for="n in 30"
+          :key="n"
+          :style="{
+            left: `${(n * 29) % 100}%`,
+            width: `${4 + (n % 3) * 2}px`,
+            height: `${4 + (n % 3) * 2}px`,
+            animationDuration: `${6 + (n % 4)}s, ${2.5 + (n % 3) * 0.5}s`,
+            animationDelay: `${(n % 10) * -0.8}s, ${(n % 5) * -0.6}s`,
+          }"
         ></i>
       </div>
     </div>
@@ -52,10 +69,8 @@ onMounted(async () => { await nextTick(); requestAnimationFrame(() => (ready.val
         <input type="range" min="0" max="1439" v-model.number="weather.nowMin" />
       </label>
       <span>{{ Math.floor(weather.nowMin / 60) }}:{{ String(weather.nowMin % 60).padStart(2, '0') }} · {{ phase }}</span>
-      <select v-model.number="weather.code" aria-label="Weather">
-        <option :value="0">sunny</option>
-        <option :value="3">cloudy</option>
-        <option :value="61">rainy</option>
+      <select v-model="weather.condition" aria-label="Weather">
+        <option v-for="c in ['sunny', 'cloudy', 'rainy', 'snowy', 'stormy']" :key="c" :value="c">{{ c }}</option>
       </select>
     </div>
   </Teleport>
@@ -70,6 +85,7 @@ onMounted(async () => { await nextTick(); requestAnimationFrame(() => (ready.val
 @property --glow    { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --cloud   { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --tint    { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --veil    { syntax: '<color>'; inherits: true; initial-value: transparent; }
 
 .sky {
   z-index: 0; overflow: hidden;
@@ -79,7 +95,7 @@ onMounted(async () => { await nextTick(); requestAnimationFrame(() => (ready.val
     var(--ground) 50%
   );
   transition: --sky-top 6s ease, --sky-bot 6s ease, --ground 6s ease,
-              --body 6s ease, --glow 6s ease, --cloud 6s ease;
+              --body 6s ease, --glow 6s ease, --cloud 6s ease, --veil 6s ease;
 }
 
 .dev-scrubber {
@@ -122,10 +138,13 @@ onMounted(async () => { await nextTick(); requestAnimationFrame(() => (ready.val
   --glow-o: .25; --star-o: 1; --body-scale: .8;
 }
 
-/* ---- WEATHER: three numbers ---- */
+/* ---- WEATHER: five numbers (+ veil color: grey for gloom, white for snow) ---- */
+.sky { --veil: var(--bark-muted); }
 .sky[data-weather='sunny']  { --veil-o: 0;   --cloud-o: .35; --clear: 1;  --rain-o: 0; }
 .sky[data-weather='cloudy'] { --veil-o: .2;  --cloud-o: .9;  --clear: .3; --rain-o: 0; }
 .sky[data-weather='rainy']  { --veil-o: .5;  --cloud-o: 1;   --clear: 0;  --rain-o: 1; }
+.sky[data-weather='stormy'] { --veil-o: .65; --cloud-o: 1;   --clear: 0;  --rain-o: 1; }
+.sky[data-weather='snowy']  { --veil-o: .3;  --cloud-o: .9;  --clear: .2; --rain-o: 0; --veil: var(--paper); } /* pale, not gloomy */
 
 /* ---- LAYERS ---- */
 .glow {
@@ -171,7 +190,18 @@ onMounted(async () => { await nextTick(); requestAnimationFrame(() => (ready.val
 .clouds.near { top: 24%; animation-duration: 70s; }
 @keyframes drift { to { transform: translateX(-50%); } }
 
-.veil { position: absolute; inset: 0; background: var(--bark-muted); opacity: var(--veil-o); transition: opacity 6s ease; }
+.veil { position: absolute; inset: 0; background: var(--veil); opacity: var(--veil-o); transition: opacity 6s ease; }
+
+/* lightning: invisible except a quick double flicker every 7s, only while stormy */
+.lightning { position: absolute; inset: 0; background: var(--paper); opacity: 0; pointer-events: none; }
+.sky[data-weather='stormy'] .lightning { animation: flash 7s linear infinite; }
+@keyframes flash {
+  0%, 88%, 100% { opacity: 0; }
+  89%           { opacity: .7; }
+  90%           { opacity: .1; }
+  92%           { opacity: .5; }
+  95%           { opacity: 0; }
+}
 
 /* ---- FRONT LAYER (above the garden bed) ---- */
 .front {
@@ -185,10 +215,21 @@ onMounted(async () => { await nextTick(); requestAnimationFrame(() => (ready.val
 .front[data-phase='dusk']  { --tint: #EF95B7; --tint-o: .3; }
 .front[data-phase='night'] { --tint: #1C2355; --tint-o: .5; }
 
-/* weather: extra grey wash and rain on/off */
-.front[data-weather='sunny']  { --wx-o: 0;   --rain-o: 0; }
-.front[data-weather='cloudy'] { --wx-o: .1;  --rain-o: 0; }
-.front[data-weather='rainy']  { --wx-o: .22; --rain-o: 1; }
+/* weather: extra grey wash, rain/snow on/off */
+.front[data-weather='sunny']  { --wx-o: 0;   --rain-o: 0; --snow-o: 0; }
+.front[data-weather='cloudy'] { --wx-o: .1;  --rain-o: 0; --snow-o: 0; }
+.front[data-weather='rainy']  { --wx-o: .22; --rain-o: 1; --snow-o: 0; }
+.front[data-weather='stormy'] { --wx-o: .3;  --rain-o: 1; --snow-o: 0; }
+.front[data-weather='snowy']  { --wx-o: 0;   --rain-o: 0; --snow-o: 1; }
+
+/* snow cover on the field; sits under .field-tint so night still darkens it */
+.field-snow {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  top: 50%;
+  background: var(--paper);
+  opacity: calc(var(--snow-o) * .55);
+  transition: opacity 6s ease;
+}
 
 .field-tint {
   position: absolute; left: 0; right: 0; bottom: 0;
@@ -197,8 +238,11 @@ onMounted(async () => { await nextTick(); requestAnimationFrame(() => (ready.val
   opacity: var(--tint-o);
   transition: opacity 6s ease;
 }
-.field-tint::after {
-  content: ''; position: absolute; inset: 0;
+/* weather wash is a sibling, not a child of .field-tint: a parent's opacity multiplies its children,
+   so as ::after it vanished by day (tint-o 0) and was weakened at every other phase */
+.field-wx {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  top: 50%;
   background: var(--bark-muted);
   opacity: var(--wx-o);
   transition: opacity 6s ease;
@@ -211,11 +255,35 @@ onMounted(async () => { await nextTick(); requestAnimationFrame(() => (ready.val
   background: #6EC1EE; opacity: .6;
   animation: fall .9s linear infinite;
 }
-.front:not([data-weather='rainy']) .rain i { animation-play-state: paused; }  /* no cost when dry */
+.front:not([data-weather='rainy'], [data-weather='stormy']) .rain i { animation-play-state: paused; }  /* no cost when dry */
 @keyframes fall { to { transform: translateY(110vh); } }
 
+/* storm: 16 extra streaks, faster, slanted by wind. The layer is widened to the right
+   so streaks blown left still cover the right edge; .front clips the overflow */
+.front:not([data-weather='stormy']) .rain i.extra { display: none; }
+.front[data-weather='stormy'] .rain { right: -30vh; }
+.front[data-weather='stormy'] .rain i { animation-name: fall-wind; animation-duration: .6s; }
+@keyframes fall-wind {
+  from { transform: translate(0, 0) rotate(15deg); }
+  to   { transform: translate(-30vh, 110vh) rotate(15deg); }  /* tan(15deg) * 110vh ~ 30vh, so the streak moves along its own slant */
+}
+
+/* snow: same idea as rain, but round, slower, and swaying sideways.
+   fall moves `transform`, sway moves `translate`, so the two animations stack instead of fighting */
+.snow { position: absolute; inset: 0; opacity: var(--snow-o); transition: opacity 3s ease; }
+.snow i {
+  position: absolute; top: -5%;
+  border-radius: 50%; background: var(--paper); opacity: .9;
+  animation-name: fall, sway;
+  animation-timing-function: linear, ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: normal, alternate;
+}
+.front:not([data-weather='snowy']) .snow i { animation-play-state: paused; }  /* no cost when not snowing */
+@keyframes sway { from { translate: -12px 0; } to { translate: 12px 0; } }
+
 @media (prefers-reduced-motion: reduce) {
-  .clouds, .stars, .rain i { animation: none; }
+  .clouds, .stars, .rain i, .snow i, .lightning { animation: none !important; }  /* flashing is also an accessibility risk */
   .sky, .sky *, .front, .front * { transition-duration: .01s !important; }
 }
 </style>

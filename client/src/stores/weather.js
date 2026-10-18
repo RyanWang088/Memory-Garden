@@ -1,70 +1,69 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
+import { apiFetch } from '@/lib/http'
 
 const FALLBACK = { lat: 1.3005, lon: 103.8626 } // SMU SCIS 1
 
-// "2026-10-13T06:58" -> minutes since local midnight
-const toMin = (iso) => {
-  const [h, m] = iso.slice(11, 16).split(':')
-  return +h * 60 + +m
-}
-
-// WMO code -> 'sunny' | 'cloudy' | 'rainy'
-function toCondition(code) {
-  if (code <= 1) return 'sunny'
-  if (code <= 3 || code === 45 || code === 48) return 'cloudy'
-  return 'rainy'
-}
-
+// Resolves the user's coords, or null if they block it, ignore the popup, or have no geolocation
 function getCoords() {
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
-      console.warn('[weather] no geolocation API, using SMU')
-      return resolve(FALLBACK)
+      console.warn('[weather] no geolocation API, staying on SMU')
+      return resolve(null)
     }
     navigator.geolocation.getCurrentPosition(
       (p) => resolve({ lat: p.coords.latitude, lon: p.coords.longitude }),
       (e) => {
-        console.warn('[weather] geolocation failed, using SMU:', e.code, e.message)
-        resolve(FALLBACK)
+        console.warn('[weather] geolocation failed, staying on SMU:', e.code, e.message)
+        resolve(null)
       },
       { timeout: 5000 },
     )
   })
 }
 
+// Server (/api/weather) calls Open-Meteo and maps the WMO code to a condition; this store just holds the result
 export const useWeatherStore = defineStore('weather', () => {
-  const code = ref(0)
+  const condition = ref('sunny') // 'sunny' | 'cloudy' | 'rainy' | 'snowy' | 'stormy'
+  const isDay = ref(true)
+  const temperature = ref(null)
+  const daily = ref([])          // [{ date, max, min, precipitation }] for 3 days
   const sunrise = ref(7 * 60)
   const sunset = ref(19 * 60)
   const nowMin = ref(12 * 60)
 
-  const condition = computed(() => toCondition(code.value))
-
-  async function load() {
-  const { lat, lon } = await getCoords()
-  try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
-      + '&current=weather_code,is_day&daily=sunrise,sunset&forecast_days=1&timezone=auto'
-    const res = await fetch(url, { cache: 'no-store' })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const { current, daily, utc_offset_seconds } = await res.json()
-
-    code.value = current.weather_code
-    sunrise.value = toMin(daily.sunrise[0])
-    sunset.value = toMin(daily.sunset[0])
-
-    // minutes since local midnight AT THAT LOCATION, accurate to the minute
-    const local = new Date(Date.now() + utc_offset_seconds * 1000)
-    nowMin.value = local.getUTCHours() * 60 + local.getUTCMinutes()
-
-    console.log('[weather] live', { lat, lon, code: code.value, condition: condition.value, nowMin: nowMin.value, sunrise: sunrise.value, sunset: sunset.value })
-  } catch (err) {
-    const d = new Date()
-    nowMin.value = d.getHours() * 60 + d.getMinutes()
-    console.warn('[weather] fetch failed, using device clock:', err)
+  async function fetchWeather({ lat, lon }) {
+    const w = await apiFetch(`/api/weather?lat=${lat}&lon=${lon}`)
+    condition.value = w.condition
+    isDay.value = w.isDay
+    temperature.value = w.temperature
+    daily.value = w.daily
+    sunrise.value = w.sunrise
+    sunset.value = w.sunset
+    nowMin.value = w.nowMin
+    console.log('[weather] live', { lat, lon, ...w })
   }
-}
 
-  return { code, condition, sunrise, sunset, nowMin, load }
+  // Show SMU weather straight away, then swap to the user's location if they allow it.
+  // Waiting on the permission popup first would leave the sky on defaults if the user never answers it.
+  async function load() {
+    const coords = getCoords() // ask now so the popup shows while SMU loads
+    try {
+      await fetchWeather(FALLBACK)
+    } catch (err) {
+      const d = new Date()
+      nowMin.value = d.getHours() * 60 + d.getMinutes()
+      console.warn('[weather] fetch failed, using device clock:', err)
+    }
+
+    const here = await coords
+    if (!here) return
+    try {
+      await fetchWeather(here)
+    } catch (err) {
+      console.warn('[weather] fetch for user location failed, staying on SMU:', err)
+    }
+  }
+
+  return { condition, isDay, temperature, daily, sunrise, sunset, nowMin, load }
 })
