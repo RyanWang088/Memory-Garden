@@ -4,7 +4,11 @@ import { useRouter } from 'vue-router'
 import { useGardenStore } from '@/stores/garden'
 import { useUiStore } from '@/stores/ui'
 import { useToastStore } from '@/stores/toast'
+import { CELL_SIZE, GRID_COLS, GRID_ROWS, GRID_WIDTH, PATH_COLOR, PATH_EDGE_COLOR, STRIPE_COLORS, STRIPE_SAMPLE_GAP, STRIPE_THICKNESS, PATH_STEP, stripeEdgeDepth, pathCenterX, pathHalfWidth, isOnPath } from '@/lib/floorLayout'
+import { createGardenCamera, SCROLL_RANGE, SHADOW_ROOM, BOTTOM_MARGIN, HALF_PI, FAR_SPREAD, FILL, PLOT_SIZE } from '@/lib/gardenCamera'
+import PlantSprite from './PlantSprite.vue'
 import Modal from './Modal.vue'
+import { useSeedDrag } from '@/composables/useSeedDrag'
 
 const garden = useGardenStore()   // garden.seeds: { id, col, row, mastery, last_reviewed }
 const ui = useUiStore()
@@ -14,56 +18,25 @@ const seedToDelete = ref(null)
 const deletingSeed = ref(false)
 const deleteError = ref('')
 
-/* ---------- constants (world px unless noted) ---------- */
-const CELL_SIZE = 100, GRID_COLS = 15, GRID_ROWS = 20
-const GRID_WIDTH = CELL_SIZE * GRID_COLS
-const SCROLL_RANGE = 1500            // vertical scroll travel
-const PLOT_SIZE = 150              
-const SHADOW_ROOM = 30               // px below a plant's base that stay visible, so its shadow isn't clipped
-const BOTTOM_MARGIN = 24             // gap between the front row and the bottom of the view
-const HALF_PI = Math.PI / 2
+const cam = createGardenCamera()
+const { camera, measure: measureCamera, updateScroll: updateCameraScroll, depthToAngle, screenX, screenY, worldToScreen, screenToCell, screenPoint } = cam
+
 // sprite size per stage (lib/plantStage.js): seed, sprout, bud, bloom, drooping, bent, fallen, stub
 const STAGE_SIZE = { 1: 0.5, 2: 0.6, 3: 0.8, 4: 1, 5: 1, 6: 0.9, 7: 0.8, 8: 0.5 }
-const stageSprite = stage => new URL(`../assets/foliage/stages/plant-stage-${stage}.svg`, import.meta.url).href
-const SEED_MIME = 'application/x-sproutly-seed'
-const EDGE_SCROLL_ZONE = 90          // dragging within this many px of the view edge auto-scrolls
+const stageById = { get: id => garden.stageOf(garden.seeds.find(s => s.id === id)) }
 
-/* ---- look & feel ---- */
-const FILL = 0.96                    // on wide screens the grid's front edge spans this share of the view
-const MIN_SCALE = 0.6                // narrower screens stop shrinking here and scroll sideways instead
-const FAR_SPREAD = 0.8               // horizontal spread at the horizon (1 = parallel columns, 0 = all meet in the middle)
-const FAR_SIZE = 0.35                // plant size at the horizon edge
-
-/* ---------- floor layout: watermelon stripes + meandering path ---------- */
-const STRIPE_COLORS = ['#97BF54', '#73C34E']
-const PATH_COLOR = '#DAB381', PATH_EDGE_COLOR = '#C8B89D'
-const STRIPE_THICKNESS = CELL_SIZE * 2, STRIPE_WOBBLE = STRIPE_THICKNESS * 0.2   // wobble < thickness / 3 so neighbouring edges never cross
-const STRIPE_SAMPLE_GAP = CELL_SIZE * 0.5, PATH_STEP = 16                        // polygon resolution
-
-const wave = (distance, wavelength, phase) => Math.sin(distance / wavelength + phase)
-
-// each stripe edge is a depth that waves along x: two out-of-sync waves => wavy but never periodic-looking
-const stripeEdgeDepth = (stripe, worldX) =>
-  stripe * STRIPE_THICKNESS + STRIPE_WOBBLE * (wave(worldX, CELL_SIZE * 7, stripe * 1.7) + 0.5 * wave(worldX, CELL_SIZE * 3, stripe * 3.1))
-const pathCenterX = depth =>
-  GRID_WIDTH / 2 + CELL_SIZE * 1.4 * (wave(depth, CELL_SIZE * 6, 0) + 0.5 * wave(depth, CELL_SIZE * 2.3, 1.3))
-const pathHalfWidth = depth =>                                            // swings between ~0.5 and ~1.6 cells
-  CELL_SIZE * (1.05 + 0.55 * (0.6 * wave(depth, CELL_SIZE * 4.1, 0.4) + 0.4 * wave(depth, CELL_SIZE * 1.7, 2.2)))
-
-const camera = { viewWidth: 400, viewHeight: 700, scale: 1, contentWidth: 400, frontY: 0, radius: 0, horizonY: 0, scrollPos: 0, panX: 0, centerX: 0 }
-const scrollerEl = ref(null), stageEl = ref(null), canvasEl = ref(null), ghostEl = ref(null)
+const scrollerEl = ref(null), stageEl = ref(null), canvasEl = ref(null), ghostRef = ref(null)
 const plantElements = new Map()
 const plantInfoElements = new Map()
 const hoveredPlantInfoId = ref(null)
-const screenPoint = {}               // reused by every projection: no per-frame allocations
-let hoverCell = null, renderQueued = false, resizeObserver
+const ghostBlocked = ref(false)
+let renderQueued = false, resizeObserver
 let scrollIdleTimer
 
 const occupiedCells = computed(() => new Set(garden.seeds.map(seed => `${seed.col},${seed.row}`)))
 const registerPlant = (id, el) => (el ? plantElements.set(id, el) : plantElements.delete(id))
 const registerPlantInfo = (id, el) => (el ? plantInfoElements.set(id, el) : plantInfoElements.delete(id))
-const isPlantInfoVisible = id =>
-  hoveredPlantInfoId.value === id || ui.selectedGardenSeedId === id
+const isPlantInfoVisible = id => hoveredPlantInfoId.value === id || ui.selectedGardenSeedId === id
 
 function onPlantPointerEnter(id) {
   hoveredPlantInfoId.value = id
@@ -73,18 +46,9 @@ function onPlantPointerLeave(id) {
   if (hoveredPlantInfoId.value === id) hoveredPlantInfoId.value = null
 }
 
-/* 1 at the front of the field, easing to `farValue` at the horizon */
-const shrinkTo = (farValue, angle) => farValue + (1 - farValue) * Math.max(0, Math.cos(angle))
-
 function measureView() {
   const { clientWidth: viewWidth, clientHeight: viewHeight } = scrollerEl.value
-  camera.viewWidth = viewWidth
-  camera.viewHeight = viewHeight
-  camera.scale = Math.max(MIN_SCALE, (viewWidth * FILL) / GRID_WIDTH)
-  camera.contentWidth = GRID_WIDTH * camera.scale + viewWidth * (1 - FILL)   // > viewWidth on phones => horizontal scroll
-  camera.frontY = viewHeight - BOTTOM_MARGIN
-  camera.radius = camera.frontY * 0.82
-  camera.horizonY = camera.frontY - camera.radius
+  measureCamera(viewWidth, viewHeight)
 
   const cssVars = {
     '--view-width': viewWidth, '--view-height': viewHeight,
@@ -96,9 +60,7 @@ function measureView() {
 
 function updateScroll() {
   const { scrollTop, scrollLeft } = scrollerEl.value
-  camera.scrollPos = Math.min(SCROLL_RANGE, Math.max(0, SCROLL_RANGE - scrollTop))   // scroll up = travel forward
-  camera.panX = scrollLeft - (camera.contentWidth - camera.viewWidth) / 2           // 0 when centred
-  camera.centerX = GRID_WIDTH / 2 + camera.panX / camera.scale                     // world x at the middle of the view
+  updateCameraScroll(scrollTop, scrollLeft)
   scrollerEl.value.classList.add('is-scrolling')
   clearTimeout(scrollIdleTimer)
   scrollIdleTimer = setTimeout(() => scrollerEl.value?.classList.remove('is-scrolling'), 120)
@@ -111,40 +73,12 @@ function requestRender() {
   requestAnimationFrame(() => { renderQueued = false; render() })
 }
 
-/* ---------- projection: world (x, depth) <-> screen ---------- */
-const depthToAngle = depth => ((depth - camera.scrollPos) * camera.scale) / camera.radius
-const screenY = angle => camera.frontY - camera.radius * Math.sin(angle)
-const screenX = (worldX, angle) =>
-  camera.viewWidth / 2 + (worldX - camera.centerX) * camera.scale * shrinkTo(FAR_SPREAD, angle)
-
-/* Writes the sprite's screen position into screenPoint. Returns false when it is fully behind the curve. */
-function worldToScreen(worldX, depth, sizeFactor) {
-  const angle = depthToAngle(depth)
-  if (angle < -0.3) return false
-  const y = screenY(angle), size = camera.scale * shrinkTo(FAR_SIZE, angle) * sizeFactor
-  const hiddenPx = angle > HALF_PI ? (y - camera.horizonY) / size : -SHADOW_ROOM   // sprite px below the horizon line
-  if (hiddenPx > PLOT_SIZE) return false
-  Object.assign(screenPoint, { x: screenX(worldX, angle), y, scale: size, clipped: hiddenPx, zIndex: 2000 - Math.round(angle * 500) })
-  return true
-}
-
-function screenToCell(pixelX, pixelY) {
-  const heightAboveFront = camera.frontY - pixelY
-  if (heightAboveFront < 0 || heightAboveFront > camera.radius * 0.97) return null
-  const angle = Math.asin(heightAboveFront / camera.radius)
-  const worldX = camera.centerX + (pixelX - camera.viewWidth / 2) / (camera.scale * shrinkTo(FAR_SPREAD, angle))
-  const depth = camera.scrollPos + (camera.radius * angle) / camera.scale
-  const col = Math.floor(worldX / CELL_SIZE), row = Math.floor(depth / CELL_SIZE)
-  return col < 0 || col >= GRID_COLS || row < 0 || row >= GRID_ROWS ? null : { col, row }
-}
-
-/* ---------- rendering ---------- */
 function render() {
   drawFloor()
   for (const seed of garden.seeds) {
     const el = plantElements.get(seed.id)
     const infoEl = plantInfoElements.get(seed.id)
-    const size = STAGE_SIZE[garden.stageOf(seed)] ?? 1
+    const size = STAGE_SIZE[stageById.get(seed.id)] ?? 1
     if (el) placeSprite(el, seed.col, seed.row, size)
     if (infoEl) placePlantInfo(infoEl, seed.col, seed.row, size)
   }
@@ -160,7 +94,7 @@ function placeSprite(el, col, row, sizeFactor) {
   el.style.setProperty('--inverse-plant-scale', String(1 / scale))
   el.style.setProperty('--plant-label-gap', `${8 / scale}px`)
   el.style.zIndex = zIndex
-  el.style.setProperty('--clipped', clipped + 'px')   // CSS clips whatever is still behind the horizon
+  el.style.setProperty('--clipped', clipped + 'px')
 }
 
 function placePlantInfo(el, col, row, sizeFactor) {
@@ -197,11 +131,11 @@ function drawFloor() {
   ctx.fillStyle = STRIPE_COLORS[0]
   ctx.fillRect(0, horizonY, viewWidth, viewHeight - horizonY)
 
-  const firstDepth = scrollPos - (BOTTOM_MARGIN * 2) / scale     // starts below the view's bottom edge: no empty strip
-  const lastDepth = scrollPos + (HALF_PI * radius) / scale       // the horizon
+  const firstDepth = scrollPos - (BOTTOM_MARGIN * 2) / scale
+  const lastDepth = scrollPos + (HALF_PI * radius) / scale
   const floorAngle = depth => Math.min(HALF_PI, depthToAngle(depth))
 
-  const fillStrip = (depth0, depth1, left0, right0, left1, right1) => {   // world-space strip -> curved quad
+  const fillStrip = (depth0, depth1, left0, right0, left1, right1) => {
     const angle0 = floorAngle(depth0), angle1 = floorAngle(depth1)
     ctx.beginPath()
     ctx.moveTo(screenX(left0, angle0), screenY(angle0))
@@ -211,9 +145,8 @@ function drawFloor() {
     ctx.fill()
   }
 
-  // stripes: horizontal bands across the field, every other one in the second colour, edges waving along x
-  const halfVisibleWidth = viewWidth / (2 * scale * FAR_SPREAD)   // world width on screen is widest at the horizon
-  const firstX = Math.floor((centerX - halfVisibleWidth) / STRIPE_SAMPLE_GAP) * STRIPE_SAMPLE_GAP   // grid-aligned: no shimmer
+  const halfVisibleWidth = viewWidth / (2 * scale * FAR_SPREAD)
+  const firstX = Math.floor((centerX - halfVisibleWidth) / STRIPE_SAMPLE_GAP) * STRIPE_SAMPLE_GAP
   const lastX = centerX + halfVisibleWidth + STRIPE_SAMPLE_GAP
   const lineToWorld = (worldX, depth) => {
     const angle = floorAngle(depth)
@@ -222,13 +155,12 @@ function drawFloor() {
   ctx.fillStyle = STRIPE_COLORS[1]
   for (let stripe = Math.floor(firstDepth / STRIPE_THICKNESS) - 1; stripe * STRIPE_THICKNESS < lastDepth; stripe++) {
     if (!(stripe & 1)) continue
-    ctx.beginPath()                                                            // one polygon per band: top edge, then bottom edge back
+    ctx.beginPath()
     for (let x = firstX; x <= lastX; x += STRIPE_SAMPLE_GAP) lineToWorld(x, stripeEdgeDepth(stripe, x))
     for (let x = lastX; x >= firstX; x -= STRIPE_SAMPLE_GAP) lineToWorld(x, stripeEdgeDepth(stripe + 1, x))
     ctx.fill()
   }
 
-  // path: darker outline pass, then the fill pass
   for (const [color, outline] of [[PATH_EDGE_COLOR, 8], [PATH_COLOR, 0]]) {
     ctx.fillStyle = color
     for (let depth = Math.floor(firstDepth / PATH_STEP) * PATH_STEP; depth < lastDepth; depth += PATH_STEP) {
@@ -240,76 +172,21 @@ function drawFloor() {
   }
 }
 
-/* ---------- interaction ---------- */
 function isBlocked(col, row) {
-  const depth = (row + 0.5) * CELL_SIZE
-  const onPath = Math.abs((col + 0.5) * CELL_SIZE - pathCenterX(depth)) < pathHalfWidth(depth) + CELL_SIZE / 2
-  return onPath || occupiedCells.value.has(`${col},${row}`)
+  return isOnPath(col, row) || occupiedCells.value.has(`${col},${row}`)
 }
 
-function cellFromEvent(e) {
-  const stage = stageEl.value.getBoundingClientRect()
-  return screenToCell(e.clientX - stage.left, e.clientY - stage.top)
-}
-
-function cellAtPointer(e) {
-  const rect = stageEl.value.getBoundingClientRect()
-  if (e.clientX < rect.left || e.clientX >= rect.right || e.clientY < rect.top || e.clientY >= rect.bottom) return null
-  return cellFromEvent(e)
-}
-
-function dropAt(e) {
-  const cell = cellAtPointer(e)
-  clearGhost()
-  ui.seedPicked = false
-  ui.seedDragPointerId = null
-  if (!cell || isBlocked(cell.col, cell.row)) return
-  router.push({ name: 'seed-create', params: { col: cell.col, row: cell.row } })
-}
-
-function onDragOver(e) {
-  if (!e.dataTransfer.types.includes(SEED_MIME)) return
-  e.preventDefault()
-  e.dataTransfer.dropEffect = 'copy'
-  const view = scrollerEl.value.getBoundingClientRect()          // edge auto-scroll: reach the back / pan sideways
-  if (e.clientY - view.top < EDGE_SCROLL_ZONE) scrollerEl.value.scrollTop -= 14
-  scrollerEl.value.scrollLeft += 14 * ((e.clientX > view.right - EDGE_SCROLL_ZONE) - (e.clientX < view.left + EDGE_SCROLL_ZONE))
-  hoverCell = cellFromEvent(e)
-  requestRender()
-}
-function onDragLeave(e) { if (!stageEl.value.contains(e.relatedTarget)) clearGhost() }
-function clearGhost() { hoverCell = null; requestRender() }
-
-function updateGhost() {
-  const ghost = ghostEl.value
-  if (!hoverCell) { ghost.style.display = 'none'; return }
-  placeSprite(ghost, hoverCell.col, hoverCell.row, 1)
-  ghost.classList.toggle('blocked', isBlocked(hoverCell.col, hoverCell.row))
-}
-
-function onDrop(e) {
-  const rawSeed = e.dataTransfer.getData(SEED_MIME)
-  if (rawSeed) dropAt(e)
-}
-
-function onPointerMove(e) {
-  if (e.pointerId !== ui.seedDragPointerId) return
-  e.preventDefault()
-  hoverCell = cellAtPointer(e)
-  requestRender()
-}
-
-function onPointerUp(e) {
-  if (e.pointerId !== ui.seedDragPointerId) return
-  dropAt(e)
-}
-
-function onPointerCancel(e) {
-  if (e.pointerId !== ui.seedDragPointerId) return
-  clearGhost()
-  ui.seedPicked = false
-  ui.seedDragPointerId = null
-}
+const seedDrag = useSeedDrag({
+  scrollerEl,
+  stageEl,
+  ghostRef,
+  ghostBlocked,
+  screenToCell,
+  isBlocked,
+  placeSprite,
+  requestRender,
+})
+const { updateGhost, onDragOver, onDragLeave, onDrop } = seedDrag
 
 function onPlantClick(seed, event) {
   if (event && !event.target.closest('.sprite')) return
@@ -347,27 +224,20 @@ async function confirmDelete() {
   }
 }
 
-/* ---------- lifecycle ---------- */
 watch(() => garden.seeds, requestRender, { deep: true, flush: 'post' })
 watch(() => ui.selectedGardenSeedId, scrollToSeed, { flush: 'post' })
 onMounted(() => {
   resizeObserver = new ResizeObserver(measureView)
   resizeObserver.observe(scrollerEl.value)
-  window.addEventListener('pointermove', onPointerMove, { passive: false })
-  window.addEventListener('pointerup', onPointerUp)
-  window.addEventListener('pointercancel', onPointerCancel)
   measureView()
-  scrollerEl.value.scrollTop = SCROLL_RANGE                                        // start at the front edge
-  scrollerEl.value.scrollLeft = (camera.contentWidth - camera.viewWidth) / 2      // start centred
+  scrollerEl.value.scrollTop = SCROLL_RANGE
+  scrollerEl.value.scrollLeft = (camera.contentWidth - camera.viewWidth) / 2
   updateScroll()
-  render()                                                                         // draw now: no empty first frame
+  render()
 })
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()
   clearTimeout(scrollIdleTimer)
-  window.removeEventListener('pointermove', onPointerMove)
-  window.removeEventListener('pointerup', onPointerUp)
-  window.removeEventListener('pointercancel', onPointerCancel)
 })
 </script>
 
@@ -383,26 +253,21 @@ onBeforeUnmount(() => {
         @drop.prevent="onDrop"
       >
         <canvas ref="canvasEl"></canvas>
-        <div
+
+        <PlantSprite
           v-for="seed in garden.seeds"
           :key="seed.id"
           :id="seed.id"
-          :ref="el => registerPlant(seed.id, el)"
-          class="plant"
+          :ref="c => registerPlant(seed.id, c?.$el)"
+          :stage="stageById.get(seed.id)"
+          :wilting="garden.isWilted(seed)"
           :class="{ 'is-highlighted': ui.selectedGardenSeedId === seed.id }"
-          :data-stage="garden.stageOf(seed)"
-          :data-wilting="garden.isWilted(seed) || undefined"
-          role="button"
-          tabindex="0"
-          :aria-label="`Open ${seed.title}`"
+          role="button" tabindex="0" :aria-label="`Open ${seed.title}`"
           @pointerenter="onPlantPointerEnter(seed.id)"
           @pointerleave="onPlantPointerLeave(seed.id)"
           @click="onPlantClick(seed, $event)"
           @keydown.enter.space.prevent="onPlantClick(seed)"
-        >
-          <div class="shadow"></div>
-          <img class="sprite" :src="stageSprite(garden.stageOf(seed))" alt="" draggable="false" />
-        </div>
+        />
 
         <div
           v-for="seed in garden.seeds"
@@ -415,9 +280,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div ref="ghostEl" class="plant ghost">
-          <img class="sprite" src="../assets/foliage/tulip.svg" alt="" draggable="false" />
-        </div>
+        <PlantSprite ref="ghostRef" ghost :blocked="ghostBlocked" />
       </div>
     </div>
   </div>
@@ -438,41 +301,6 @@ onBeforeUnmount(() => {
 .track { width: var(--content-width); height: calc(var(--view-height) + var(--scroll-range)); }
 .stage { position: sticky; top: 0; left: 0; width: var(--view-width); height: var(--view-height); overflow: hidden; user-select: none; }
 canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-
-/* the wrapper is a 0x0 box at the plant's base; clip-path hides whatever is still behind the horizon
-   (--clipped = sprite px below the horizon line; negative leaves room for the shadow) */
-.plant {
-  position: absolute; left: 0; top: 0; width: 0; height: 0; display: none; will-change: transform;
-  clip-path: inset(-1000px -1000px var(--clipped, 0px) -1000px);
-}
-.plant::before {
-  position: absolute; bottom: -40px; left: -130px; width: 300px; height: 300px;
-  content: ''; cursor: pointer; pointer-events: auto;
-}
-@keyframes plantSway {
-  0% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(3deg);
-  }
-  75% {
-    transform: rotate(-3deg);
-  }
-  100% {
-    transform: rotate(0deg);
-  }
-}
-.sprite {
-  position: absolute; left: calc(var(--sprite-size) / -2); bottom: 0; width: var(--sprite-size); height: var(--sprite-size);
-  transform-origin: 50% 100%; cursor: pointer; transition: filter .3s, transform .3s;
-  animation: plantSway 4s ease-in-out infinite;
-}
-.scroller.is-scrolling .sprite { animation-play-state: paused; }
-.shadow {
-  position: absolute; left: calc(var(--sprite-size) / -4.5); bottom: -6px;
-  width: calc(var(--sprite-size) / 2.2); height: calc(var(--sprite-size) / 8); border-radius: 50%; background: var(--shadow);
-}
 .plant-info {
   position: absolute; top: 0; left: 0; pointer-events: none;
 }
@@ -492,12 +320,4 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   border-right: 8px solid transparent; border-left: 8px solid transparent;
   content: ''; transform: translateX(-50%);
 }
-
-/* a wilting sprout keeps the stage 2 sprite with brown leaves */
-.plant[data-stage="2"][data-wilting] .sprite { filter: sepia(.8) saturate(.7); }
-.ghost { pointer-events: none; z-index: 9000 !important; }   /* translucent pending plant when dragging across canvasadd */
-.ghost::before { pointer-events: none; }
-.ghost .sprite { opacity: .6; }
-.ghost.blocked .sprite { filter: grayscale(1) sepia(1) hue-rotate(-40deg) saturate(4); }
-
 </style>

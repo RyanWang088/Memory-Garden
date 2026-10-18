@@ -2,11 +2,10 @@
 const BASE_URL = 'https://api.open-meteo.com/v1/forecast'
 const CACHE_MS = 10 * 60 * 1000 // Open-Meteo refreshes "current" every 15 min, so 10 min is fresh enough
 
-// WMO code -> 'sunny' | 'cloudy' | 'rainy' | 'snowy' | 'stormy' (table from the Ideas Document)
+// WMO code -> 'sunny' | 'cloudy' | 'rainy' | 'stormy'  snow omitted due to time constraint
 export function toCondition(code) {
   if (code <= 1) return 'sunny'                          // 0 clear, 1 mainly clear
   if (code <= 3 || code === 45 || code === 48) return 'cloudy' // 2 partly cloudy, 3 overcast, 45/48 fog
-  if ([71, 73, 75, 77, 85, 86].includes(code)) return 'snowy'
   if (code >= 95) return 'stormy'                       // 95 thunderstorm, 96/99 with hail
   return 'rainy'                                         // 51-57 drizzle, 61-67 rain, 80-82 showers
 }

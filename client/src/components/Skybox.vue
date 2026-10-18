@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
-import { useSky } from '@/lib/sky.js'
+import { useSky } from '@/composables/useSky'
 import { useWeatherStore } from '@/stores/weather'
 const weather = useWeatherStore()
 const { phase, bodyStyle, condition } = useSky()
@@ -35,28 +35,13 @@ onMounted(async () => { await nextTick(); requestAnimationFrame(() => (ready.val
   </div>
   <Teleport to="#sky-front" defer>
     <div class="front" :data-phase="ready ? phase : 'night'" :data-weather="condition">
-      <div class="field-snow"></div>
       <div class="field-tint"></div>
-      <div class="field-wx"></div>
       <div class="rain">
         <i
           v-for="n in 40"
           :key="n"
           :class="{ extra: n > 24 }"
-          :style="{ left: `${(n * 37) % 100}%`, animationDelay: `${(n % 7) * -0.2}s` }"
-        ></i>
-      </div>
-      <div class="snow">
-        <i
-          v-for="n in 30"
-          :key="n"
-          :style="{
-            left: `${(n * 29) % 100}%`,
-            width: `${4 + (n % 3) * 2}px`,
-            height: `${4 + (n % 3) * 2}px`,
-            animationDuration: `${6 + (n % 4)}s, ${2.5 + (n % 3) * 0.5}s`,
-            animationDelay: `${(n % 10) * -0.8}s, ${(n % 5) * -0.6}s`,
-          }"
+          :style="{ left: `${(n * 37) % 100}%`, animationDelay: `${(n % 7) * -0.2}s`           }"
         ></i>
       </div>
     </div>
@@ -70,14 +55,13 @@ onMounted(async () => { await nextTick(); requestAnimationFrame(() => (ready.val
       </label>
       <span>{{ Math.floor(weather.nowMin / 60) }}:{{ String(weather.nowMin % 60).padStart(2, '0') }} · {{ phase }}</span>
       <select v-model="weather.condition" aria-label="Weather">
-        <option v-for="c in ['sunny', 'cloudy', 'rainy', 'snowy', 'stormy']" :key="c" :value="c">{{ c }}</option>
+        <option v-for="c in ['sunny', 'cloudy', 'rainy', 'stormy']" :key="c" :value="c">{{ c }}</option>
       </select>
     </div>
   </Teleport>
 </template>
 
 <style scoped>
-/* Registering these lets the browser interpolate colors. 'transparent' is just the required literal fallback. */
 @property --sky-top { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --sky-bot { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --ground  { syntax: '<color>'; inherits: true; initial-value: transparent; }
@@ -92,7 +76,7 @@ onMounted(async () => { await nextTick(); requestAnimationFrame(() => (ready.val
   background: linear-gradient(
     var(--sky-top) 0%,
     var(--sky-bot) 50%,
-    var(--ground) 50%
+    var(--ground) 51%
   );
   transition: --sky-top 6s ease, --sky-bot 6s ease, --ground 6s ease,
               --body 6s ease, --glow 6s ease, --cloud 6s ease, --veil 6s ease;
@@ -116,8 +100,8 @@ onMounted(async () => { await nextTick(); requestAnimationFrame(() => (ready.val
 
 /* ---- PHASES: palette vars only ---- */
 .sky[data-phase='day'] {
-  --sky-top: #6EC1EE; --sky-bot: #CFEFFC; --ground: var(--mint);
-  --body: var(--cream); --glow: var(--linen); --cloud: var(--paper);
+  --sky-top:color-mix(#6EC1EE,var(--periwinkle)) ; --sky-bot: #CFEFFC; --ground: var(--mint);
+  --body: var(--cream); --glow: var(--paper); --cloud: var(--paper);
   --glow-o: .0; --star-o: 0; --body-scale: 1;
 }
 .sky[data-phase='dawn'] {
@@ -138,13 +122,12 @@ onMounted(async () => { await nextTick(); requestAnimationFrame(() => (ready.val
   --glow-o: .25; --star-o: 1; --body-scale: .8;
 }
 
-/* ---- WEATHER: five numbers (+ veil color: grey for gloom, white for snow) ---- */
+/* ---- WEATHER ---- */
 .sky { --veil: var(--bark-muted); }
 .sky[data-weather='sunny']  { --veil-o: 0;   --cloud-o: .35; --clear: 1;  --rain-o: 0; }
 .sky[data-weather='cloudy'] { --veil-o: .2;  --cloud-o: .9;  --clear: .3; --rain-o: 0; }
 .sky[data-weather='rainy']  { --veil-o: .5;  --cloud-o: 1;   --clear: 0;  --rain-o: 1; }
-.sky[data-weather='stormy'] { --veil-o: .65; --cloud-o: 1;   --clear: 0;  --rain-o: 1; }
-.sky[data-weather='snowy']  { --veil-o: .3;  --cloud-o: .9;  --clear: .2; --rain-o: 0; --veil: var(--paper); } /* pale, not gloomy */
+.sky[data-weather='stormy'] { --veil-o: .65; --cloud-o: 1;  --clear: 0;  --rain-o: 1; }
 
 /* ---- LAYERS ---- */
 .glow {
@@ -215,38 +198,21 @@ onMounted(async () => { await nextTick(); requestAnimationFrame(() => (ready.val
 .front[data-phase='dusk']  { --tint: #EF95B7; --tint-o: .3; }
 .front[data-phase='night'] { --tint: #1C2355; --tint-o: .5; }
 
-/* weather: extra grey wash, rain/snow on/off */
-.front[data-weather='sunny']  { --wx-o: 0;   --rain-o: 0; --snow-o: 0; }
-.front[data-weather='cloudy'] { --wx-o: .1;  --rain-o: 0; --snow-o: 0; }
-.front[data-weather='rainy']  { --wx-o: .22; --rain-o: 1; --snow-o: 0; }
-.front[data-weather='stormy'] { --wx-o: .3;  --rain-o: 1; --snow-o: 0; }
-.front[data-weather='snowy']  { --wx-o: 0;   --rain-o: 0; --snow-o: 1; }
-
-/* snow cover on the field; sits under .field-tint so night still darkens it */
-.field-snow {
-  position: absolute; left: 0; right: 0; bottom: 0;
-  top: 50%;
-  background: var(--paper);
-  opacity: calc(var(--snow-o) * .55);
-  transition: opacity 6s ease;
-}
-
 .field-tint {
   position: absolute; left: 0; right: 0; bottom: 0;
   top: 50%;                      /* = HORIZON from Step 0; tints the field only */
-  background: var(--tint);
-  opacity: var(--tint-o);
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--tint) 20%
+  );  opacity: var(--tint-o);
   transition: opacity 6s ease;
 }
-/* weather wash is a sibling, not a child of .field-tint: a parent's opacity multiplies its children,
-   so as ::after it vanished by day (tint-o 0) and was weakened at every other phase */
-.field-wx {
-  position: absolute; left: 0; right: 0; bottom: 0;
-  top: 50%;
-  background: var(--bark-muted);
-  opacity: var(--wx-o);
-  transition: opacity 6s ease;
-}
+/* weather: rain on/off */
+.front[data-weather='sunny'],
+.front[data-weather='cloudy'] { --rain-o: 0; }
+.front[data-weather='rainy'],
+.front[data-weather='stormy'] { --rain-o: 1; }
 
 /* rain spans the full front layer so it also falls through the lower sky */
 .rain { position: absolute; inset: 0; opacity: var(--rain-o); transition: opacity 3s ease; }
@@ -268,22 +234,8 @@ onMounted(async () => { await nextTick(); requestAnimationFrame(() => (ready.val
   to   { transform: translate(-30vh, 110vh) rotate(15deg); }  /* tan(15deg) * 110vh ~ 30vh, so the streak moves along its own slant */
 }
 
-/* snow: same idea as rain, but round, slower, and swaying sideways.
-   fall moves `transform`, sway moves `translate`, so the two animations stack instead of fighting */
-.snow { position: absolute; inset: 0; opacity: var(--snow-o); transition: opacity 3s ease; }
-.snow i {
-  position: absolute; top: -5%;
-  border-radius: 50%; background: var(--paper); opacity: .9;
-  animation-name: fall, sway;
-  animation-timing-function: linear, ease-in-out;
-  animation-iteration-count: infinite;
-  animation-direction: normal, alternate;
-}
-.front:not([data-weather='snowy']) .snow i { animation-play-state: paused; }  /* no cost when not snowing */
-@keyframes sway { from { translate: -12px 0; } to { translate: 12px 0; } }
-
 @media (prefers-reduced-motion: reduce) {
-  .clouds, .stars, .rain i, .snow i, .lightning { animation: none !important; }  /* flashing is also an accessibility risk */
+  .clouds, .stars, .rain i, .lightning { animation: none !important; }  /* flashing is also an accessibility risk */
   .sky, .sky *, .front, .front * { transition-duration: .01s !important; }
 }
 </style>

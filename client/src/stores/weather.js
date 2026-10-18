@@ -24,7 +24,7 @@ function getCoords() {
 
 // Server (/api/weather) calls Open-Meteo and maps the WMO code to a condition; this store just holds the result
 export const useWeatherStore = defineStore('weather', () => {
-  const condition = ref('sunny') // 'sunny' | 'cloudy' | 'rainy' | 'snowy' | 'stormy'
+  const condition = ref('sunny') // 'sunny' | 'cloudy' | 'rainy' | 'stormy'
   const isDay = ref(true)
   const temperature = ref(null)
   const daily = ref([])          // [{ date, max, min, precipitation }] for 3 days
