@@ -1,7 +1,11 @@
 <script setup>
-defineProps({ stage: Number, wilting: Boolean, ghost: Boolean, blocked: Boolean })
-const sprite = s => new URL(`../assets/foliage/stages/plant-stage-${s}.svg`, import.meta.url).href
-const ghostSprite = new URL('../assets/foliage/tulip.svg', import.meta.url).href
+defineProps(['stage', 'flower', 'wilting', 'ghost', 'blocked'])
+const sprites = import.meta.glob('../assets/foliage/*.svg', { eager: true, query: '?url', import: 'default' })
+const sprite = (stage, flower) => {
+  const name = stage === 1 ? 'seed' : stage === 2 ? 'sprout' : `${flower || 'tulip'}-${stage}`
+  return sprites[`../assets/foliage/${name}.svg`]
+}
+const ghostSprite = sprites['../assets/foliage/seed.svg']
 </script>
 
 <template>
@@ -13,7 +17,7 @@ const ghostSprite = new URL('../assets/foliage/tulip.svg', import.meta.url).href
     data-testid="plant"
   >
     <div class="shadow"></div>
-    <img class="sprite" :src="ghost ? ghostSprite : sprite(stage)" alt="" draggable="false" />
+    <img class="sprite" :src="ghost ? ghostSprite : sprite(stage, flower || 'tulip')" alt="" draggable="false" />
   </div>
 </template>
 
@@ -41,14 +45,14 @@ const ghostSprite = new URL('../assets/foliage/tulip.svg', import.meta.url).href
   }
 }
 .sprite {
-  position: absolute; left: calc(var(--sprite-size) / -2); bottom: 0; width: var(--sprite-size); height: var(--sprite-size);
+  position: absolute; left: -75px; bottom: 0; width: 150px; height: 150px;
   transform-origin: 50% 100%; cursor: pointer; transition: filter .3s, transform .3s;
   animation: plantSway 4s ease-in-out infinite;
 }
 :global(.is-scrolling) .sprite { animation-play-state: paused; }
 .shadow {
-  position: absolute; left: calc(var(--sprite-size) / -4.5); bottom: -6px;
-  width: calc(var(--sprite-size) / 2.2); height: calc(var(--sprite-size) / 8); border-radius: 50%; background: var(--shadow);
+  position: absolute; left: -33.33px; bottom: -6px;
+  width: 68.18px; height: 18.75px; border-radius: 50%; background: var(--shadow);
 }
 .plant[data-stage="2"][data-wilting] .sprite { filter: sepia(.8) saturate(.7); }
 .ghost { pointer-events: none; z-index: 9000 !important; }

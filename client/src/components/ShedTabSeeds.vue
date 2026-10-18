@@ -4,7 +4,7 @@ import { useUiStore } from '@/stores/ui'
 import { useFlowerStore } from '@/stores/flower'
 import { useToastStore } from '@/stores/toast'
 import { tagStyle } from '@/lib/tagColors'
-import tulipSvg from '@/assets/foliage/tulip.svg'
+import tulipSvg from '@/assets/foliage/tulip-4.svg'
 
 const ui = useUiStore()
 const flower = useFlowerStore()

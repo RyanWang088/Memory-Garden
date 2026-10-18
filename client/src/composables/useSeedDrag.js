@@ -52,7 +52,7 @@ export function useSeedDrag({ scrollerEl, stageEl, ghostRef, ghostBlocked, scree
       ghostBlocked.value = false
       return
     }
-    placeSprite(ghost, hoverCell.col, hoverCell.row, 1)
+    placeSprite(ghost, hoverCell.col, hoverCell.row)
     ghostBlocked.value = isBlocked(hoverCell.col, hoverCell.row)
   }
 

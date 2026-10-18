@@ -4,8 +4,11 @@ import { useRouter } from 'vue-router'
 import { useGardenStore } from '@/stores/garden'
 import { useUiStore } from '@/stores/ui'
 import { useToastStore } from '@/stores/toast'
-import { CELL_SIZE, GRID_COLS, GRID_ROWS, GRID_WIDTH, PATH_COLOR, PATH_EDGE_COLOR, STRIPE_COLORS, STRIPE_SAMPLE_GAP, STRIPE_THICKNESS, PATH_STEP, stripeEdgeDepth, pathCenterX, pathHalfWidth, isOnPath } from '@/lib/floorLayout'
-import { createGardenCamera, SCROLL_RANGE, SHADOW_ROOM, BOTTOM_MARGIN, HALF_PI, FAR_SPREAD, FILL, PLOT_SIZE } from '@/lib/gardenCamera'
+import { CELL_SIZE, isOnPath } from '@/lib/floorLayout'
+import { createGardenCamera, SCROLL_RANGE } from '@/lib/gardenCamera'
+import { drawMeadow } from '@/lib/meadowRenderer'
+import { loadBackdrop } from '@/lib/meadowBackdrop'
+import { loadLogSprite } from '@/lib/logSprite'
 import PlantSprite from './PlantSprite.vue'
 import Modal from './Modal.vue'
 import { useSeedDrag } from '@/composables/useSeedDrag'
@@ -19,10 +22,8 @@ const deletingSeed = ref(false)
 const deleteError = ref('')
 
 const cam = createGardenCamera()
-const { camera, measure: measureCamera, updateScroll: updateCameraScroll, depthToAngle, screenX, screenY, worldToScreen, screenToCell, screenPoint } = cam
+const { camera, measure: measureCamera, updateScroll: updateCameraScroll, worldToScreen, screenToCell, screenPoint } = cam
 
-// sprite size per stage (lib/plantStage.js): seed, sprout, bud, bloom, drooping, bent, fallen, stub
-const STAGE_SIZE = { 1: 0.5, 2: 0.6, 3: 0.8, 4: 1, 5: 1, 6: 0.9, 7: 0.8, 8: 0.5 }
 const stageById = { get: id => garden.stageOf(garden.seeds.find(s => s.id === id)) }
 
 const scrollerEl = ref(null), stageEl = ref(null), canvasEl = ref(null), ghostRef = ref(null)
@@ -32,6 +33,9 @@ const hoveredPlantInfoId = ref(null)
 const ghostBlocked = ref(false)
 let renderQueued = false, resizeObserver
 let scrollIdleTimer
+
+// meadow art: backdrop is a stub (see lib/meadowBackdrop.js), the log is an SVG sprite
+const meadowAssets = { backdrop: loadBackdrop(() => requestRender()), logImg: loadLogSprite(() => requestRender()) }
 
 const occupiedCells = computed(() => new Set(garden.seeds.map(seed => `${seed.col},${seed.row}`)))
 const registerPlant = (id, el) => (el ? plantElements.set(id, el) : plantElements.delete(id))
@@ -52,7 +56,7 @@ function measureView() {
 
   const cssVars = {
     '--view-width': viewWidth, '--view-height': viewHeight,
-    '--content-width': camera.contentWidth, '--scroll-range': SCROLL_RANGE, '--sprite-size': PLOT_SIZE,
+    '--content-width': camera.contentWidth, '--scroll-range': SCROLL_RANGE,
   }
   for (const [name, px] of Object.entries(cssVars)) scrollerEl.value.style.setProperty(name, px + 'px')
   updateScroll()
@@ -78,15 +82,14 @@ function render() {
   for (const seed of garden.seeds) {
     const el = plantElements.get(seed.id)
     const infoEl = plantInfoElements.get(seed.id)
-    const size = STAGE_SIZE[stageById.get(seed.id)] ?? 1
-    if (el) placeSprite(el, seed.col, seed.row, size)
-    if (infoEl) placePlantInfo(infoEl, seed.col, seed.row, size)
+    if (el) placeSprite(el, seed.col, seed.row)
+    if (infoEl) placePlantInfo(infoEl, seed.col, seed.row)
   }
   updateGhost()
 }
 
-function placeSprite(el, col, row, sizeFactor) {
-  const visible = worldToScreen((col + 0.5) * CELL_SIZE, (row + 0.5) * CELL_SIZE, sizeFactor)
+function placeSprite(el, col, row) {
+  const visible = worldToScreen((col + 0.5) * CELL_SIZE, (row + 0.5) * CELL_SIZE)
   el.style.display = visible ? 'block' : 'none'
   if (!visible) return
   const { x, y, scale, clipped, zIndex } = screenPoint
@@ -97,8 +100,8 @@ function placeSprite(el, col, row, sizeFactor) {
   el.style.setProperty('--clipped', clipped + 'px')
 }
 
-function placePlantInfo(el, col, row, sizeFactor) {
-  const visible = worldToScreen((col + 0.5) * CELL_SIZE, (row + 0.5) * CELL_SIZE, sizeFactor)
+function placePlantInfo(el, col, row) {
+  const visible = worldToScreen((col + 0.5) * CELL_SIZE, (row + 0.5) * CELL_SIZE)
   el.style.display = visible ? 'flex' : 'none'
   if (!visible) return
   const { x, y } = screenPoint
@@ -119,7 +122,9 @@ function scrollToSeed(seedId) {
 }
 
 function drawFloor() {
-  const canvas = canvasEl.value, { viewWidth, viewHeight, radius, horizonY, scale, scrollPos, centerX } = camera
+  const canvas = canvasEl.value
+  if (!canvas) return
+  const { viewWidth, viewHeight } = camera
   const pixelRatio = Math.min(window.devicePixelRatio || 1, 2)
   if (canvas.width !== viewWidth * pixelRatio || canvas.height !== viewHeight * pixelRatio) {
     canvas.width = viewWidth * pixelRatio
@@ -128,48 +133,7 @@ function drawFloor() {
   const ctx = canvas.getContext('2d')
   ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
   ctx.clearRect(0, 0, viewWidth, viewHeight)
-  ctx.fillStyle = STRIPE_COLORS[0]
-  ctx.fillRect(0, horizonY, viewWidth, viewHeight - horizonY)
-
-  const firstDepth = scrollPos - (BOTTOM_MARGIN * 2) / scale
-  const lastDepth = scrollPos + (HALF_PI * radius) / scale
-  const floorAngle = depth => Math.min(HALF_PI, depthToAngle(depth))
-
-  const fillStrip = (depth0, depth1, left0, right0, left1, right1) => {
-    const angle0 = floorAngle(depth0), angle1 = floorAngle(depth1)
-    ctx.beginPath()
-    ctx.moveTo(screenX(left0, angle0), screenY(angle0))
-    ctx.lineTo(screenX(right0, angle0), screenY(angle0))
-    ctx.lineTo(screenX(right1, angle1), screenY(angle1))
-    ctx.lineTo(screenX(left1, angle1), screenY(angle1))
-    ctx.fill()
-  }
-
-  const halfVisibleWidth = viewWidth / (2 * scale * FAR_SPREAD)
-  const firstX = Math.floor((centerX - halfVisibleWidth) / STRIPE_SAMPLE_GAP) * STRIPE_SAMPLE_GAP
-  const lastX = centerX + halfVisibleWidth + STRIPE_SAMPLE_GAP
-  const lineToWorld = (worldX, depth) => {
-    const angle = floorAngle(depth)
-    ctx.lineTo(screenX(worldX, angle), screenY(angle))
-  }
-  ctx.fillStyle = STRIPE_COLORS[1]
-  for (let stripe = Math.floor(firstDepth / STRIPE_THICKNESS) - 1; stripe * STRIPE_THICKNESS < lastDepth; stripe++) {
-    if (!(stripe & 1)) continue
-    ctx.beginPath()
-    for (let x = firstX; x <= lastX; x += STRIPE_SAMPLE_GAP) lineToWorld(x, stripeEdgeDepth(stripe, x))
-    for (let x = lastX; x >= firstX; x -= STRIPE_SAMPLE_GAP) lineToWorld(x, stripeEdgeDepth(stripe + 1, x))
-    ctx.fill()
-  }
-
-  for (const [color, outline] of [[PATH_EDGE_COLOR, 8], [PATH_COLOR, 0]]) {
-    ctx.fillStyle = color
-    for (let depth = Math.floor(firstDepth / PATH_STEP) * PATH_STEP; depth < lastDepth; depth += PATH_STEP) {
-      const nextDepth = depth + PATH_STEP + 1
-      const center0 = pathCenterX(depth), center1 = pathCenterX(nextDepth)
-      const half0 = pathHalfWidth(depth) + outline, half1 = pathHalfWidth(nextDepth) + outline
-      fillStrip(depth, nextDepth, center0 - half0, center0 + half0, center1 - half1, center1 + half1)
-    }
-  }
+  drawMeadow(ctx, cam, meadowAssets)
 }
 
 function isBlocked(col, row) {
@@ -260,6 +224,7 @@ onBeforeUnmount(() => {
           :id="seed.id"
           :ref="c => registerPlant(seed.id, c?.$el)"
           :stage="stageById.get(seed.id)"
+          :flower="seed.flower"
           :wilting="garden.isWilted(seed)"
           :class="{ 'is-highlighted': ui.selectedGardenSeedId === seed.id }"
           role="button" tabindex="0" :aria-label="`Open ${seed.title}`"

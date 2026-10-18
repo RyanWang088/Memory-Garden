@@ -40,7 +40,7 @@ const nextReview = computed(() => {
 })
 
 const flowerImage = computed(() =>
-  new URL(`../assets/foliage/${props.seed.flower || 'tulip'}.svg`, import.meta.url).href
+  new URL(`../assets/foliage/${props.seed.flower || 'tulip'}-4.svg`, import.meta.url).href
 )
 </script>
 

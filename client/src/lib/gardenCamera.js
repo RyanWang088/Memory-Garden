@@ -1,10 +1,7 @@
-import {
-  CELL_SIZE, GRID_COLS, GRID_ROWS, GRID_WIDTH,
-  STRIPE_THICKNESS, STRIPE_WOBBLE, STRIPE_SAMPLE_GAP, PATH_STEP,
-} from './floorLayout.js'
+import { CELL_SIZE, GRID_COLS, GRID_ROWS, GRID_WIDTH } from './floorLayout.js'
 
 export const SCROLL_RANGE = 1500
-export const PLOT_SIZE = 150
+export const PLANT_CANVAS_SIZE = 150
 export const SHADOW_ROOM = 30
 export const BOTTOM_MARGIN = 24
 export const HALF_PI = Math.PI / 2
@@ -24,13 +21,13 @@ export function createGardenCamera() {
   const screenX = (worldX, angle) =>
     camera.viewWidth / 2 + (worldX - camera.centerX) * camera.scale * shrinkTo(FAR_SPREAD, angle)
 
-  const worldToScreen = (worldX, depth, sizeFactor) => {
+  const worldToScreen = (worldX, depth) => {
     const angle = depthToAngle(depth)
     if (angle < -0.3) return false
-    const y = screenY(angle), size = camera.scale * shrinkTo(FAR_SIZE, angle) * sizeFactor
-    const hiddenPx = angle > HALF_PI ? (y - camera.horizonY) / size : -SHADOW_ROOM
-    if (hiddenPx > PLOT_SIZE) return false
-    Object.assign(screenPoint, { x: screenX(worldX, angle), y, scale: size, clipped: hiddenPx, zIndex: 2000 - Math.round(angle * 500) })
+    const y = screenY(angle), scale = camera.scale * shrinkTo(FAR_SIZE, angle)
+    const hiddenPx = angle > HALF_PI ? (y - camera.horizonY) / scale : -SHADOW_ROOM
+    if (hiddenPx > PLANT_CANVAS_SIZE) return false
+    Object.assign(screenPoint, { x: screenX(worldX, angle), y, scale, clipped: hiddenPx, zIndex: 2000 - Math.round(angle * 500) })
     return true
   }
 
