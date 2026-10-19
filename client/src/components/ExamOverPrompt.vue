@@ -21,8 +21,8 @@ const canMove = computed(() => props.exam.shelf_slot !== null || props.freeSlots
   <section class="exam-over" role="dialog" aria-labelledby="exam-over-title" data-testid="exam-over">
     <h3 id="exam-over-title" class="m-0">{{ exam.name }} is over</h3>
     <p class="text-body-small m-0">
-      Move it to your flower house as a keepsake? Its {{ plantCount }} {{ plantCount === 1 ? 'plant' : 'plants' }}
-      will leave the garden and stop asking for reviews.
+      Where should its {{ plantCount }} {{ plantCount === 1 ? 'bloom' : 'blooms' }} live? In the house they become
+      keepsakes and stop asking for reviews.
     </p>
     <p v-if="!canMove" class="text-body-small m-0" data-testid="exam-over-full">
       Your shelves are full. Unlock more space on your <RouterLink :to="{ name: 'profile' }">profile</RouterLink>.
