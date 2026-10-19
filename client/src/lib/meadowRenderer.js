@@ -1,6 +1,6 @@
 import {
   GRID_WIDTH, HILL_GAP, HILL_SAMPLE_GAP, RIM_COLOR, PATH_COLOR, PATH_EDGE_COLOR, PATH_STEP, PATH_EDGE_WIDTH,
-  PROPS,
+  PROPS, STONES, STONE_SHADOW_COLOR,
   fogColor, hillEdgeDepth, pathCenterX, pathHalfWidth,
 } from './floorLayout.js'
 import { HALF_PI, BOTTOM_MARGIN, FAR_SPREAD, FAR_SIZE } from './gardenCamera.js'
@@ -8,25 +8,36 @@ import { drawLog } from './logSprite.js'
 
 const TAU = Math.PI * 2
 
-// Draws the whole meadow. The caller has already set the DPR transform and cleared the canvas.
+// The meadow is drawn on two canvases. The caller has already set the DPR transform and cleared each one.
 //   cam    = createGardenCamera() result
 //   assets = { logImg: Image|null }
-export function drawMeadow(ctx, cam, assets = {}) {
+
+// depths on screen, from just below the front edge to the horizon
+function visibleDepths(camera) {
+  const { radius, scale, scrollPos } = camera
+  return { firstDepth: scrollPos - (BOTTOM_MARGIN * 2) / scale, lastDepth: scrollPos + (HALF_PI * radius) / scale }
+}
+
+// Ground: hills, path and cobblestones. Changes only when the camera moves.
+export function drawGround(ctx, cam) {
   const { camera, depthToAngle } = cam
-  const { viewWidth, viewHeight, radius, horizonY, frontY, scale, scrollPos, centerX } = camera
-  const span = frontY - horizonY
+  const { viewWidth, viewHeight, horizonY, frontY } = camera
   const floorAngle = depth => Math.min(HALF_PI, depthToAngle(depth))
+  const { firstDepth, lastDepth } = visibleDepths(camera)
 
   // far-distance base colour: the pale end of the ramp
   ctx.fillStyle = fogColor(0)
   ctx.fillRect(0, horizonY, viewWidth, viewHeight - horizonY)
 
-  const firstDepth = scrollPos - (BOTTOM_MARGIN * 2) / scale
-  const lastDepth = scrollPos + (HALF_PI * radius) / scale
-
-  drawHills(ctx, cam, { span, firstDepth, lastDepth, floorAngle })
+  drawHills(ctx, cam, { span: frontY - horizonY, firstDepth, lastDepth, floorAngle })
   drawPath(ctx, cam, { firstDepth, lastDepth, floorAngle })
-  drawProps(ctx, cam, assets, { firstDepth, lastDepth })
+  drawStones(ctx, cam, { firstDepth, lastDepth, floorAngle })
+}
+
+// Props: grass tufts, flower dots and logs, on a canvas above the ground. Redrawn every frame while the grass
+// sways; time (seconds) sets the sway, 0 = still.
+export function drawMeadowProps(ctx, cam, assets = {}, time = 0) {
+  drawProps(ctx, cam, assets, visibleDepths(cam.camera), time)
 }
 
 function drawHills(ctx, cam, { span, firstDepth, lastDepth, floorAngle }) {
@@ -80,6 +91,26 @@ function drawPath(ctx, cam, { firstDepth, lastDepth, floorAngle }) {
   }
 }
 
+// Cobblestones: flat ellipses on the floor, sized in world units so they shrink and squash with distance.
+// Each gets a darker copy just below it as its shadow.
+function drawStones(ctx, cam, { firstDepth, lastDepth, floorAngle }) {
+  const { screenX, screenY } = cam
+  for (let i = STONES.length - 1; i >= 0; i--) {
+    const s = STONES[i]
+    if (s.d < firstDepth || s.d > lastDepth) continue
+    const a = floorAngle(s.d)
+    if (a < -0.05 || a > HALF_PI * 0.985) continue
+    const cx = screenX(s.x, a), cy = screenY(a)
+    const rx = (screenX(s.x + s.rx, a) - screenX(s.x - s.rx, a)) / 2
+    const ry = Math.abs(screenY(floorAngle(s.d - s.rz)) - screenY(floorAngle(s.d + s.rz))) / 2
+    if (ry < 0.5) continue
+    ctx.fillStyle = STONE_SHADOW_COLOR
+    ctx.beginPath(); ctx.ellipse(cx, cy + ry * 0.35, rx, ry, 0, 0, TAU); ctx.fill()
+    ctx.fillStyle = s.c
+    ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, TAU); ctx.fill()
+  }
+}
+
 // Tuft: three upward strokes whose bases are spaced apart so each blade reads on its own.
 const TUFT_BLADES = [
   // base x, tip x, height factor
@@ -88,7 +119,12 @@ const TUFT_BLADES = [
   [5, 8.5, 0.8],
 ]
 
-function drawProps(ctx, cam, assets, { firstDepth, lastDepth }) {
+// Sway of a tuft's tips, in blade units: a quick flutter that varies by position, plus a slow breeze
+// rolling across the meadow. Blades bend in proportion to their height.
+const swayAt = (p, time) =>
+  time && 1.6 * Math.sin(time * 1.8 + p.x * 0.013 + p.d * 0.007) + 1.2 * Math.sin(time * 0.7 + p.x * 0.004)
+
+function drawProps(ctx, cam, assets, { firstDepth, lastDepth }, time) {
   const { camera, depthToAngle, screenX, screenY, shrinkTo } = cam
   const { scale } = camera
   ctx.lineCap = 'round'
@@ -102,13 +138,13 @@ function drawProps(ctx, cam, assets, { firstDepth, lastDepth }) {
     const far = shrinkTo(FAR_SIZE, a), u = scale * far * p.s
 
     if (p.k === 'tuft') {
-      const h = 20 * u
+      const h = 20 * u, sway = swayAt(p, time)
       ctx.strokeStyle = `rgba(84,128,42,${0.3 + 0.5 * Math.cos(a)})`
       ctx.lineWidth = Math.max(0.8, 1.3 * far * p.s)
       ctx.beginPath()
       for (const [bx, tx, hf] of TUFT_BLADES) {
         ctx.moveTo(px + bx * u * 0.5, py)
-        ctx.lineTo(px + tx * u * 0.5, py - h * hf)
+        ctx.lineTo(px + (tx + sway * hf) * u * 0.5, py - h * hf)
       }
       ctx.stroke()
     } else if (p.k === 'flower') {

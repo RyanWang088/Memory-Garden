@@ -6,7 +6,7 @@ import { useUiStore } from '@/stores/ui'
 import { useToastStore } from '@/stores/toast'
 import { CELL_SIZE, isOnPath } from '@/lib/floorLayout'
 import { createGardenCamera, SCROLL_RANGE } from '@/lib/gardenCamera'
-import { drawMeadow } from '@/lib/meadowRenderer'
+import { drawGround, drawMeadowProps } from '@/lib/meadowRenderer'
 import { loadLogSprite } from '@/lib/logSprite'
 import PlantSprite from './PlantSprite.vue'
 import Modal from './Modal.vue'
@@ -27,7 +27,7 @@ const { camera, measure: measureCamera, updateScroll: updateCameraScroll, worldT
 
 const stageById = { get: id => garden.stageOf(garden.seeds.find(s => s.id === id)) }
 
-const scrollerEl = ref(null), stageEl = ref(null), canvasEl = ref(null), ghostRef = ref(null)
+const scrollerEl = ref(null), stageEl = ref(null), groundEl = ref(null), propsEl = ref(null), ghostRef = ref(null)
 const plantElements = new Map()
 const plantInfoElements = new Map()
 const hoveredPlantInfoId = ref(null)
@@ -71,6 +71,35 @@ function updateScroll() {
   clearTimeout(scrollIdleTimer)
   scrollIdleTimer = setTimeout(() => scrollerEl.value?.classList.remove('is-scrolling'), 120)
   requestRender()
+  wakeSway()
+}
+
+// Grass sway: only the props canvas is redrawn each frame; the ground canvas still redraws only when the camera
+// moves. The loop stops after a while with no pointer or scroll activity, when the garden unmounts, and never
+// starts if the OS asks for reduced motion. (Browsers already pause requestAnimationFrame in hidden tabs.)
+const SWAY_IDLE_MS = 10_000
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+let swayTime = 0, swayFrame = 0, lastActive = 0
+
+function swayLoop(now) {
+  swayTime = now / 1000
+  drawProps()
+  swayFrame = now - lastActive < SWAY_IDLE_MS ? requestAnimationFrame(swayLoop) : 0
+}
+
+function wakeSway() {
+  lastActive = performance.now()
+  if (!swayFrame && !reducedMotion.matches) swayFrame = requestAnimationFrame(swayLoop)
+}
+
+function stopSway() {
+  cancelAnimationFrame(swayFrame)
+  swayFrame = 0
+}
+
+function onReducedMotionChange() {
+  if (reducedMotion.matches) stopSway()
+  else wakeSway()
 }
 
 function requestRender() {
@@ -130,9 +159,8 @@ function scrollToSeed() {
   router.replace({ name: 'garden', query })
 }
 
-function drawFloor() {
-  const canvas = canvasEl.value
-  if (!canvas) return
+// Sizes the canvas to the view (at most 2x DPR), sets the transform and clears it
+function prepareCanvas(canvas) {
   const { viewWidth, viewHeight } = camera
   const pixelRatio = Math.min(window.devicePixelRatio || 1, 2)
   if (canvas.width !== viewWidth * pixelRatio || canvas.height !== viewHeight * pixelRatio) {
@@ -142,7 +170,16 @@ function drawFloor() {
   const ctx = canvas.getContext('2d')
   ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
   ctx.clearRect(0, 0, viewWidth, viewHeight)
-  drawMeadow(ctx, cam, meadowAssets)
+  return ctx
+}
+
+function drawFloor() {
+  if (groundEl.value) drawGround(prepareCanvas(groundEl.value), cam)
+  if (!swayFrame) drawProps() // while swaying, the loop draws the props this frame anyway
+}
+
+function drawProps() {
+  if (propsEl.value) drawMeadowProps(prepareCanvas(propsEl.value), cam, meadowAssets, swayTime)
 }
 
 function isBlocked(col, row) {
@@ -211,15 +248,18 @@ onMounted(() => {
   updateScroll()
   render()
   scrollToSeed()
+  reducedMotion.addEventListener('change', onReducedMotionChange)
 })
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()
   clearTimeout(scrollIdleTimer)
+  stopSway()
+  reducedMotion.removeEventListener('change', onReducedMotionChange)
 })
 </script>
 
 <template>
-  <div ref="scrollerEl" class="scroller" @scroll.passive="updateScroll">
+  <div ref="scrollerEl" class="scroller" @scroll.passive="updateScroll" @pointermove.passive="wakeSway">
     <div class="track">
       <div
         ref="stageEl"
@@ -230,7 +270,8 @@ onBeforeUnmount(() => {
         @drop.prevent="onDrop"
       >
         <!-- <img class="backdrop" :src="backdropUrl" alt="" draggable="false" /> -->
-        <canvas ref="canvasEl"></canvas>
+        <canvas ref="groundEl"></canvas>
+        <canvas ref="propsEl"></canvas>
 
         <PlantSprite
           v-for="seed in garden.seeds"

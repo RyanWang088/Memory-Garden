@@ -468,7 +468,6 @@ function save() {
             <span class="text-label-field">Quiz options</span>
             <span class="help">Optional{{ trapCount ? ` · ${trapCount} trap ${trapCount === 1 ? 'answer' : 'answers'}` : '' }}</span>
           </summary>
-          <p class="help">Add up to 3 trap answers for this card's quiz. Cards from an uploaded file come with AI-written traps you can edit. Empty tiles are filled with answers from your other cards.</p>
           <div class="tiles">
             <div class="tile correct" :class="`tile-${TILES[0].color}`">
               <span class="tile-shape" aria-hidden="true">{{ TILES[0].shape }}</span>

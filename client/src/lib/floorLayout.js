@@ -84,3 +84,27 @@ function buildProps() {
 }
 
 export const PROPS = buildProps()
+
+// ---- cobblestones on the path ----
+export const STONE_COLORS = ['#D3C3AD', '#C9B79E', '#DDCFBB', '#BFAC93']
+export const STONE_SHADOW_COLOR = '#A88F72'
+const STONE_GAP = 34 // world distance between stone centres, along and across the path
+
+// Staggered rows of stones (like brickwork) inside the path's edges, with a few left out so the sand shows.
+function buildStones() {
+  const rand = seeded(11), out = []
+  for (let row = 0, d = STONE_GAP / 2; d < SCATTER_DEPTH; row++, d += STONE_GAP) {
+    const center = pathCenterX(d), half = pathHalfWidth(d) - STONE_GAP * 0.45
+    for (let x = -half + (row % 2 ? STONE_GAP / 2 : 0); x <= half; x += STONE_GAP) {
+      if (rand() < 0.12) continue
+      out.push({
+        x: center + x + (rand() - 0.5) * 6, d: d + (rand() - 0.5) * 6,
+        rx: 11 + rand() * 4, rz: 9 + rand() * 4, // half width / half depth in world units
+        c: STONE_COLORS[Math.floor(rand() * STONE_COLORS.length)],
+      })
+    }
+  }
+  return out // near -> far
+}
+
+export const STONES = buildStones()
