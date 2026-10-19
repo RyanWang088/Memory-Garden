@@ -5,6 +5,7 @@ import { useGardenStore } from '@/stores/garden'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
 import { shuffle } from '@/lib/shuffle'
+import { useStudyTimer } from '@/composables/useStudyTimer'
 
 // "Structured Quiz Mode" review session: up to 10 multiple-choice questions from one seed,
 // then a results screen where the user claims coins for their score.
@@ -18,6 +19,7 @@ const router = useRouter()
 const garden = useGardenStore()
 const auth = useAuthStore()
 const toast = useToastStore()
+const studyTimer = useStudyTimer() // adds this session's active time to the profile when the page closes
 
 const loading = ref(true)
 const error = ref('')
@@ -90,6 +92,7 @@ onMounted(async () => {
     else {
       questions.value = buildQuiz(seed.value, garden.seeds)
       startedAt.value = Date.now()
+      studyTimer.start()
     }
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e)
@@ -106,6 +109,7 @@ onUnmounted(() => {
 function choose(optionIndex) {
   if (chosen.value !== null || finished.value) return
   chosen.value = optionIndex
+  studyTimer.mark()
   const correct = current.value.options[optionIndex] === current.value.answer
   if (correct) correctCount.value++
   results.push({ card_id: current.value.id, rating: correct ? 'correct' : 'wrong' })
@@ -113,6 +117,7 @@ function choose(optionIndex) {
 
 function next() {
   if (chosen.value === null) return
+  studyTimer.mark()
   if (isLast.value) return finish()
   index.value++
   chosen.value = null

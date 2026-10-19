@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { useGardenStore } from '@/stores/garden' // garden.seeds = seeds the user currently has
+import { useGardenStore } from '@/stores/garden' // garden.gardenSeeds = seeds still in the garden
 import SeedCard from './SeedCard.vue'
 
 const emit = defineEmits(['close', 'select'])
@@ -11,14 +11,14 @@ const libraryView = ref('recommended')
 // Highest priority first (deadline + progress, scored by the server), so these match the "!" seeds in the garden.
 // Ties: oldest-reviewed first; never reviewed seeds (date 0) come first
 const recommended = computed(() =>
-  [...garden.seeds]
+  [...garden.gardenSeeds]
     .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0)
       || new Date(a.last_reviewed || 0) - new Date(b.last_reviewed || 0))
     .slice(0, 6)
 )
 
 const isSearching = computed(() => query.value.trim() !== '')
-const baseSeeds = computed(() => libraryView.value === 'recommended' ? recommended.value : garden.seeds)
+const baseSeeds = computed(() => libraryView.value === 'recommended' ? recommended.value : garden.gardenSeeds)
 const results = computed(() => {
   const q = query.value.trim().toLowerCase()
   if (!q) return baseSeeds.value

@@ -1,15 +1,39 @@
 <script setup>
-import { onMounted, onBeforeUnmount, computed } from 'vue'
+import { onMounted, onBeforeUnmount, computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useGardenStore } from '@/stores/garden'
 import { useUiStore } from '@/stores/ui'
 import { useWeatherStore } from '@/stores/weather'
 import GardenBed from '@/components/GardenBed.vue'
 import ShedPanel from '@/components/ShedPanel.vue'
 import Skybox from '@/components/Skybox.vue'
+import ExamOverPrompt from '@/components/ExamOverPrompt.vue'
 
 const garden = useGardenStore()
 const ui = useUiStore()
 const weather = useWeatherStore()
+const route = useRoute()
+const router = useRouter()
+
+// "Exam is over": one subject at a time, oldest exam first, only on the garden itself (not over a seed page)
+const examChoice = ref('')  // the choice being saved
+const examError = ref('')
+const exam = computed(() => (route.name === 'garden' ? garden.examsOver[0] : null))
+
+async function chooseExamOutcome(choice) {
+  if (examChoice.value || !exam.value) return
+  const { id } = exam.value
+  examChoice.value = choice
+  examError.value = ''
+  try {
+    await garden.chooseExamOutcome(id, choice)
+    if (choice === 'house') await router.push({ name: 'profile', query: { new: id } })
+  } catch (e) {
+    examError.value = e instanceof Error ? e.message : String(e)
+  } finally {
+    examChoice.value = ''
+  }
+}
 
 function clearSeedSelectionOutsideCard(event) {
   if (event.target instanceof Element && event.target.closest('.seed-card')) return
@@ -37,6 +61,10 @@ onBeforeUnmount(() => {
         <div class="bed-wrap position-sticky bottom-0"><GardenBed /></div>
       </div>
       <div id="sky-front"></div>
+      <div v-if="exam" class="exam-over-wrap position-absolute bottom-0 start-0 w-100 d-flex justify-content-center">
+        <ExamOverPrompt :key="exam.id" :exam="exam" :free-slots="garden.freeShelfSlots" :busy="examChoice" :error="examError"
+          @choose="chooseExamOutcome" />
+      </div>
     </section>
 
     <ShedPanel />
@@ -47,6 +75,8 @@ onBeforeUnmount(() => {
 <style scoped>
 .garden-stage { min-width: 0; min-height: 0; z-index: 1; }
 #sky-front { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.exam-over-wrap { z-index: 3; padding-bottom: 24px; pointer-events: none; }
+.exam-over-wrap > * { pointer-events: auto; }
 .backdrop { background: center / cover no-repeat; z-index: 0; }
 
 .scroller { z-index: 1; scrollbar-width: none; overscroll-behavior: contain; }

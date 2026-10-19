@@ -221,12 +221,14 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
       phase.value = 'done'
     }
     announce()
-    // Focus reward: persisted via the profile (swap to an RPC if you want server-side validation)
+    // Focus reward: persisted via the profile (swap to an RPC if you want server-side validation).
+    // The finished block also counts as study time (after the reward, which re-reads the whole profile).
     if (finished.type === 'focus') {
       await auth.updateProfile({
         coins: auth.profile.coins + FOCUS_REWARD.coins,
         exp: auth.profile.exp + FOCUS_REWARD.exp,
       }).catch(console.error)
+      await auth.addStudyTime(finished.seconds).catch(console.error)
     }
   }
 

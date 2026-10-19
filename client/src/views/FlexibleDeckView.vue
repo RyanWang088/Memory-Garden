@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useGardenStore } from '@/stores/garden'
 import { useToastStore } from '@/stores/toast'
 import { shuffle } from '@/lib/shuffle'
+import { useStudyTimer } from '@/composables/useStudyTimer'
 
 // "Flexible Deck Mode" review session: flip flashcards, up to 20 cards from one seed.
 // Forgot brings the card back soon, Hard brings it back later; Easy finishes it for today.
@@ -20,6 +21,7 @@ const route = useRoute()
 const router = useRouter()
 const garden = useGardenStore()
 const toast = useToastStore()
+const studyTimer = useStudyTimer() // adds this session's active time to the profile when the page closes
 
 const loading = ref(true)
 const error = ref('')
@@ -61,6 +63,7 @@ onMounted(async () => {
         .map(card => ({ uid: nextUid++, id: card.id, question: card.question, answer: card.answer }))
       totalCards.value = queue.value.length
       startedAt.value = Date.now()
+      studyTimer.start()
     }
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e)
@@ -73,11 +76,13 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
 function showAnswer() {
   flipped.value = true
+  studyTimer.mark()
 }
 
 function rate(rating) {
   const card = current.value
   if (!card || !flipped.value) return
+  studyTimer.mark()
   if (!firstRatings.has(card.id)) {
     firstRatings.set(card.id, rating)
     counts.value[rating]++

@@ -4,7 +4,7 @@
 //   due       = share of cards whose next_review is empty or has passed
 //   staleness = days since last review / 14 (max 1, never reviewed = 1)
 //   score     = urgency * (0.5 weakness + 0.3 due + 0.2 staleness)
-// Seeds whose exam has passed, or with no cards, score 0.
+// Seeds whose exam has passed, with no cards, or moved to the flower house score 0.
 const DAY = 86_400_000
 export const ALERT_LIMIT = 6
 const MIN_ALERT_SCORE = 0.05
@@ -24,7 +24,7 @@ function daysUntil(exam_date, now) {
 export function scoreSeed(seed, now = Date.now()) {
   const cards = seed.cards ?? []
   const daysLeft = daysUntil(seed.exam_date, now)
-  if (!cards.length || daysLeft === -1) return 0
+  if (!cards.length || daysLeft === -1 || seed.in_house) return 0
 
   const urgency = daysLeft === null ? NO_EXAM_URGENCY : 1 / (1 + daysLeft / 7)
   const weakness = (100 - seed.mastery) / 100

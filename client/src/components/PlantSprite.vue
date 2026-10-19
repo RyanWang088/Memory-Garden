@@ -1,22 +1,10 @@
 <script setup>
 import { computed } from 'vue'
+import { plantSpriteUrl } from '@/lib/plantSprites'
 
 const props = defineProps(['stage', 'flower', 'wilting', 'ghost', 'blocked','color','alert'])
 
-const sprites = import.meta.glob('../assets/foliage/*.svg', { eager: true, query: '?url', import: 'default' })
-const url = name => sprites[`../assets/foliage/${name}.svg`]
-
-// shared by every plant type: 1 seed, 2 sprout, 8 stub.  Per flower: 3-7 (tulip-4, tulip-yellow-4 ...)
-const SHARED = { 1: 'seed', 2: 'sprout', 8: 'stub' }
-const spriteName = (stage, flower = 'tulip', color) =>
-  SHARED[stage] ?? `${flower}${color ? `-${color}` : ''}-${stage}`
-
-const src = computed(() => {
-  if (props.ghost) return url('seed')
-  return url(spriteName(props.stage, props.flower, props.color))
-    ?? url(spriteName(props.stage, 'tulip'))
-    ?? url('seed')
-})
+const src = computed(() => props.ghost ? plantSpriteUrl(1) : plantSpriteUrl(props.stage, props.flower, props.color))
 </script>
 
 <template>

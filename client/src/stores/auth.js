@@ -56,17 +56,26 @@ export const useAuthStore = defineStore('auth', () => {
   }
   
   // Daily streak per calendar day: visited yesterday -> +1, missed a day -> 1, already visited today -> no change.
+  // best_streak keeps the highest streak ever.
   async function tendStreak() {
-    const { streak, last_tended } = profile.value
+    const { streak, best_streak = 0, last_tended } = profile.value
     const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1)
     if (last_tended && dayOf(last_tended) === dayOf(Date.now())) return
     const newStreak = last_tended && dayOf(last_tended) === dayOf(yesterday) ? streak + 1 : 1
-    await updateProfile({ streak: newStreak, last_tended: new Date().toISOString() }).catch(console.error)
+    await updateProfile({ streak: newStreak, best_streak: Math.max(best_streak, newStreak), last_tended: new Date().toISOString() })
+      .catch(console.error)
+  }
+
+  // Study time (Pomodoro focus blocks, Flexible Deck, Structured Quiz). The database adds it, so two tabs
+  // adding at once can't overwrite each other.
+  async function addStudyTime(seconds) {
+    const total = check(await supabase.rpc('add_study_time', { p_seconds: Math.round(seconds) }))
+    profile.value = { ...profile.value, study_seconds: total }
   }
 
   // Saves onboarding answers + avatar choice and flips `onboarded` so returning users skip it.
   const completeOnboarding = (answers, avatar = null) =>
     updateProfile({ onboarding_answers: answers, avatar, onboarded: true })
 
-  return { user, profile, ready, init, signUp, signIn, signOut, updateProfile, completeOnboarding }
+  return { user, profile, ready, init, signUp, signIn, signOut, updateProfile, addStudyTime, completeOnboarding }
 })

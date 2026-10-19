@@ -13,7 +13,7 @@ import Modal from './Modal.vue'
 import { useSeedDrag } from '@/composables/useSeedDrag'
 // import backdropUrl from '@/assets/backdrop.png'
 
-const garden = useGardenStore()   // garden.seeds: { id, col, row, mastery, last_reviewed }
+const garden = useGardenStore()   // garden.gardenSeeds: { id, col, row, mastery, last_reviewed }, the plants still in the garden
 const ui = useUiStore()
 const route = useRoute()
 const router = useRouter()
@@ -25,7 +25,7 @@ const deleteError = ref('')
 const cam = createGardenCamera()
 const { camera, measure: measureCamera, updateScroll: updateCameraScroll, worldToScreen, screenToCell, screenPoint } = cam
 
-const stageById = { get: id => garden.stageOf(garden.seeds.find(s => s.id === id)) }
+const stageById = { get: id => garden.stageOf(garden.gardenSeeds.find(s => s.id === id)) }
 
 const scrollerEl = ref(null), stageEl = ref(null), canvasEl = ref(null), ghostRef = ref(null)
 const plantElements = new Map()
@@ -38,7 +38,7 @@ let scrollIdleTimer
 // meadow art: the backdrop sits behind the canvas; the log is drawn as a sprite
 const meadowAssets = { logImg: loadLogSprite(() => requestRender()) }
 
-const occupiedCells = computed(() => new Set(garden.seeds.map(seed => `${seed.col},${seed.row}`)))
+const occupiedCells = computed(() => new Set(garden.gardenSeeds.map(seed => `${seed.col},${seed.row}`)))
 const registerPlant = (id, el) => (el ? plantElements.set(id, el) : plantElements.delete(id))
 const registerPlantInfo = (id, el) => (el ? plantInfoElements.set(id, el) : plantInfoElements.delete(id))
 const isPlantInfoVisible = id => hoveredPlantInfoId.value === id || ui.selectedGardenSeedId === id
@@ -81,7 +81,7 @@ function requestRender() {
 
 function render() {
   drawFloor()
-  for (const seed of garden.seeds) {
+  for (const seed of garden.gardenSeeds) {
     const el = plantElements.get(seed.id)
     const infoEl = plantInfoElements.get(seed.id)
     if (el) placeSprite(el, seed.col, seed.row)
@@ -115,7 +115,7 @@ function scrollToSeed() {
   const seedId = route.query.scrollTo
   if (typeof seedId !== 'string') return
 
-  const seed = garden.seeds.find(item => item.id === seedId)
+  const seed = garden.gardenSeeds.find(item => item.id === seedId)
   if (!seed || !scrollerEl.value || camera.radius <= 0) return
 
   const targetY = camera.viewHeight * 0.68
@@ -197,7 +197,7 @@ async function confirmDelete() {
   }
 }
 
-watch(() => garden.seeds, () => {
+watch(() => garden.gardenSeeds, () => {
   requestRender()
   scrollToSeed()
 }, { deep: true, flush: 'post' })
@@ -233,7 +233,7 @@ onBeforeUnmount(() => {
         <canvas ref="canvasEl"></canvas>
 
         <PlantSprite
-          v-for="seed in garden.seeds"
+          v-for="seed in garden.gardenSeeds"
           :key="seed.id"
           :id="seed.id"
           :ref="c => registerPlant(seed.id, c?.$el)"
@@ -250,7 +250,7 @@ onBeforeUnmount(() => {
           @keydown.enter.space.prevent="onPlantClick(seed)"
         />
         <div
-          v-for="seed in garden.seeds"
+          v-for="seed in garden.gardenSeeds"
           :key="`info-${seed.id}`"
           :ref="el => registerPlantInfo(seed.id, el)"
           class="plant-info"
