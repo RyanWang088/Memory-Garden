@@ -189,7 +189,9 @@ async function generate(f) {
   try {
     const { cards: generated } = await apiFetch('/api/seeds/generate', { method: 'POST', body, signal: controller.signal })
     const first = cards.value.length
-    cards.value.push(...generated.map((c) => ({ id: nextId++, fileId: f.id, question: c.question, answer: c.answer, traps: ['', '', ''] })))
+    // the AI's trap answers fill the tiles, still editable; padded to 3 tiles
+    const tilesFrom = (wrong = []) => [...wrong, '', '', ''].slice(0, 3)
+    cards.value.push(...generated.map((c) => ({ id: nextId++, fileId: f.id, question: c.question, answer: c.answer, traps: tilesFrom(c.wrong_options) })))
     f.status = 'done'
     f.count = generated.length
     if (!editing.value) index.value = first // jump to this file's first pair
@@ -466,7 +468,7 @@ function save() {
             <span class="text-label-field">Quiz options</span>
             <span class="help">Optional{{ trapCount ? ` · ${trapCount} trap ${trapCount === 1 ? 'answer' : 'answers'}` : '' }}</span>
           </summary>
-          <p class="help">Add up to 3 trap answers for this card's quiz. Empty tiles are filled with answers from your other cards.</p>
+          <p class="help">Add up to 3 trap answers for this card's quiz. Cards from an uploaded file come with AI-written traps you can edit. Empty tiles are filled with answers from your other cards.</p>
           <div class="tiles">
             <div class="tile correct" :class="`tile-${TILES[0].color}`">
               <span class="tile-shape" aria-hidden="true">{{ TILES[0].shape }}</span>
