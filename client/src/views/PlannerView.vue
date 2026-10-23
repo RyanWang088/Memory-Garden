@@ -1,20 +1,45 @@
 <script setup>
-import { computed, onMounted, watchEffect } from 'vue'
+import { computed, onMounted, watchEffect, ref } from 'vue'
 import { useGardenStore } from '@/stores/garden'
 
+// full calendar from fullcalendar.io v7
+import FullCalendar from "@fullcalendar/vue3";
+import themePlugin from "@fullcalendar/vue3/themes/monarch"; // YOUR THEME
+import dayGridPlugin from "@fullcalendar/vue3/daygrid";
+import interactionPlugin from "@fullcalendar/vue3/interaction";
+
+  // stylesheets
+import '@fullcalendar/vue3/skeleton.css'; // ALWAYS NEED SKELETON
+import '@fullcalendar/vue3/themes/monarch/theme.css'; // YOUR THEME
+import '@fullcalendar/vue3/themes/monarch/palettes/purple.css'; // YOUR THEME'S PALETTE
+
+  
 // Book-flip styling goes here later. Data side: group seeds by subject with an aggregate readiness score.
 const garden = useGardenStore()
 onMounted(() => { if (!garden.loaded) garden.fetchSeeds() })
 
-const subjects = computed(() => [...new Set(garden.seeds.map(s => s.subject))])
+const subjects = computed(() => [...new Set(garden.seeds.filter(s1=>!s1.in_house).map(s => { 
+
+  return s.subject
+  
+
+}))])
 // TODO: milestones/deadlines -> add a `milestones` table 
 const milestones = computed(()=>
-  [...new Set(garden.seeds.map(s1 =>({ subject:s1.subject, exam_date:s1.exam_date})).filter(s2=>{return !!s2.exam_date}))]
-) // placing {} makes the computed a function, place return to return value
-// returns array of objects that have subject and exam date
-
+  [...new Set(garden.seeds.map(s=>{
+    return {subject:s.subject,exam_date:s.exam_date,in_house:s.in_house}
+  }).filter(s=>!s.in_house))]
+) 
+const events=computed(()=>([...new Set(milestones.value.map(milestone=> ({title:milestone.subject,start:milestone.exam_date,end:milestone.exam_date})))]))
+const calendarOptions = computed(()=> ({
+  plugins: [themePlugin, dayGridPlugin, interactionPlugin],
+  initialView: "dayGridMonth",
+  headerToolbar:{start:'title', right:'prev,next'},
+  events:events.value
+ })) // calendarOptions from full calendar, passed in exam dates
 watchEffect(()=>{
   console.log(milestones.value)
+  console.log(events.value)
 }) //testing, milestone updates later once fetchSeeds() runs
   
 
@@ -24,10 +49,29 @@ watchEffect(()=>{
   <main class="container py-4" data-testid="planner">
     <h2>Planner</h2>
     <p v-if="!subjects.length" class="text-muted">No subjects yet. Plant a seed in the garden to start tracking progress.</p>
-    <div v-for="s in subjects" :key="s" class="mb-3">
+    <table v-else class=" table table-bordered">
+      <thead class="table-primary">
+        <tr>
+      <th><span class="text-muted">Subject</span></th>
+      <th><span class="text-muted">Readiness</span></th>
+      <!-- <th><span class="text-muted">Exam Date</span></th> -->
+      </tr>
+    </thead>
+      <tbody>
+        <tr v-for="s in subjects" :key="s">
+          <td><strong>{{ s }}</strong></td>
+          <td>{{ garden.readiness(s) }}%</td>
+          
+        </tr>
+      </tbody>
+    </table>
+    <!-- <div v-for="s in subjects" :key="s" class="mb-3">
       <strong>{{ s }}</strong> <span class="text-muted">readiness {{ garden.readiness(s) }}%</span>
-    </div>
+
+    </div> -->
     <h4 class="mt-4">Upcoming milestones</h4>
     <p class="text-muted">TODO</p>
+    
+    <FullCalendar :options="calendarOptions" />
   </main>
 </template>
