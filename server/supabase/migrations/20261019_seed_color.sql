@@ -1,2 +1,0 @@
-ALTER TABLE seeds
-ADD COLUMN IF NOT EXISTS color text NOT NULL DEFAULT 'red';

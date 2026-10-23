@@ -4,6 +4,7 @@ import { supabase, check } from '@/lib/supabase'
 import { apiFetch } from '@/lib/http'
 import { usePomodoroStore } from './pomodoro' // pomodoro imports this store too; fine, as both are only used inside functions
 import { useMusicStore } from './music'
+import { useToastStore } from './toast'
 
 // Login and profiles talk to Supabase directly (Supabase Auth is meant to run in the browser).
 // Registration goes through the Express server (POST /api/auth/register), which validates and creates the account.
@@ -63,7 +64,10 @@ export const useAuthStore = defineStore('auth', () => {
     if (last_tended && dayOf(last_tended) === dayOf(Date.now())) return
     const newStreak = last_tended && dayOf(last_tended) === dayOf(yesterday) ? streak + 1 : 1
     await updateProfile({ streak: newStreak, best_streak: Math.max(best_streak, newStreak), last_tended: new Date().toISOString() })
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err)
+        useToastStore().show({ type: 'warning', message: "Couldn't save today's streak. Try refreshing." })
+      })
   }
 
   // Study time (Pomodoro focus blocks, Flexible Deck, Structured Quiz). The database adds it, so two tabs

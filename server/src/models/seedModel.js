@@ -1,5 +1,5 @@
 // Model: data access for the `seeds` table (a seed = one topic = one plant).
-// Schema (supabase/setup.sql): subjects -> seeds -> cards. Mastery lives on cards only,
+// Schema (supabase/schema.sql): subjects -> seeds -> cards. Mastery lives on cards only,
 // so a seed's mastery is the average card_mastery, calculated here.
 import { supabase, check } from '../lib/supabase.js'
 import { markTopPriority } from '../lib/priority.js'
