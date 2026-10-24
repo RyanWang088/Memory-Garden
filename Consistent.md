@@ -117,22 +117,34 @@ The fonts are **Fredoka** (headings, labels, numbers) and **Nunito** (body text)
 ### 3.1 Architecture
 
 ```mermaid
+%%{init: {'theme': 'base', 'flowchart': {'curve': 'step', 'nodeSpacing': 40, 'rankSpacing': 70, 'padding': 15}, 'themeVariables': {'primaryColor': '#FFFFFF', 'primaryTextColor': '#5A3E36', 'primaryBorderColor': '#E0A93A', 'lineColor': '#5A3E36', 'clusterBkg': '#FFE484', 'clusterBorder': '#E0A93A', 'edgeLabelBackground': '#FFF7F0'}}}%%
 flowchart LR
+    subgraph Arch[" "]
+    direction LR
     subgraph Browser["Browser (client/)"]
+        direction TB
         V[views/] --> C[components/]
         V --> S[stores/ Pinia]
         C --> S
-        S --> L[lib/]
     end
     subgraph Server["Express API (server/)"]
+        direction TB
         R[routes/] --> CT[controllers/] --> M[models/]
-        CT --> SL[lib/ ai, extractText, weather]
     end
-    L -- "apiFetch /api/*" --> R
-    L -- "supabase-js: auth, profiles, RPCs" --> DB[(Supabase Postgres + Auth)]
+    subgraph External["External services"]
+        direction TB
+        DB[(Supabase<br/>Postgres + Auth)]
+        AI[OpenRouter / Groq]
+        W[Weather API]
+    end
+    S -- "apiFetch /api/*" --> R
+    S -- "supabase-js:<br/>auth, profiles, RPCs" --> DB
     M -- "secret key" --> DB
-    SL --> AI[OpenRouter / Groq]
-    SL --> W[Weather API]
+    CT --> AI
+    CT --> W
+    end
+    style Arch fill:#FFF7F0,stroke:#E0A93A
+    style External fill:#BFEBD6,stroke:#7FC9A6
 ```
 
 ### 3.2 Who talks to what
@@ -278,7 +290,7 @@ erDiagram
 
 ### 3.5 Database change rules
 
-1. **The live Supabase project is the source of truth.** Make changes there (SQL editor or Table editor).
+1. Make changes in Supabase (SQL editor or Table editor).
 2. **Then refresh `server/supabase/schema.sql`** so the repo keeps a full copy. It's one snapshot file; don't add separate migration files. Regenerate it from the live database (ask the AI to "re-dump schema.sql from Supabase") rather than hand-editing it.
 3. **A new table** needs RLS turned on, policies limiting rows to `auth.uid()`, and grants for the role that uses it.
 4. **A new profile column the client writes** must be added to the column grant (`GRANT UPDATE (...) ON public.profiles` in `schema.sql`). Otherwise the update fails with `42501 permission denied`. This is what froze the streak.

@@ -23,10 +23,11 @@ const CARD_SCHEMA = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['question', 'answer', 'topic', 'difficulty'],
+        required: ['question', 'answer', 'wrong_options', 'topic', 'difficulty'],
         properties: {
           question: { type: 'string' },
           answer: { type: 'string' },
+          wrong_options: { type: 'array', items: { type: 'string' } },
           topic: { type: 'string' },
           difficulty: { type: 'string', enum: ['easy', 'medium', 'hard'] },
         },
@@ -48,6 +49,9 @@ const RULES = `Rules:
 - Mix difficulty: roughly a third easy (recall), a third medium (explain), a third hard (apply or compare).
 - Use only information in the document. Skip admin details like URLs, emails, names of staff and page numbers.
 - Keep questions short and answers concise (under 400 characters each).
+- "wrong_options" are exactly 3 trap answers for a multiple-choice quiz: clearly wrong, but plausible to someone
+  who half-remembers the topic. Take them from the same document or subject where possible, and match the answer's
+  form and length (a name for a name, a year for a year, a sentence for a sentence). Never a rewording of the answer.
 - "topic" is a short label (2-6 words) naming exactly what the question tests.
 - If the document has less content, write fewer pairs. Never pad or repeat to reach the maximum.`
 
@@ -130,10 +134,13 @@ function clean(cards, existing) {
     if (!question || !answer || seenQ.has(q) || (topic && seenTopic.has(topic))) continue
     seenQ.add(q)
     if (topic) seenTopic.add(topic)
-    out.push({ question, answer, topic: c.topic, difficulty: c.difficulty })
+    const wrong_options = Array.isArray(c.wrong_options) ? c.wrong_options.map((w) => String(w)) : []
+    out.push({ question, answer, wrong_options, topic: c.topic, difficulty: c.difficulty })
   }
   return out
 }
+
+const pair = ({ question, answer, wrong_options }) => ({ question, answer, wrong_options })
 
 async function inBatches(items, size, fn) {
   const results = []
@@ -141,13 +148,13 @@ async function inBatches(items, size, fn) {
   return results
 }
 
-// Returns up to `max` cleaned { question, answer } pairs
+// Returns up to `max` cleaned { question, answer, wrong_options } cards (wrong_options not yet cleaned)
 export async function generateCards(fullText, { max = 50, existing = [], signal } = {}) {
   const text = fullText.slice(0, MAX_TEXT)
 
   if (text.length <= SINGLE_LIMIT) {
     const { cards } = await askForCards(text, max, existing, signal)
-    return clean(cards, existing).slice(0, max).map(({ question, answer }) => ({ question, answer }))
+    return clean(cards, existing).slice(0, max).map(pair)
   }
 
   const parts = []
@@ -156,12 +163,12 @@ export async function generateCards(fullText, { max = 50, existing = [], signal 
   const results = await inBatches(parts, PARALLEL, (p, i) =>
     askForCards(p, perPart, existing, signal, { n: i + 1, total: parts.length }))
   const candidates = clean(results.flatMap((r) => r.cards), existing)
-  if (candidates.length <= max) return candidates.map(({ question, answer }) => ({ question, answer }))
+  if (candidates.length <= max) return candidates.map(pair)
 
   const { picked } = await chat([
     { role: 'system', content: `From these flashcard candidates, pick at most ${max} by index. Choose ones that test different ideas (no overlap), cover the whole document, and mix easy, medium and hard.` },
     { role: 'user', content: candidates.map((c, i) => `${i}. [${c.difficulty}] (${c.topic}) ${c.question}`).join('\n') },
   ], PICK_SCHEMA, signal)
   const chosen = [...new Set(picked)].filter((i) => Number.isInteger(i) && candidates[i]).map((i) => candidates[i])
-  return (chosen.length ? chosen : candidates).slice(0, max).map(({ question, answer }) => ({ question, answer }))
+  return (chosen.length ? chosen : candidates).slice(0, max).map(pair)
 }

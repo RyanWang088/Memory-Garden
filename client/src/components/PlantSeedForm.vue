@@ -93,12 +93,7 @@ function addCard() {
 // Quiz options, under the Preview: Kahoot-style tiles for the card on screen (the new card, or any added one,
 // typed or AI). Its answer is always the correct tile; the user only types traps, and the quiz shuffles all four,
 // so the position doesn't matter.
-const TILES = [
-  { shape: '▲', color: 'berry' },
-  { shape: '◆', color: 'periwinkle' },
-  { shape: '●', color: 'butter' },
-  { shape: '■', color: 'mint' },
-]
+const SHAPES = ['▲', '◆', '●', '■']
 const same = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase()
 // trimmed, no blanks, none equal to the answer, no repeats (case-insensitive), at most 3
 function cleanTraps(list, correct) {
@@ -189,7 +184,9 @@ async function generate(f) {
   try {
     const { cards: generated } = await apiFetch('/api/seeds/generate', { method: 'POST', body, signal: controller.signal })
     const first = cards.value.length
-    cards.value.push(...generated.map((c) => ({ id: nextId++, fileId: f.id, question: c.question, answer: c.answer, traps: ['', '', ''] })))
+    // the AI's trap answers fill the tiles, still editable; padded to 3 tiles
+    const tilesFrom = (wrong = []) => [...wrong, '', '', ''].slice(0, 3)
+    cards.value.push(...generated.map((c) => ({ id: nextId++, fileId: f.id, question: c.question, answer: c.answer, traps: tilesFrom(c.wrong_options) })))
     f.status = 'done'
     f.count = generated.length
     if (!editing.value) index.value = first // jump to this file's first pair
@@ -351,8 +348,10 @@ function save() {
       </ul>
     </section>
 
-    <!-- Flashcard Builder -->
-    <section class="card-box">
+    <!-- Flashcard Builder and Upload a file, side by side so the Preview stays close -->
+    <div class="row g-3">
+    <div class="col-sm-6 d-flex">
+    <section class="card-box w-100">
       <div class="card-head">
         <h4>Flashcard builder</h4>
         <button type="button" class="plus" :disabled="!canAddCard" aria-label="Add card" data-testid="card-add" @click="addCard">+</button>
@@ -361,7 +360,6 @@ function save() {
         <label class="field">
           <span class="text-label-field">Question</span>
           <textarea v-model="question" rows="3" maxlength="500" placeholder="How do you centre text horizontally in CSS?" data-testid="card-question" />
-          <span class="help">Keep it concise.</span>
         </label>
         <label class="field">
           <span class="text-label-field">Answer</span>
@@ -375,9 +373,11 @@ function save() {
         </span>
       </p>
     </section>
+    </div>
 
     <!-- Upload a file -->
-    <section class="card-box">
+    <div class="col-sm-6 d-flex">
+    <section class="card-box w-100">
       <div>
         <h4>Upload a file</h4>
         <p class="help">Select and upload your notes or slides.</p>
@@ -421,6 +421,8 @@ function save() {
         </li>
       </ul>
     </section>
+    </div>
+    </div>
 
     <!-- Preview -->
     <section class="card-box">
@@ -466,15 +468,14 @@ function save() {
             <span class="text-label-field">Quiz options</span>
             <span class="help">Optional{{ trapCount ? ` · ${trapCount} trap ${trapCount === 1 ? 'answer' : 'answers'}` : '' }}</span>
           </summary>
-          <p class="help">Add up to 3 trap answers for this card's quiz. Empty tiles are filled with answers from your other cards.</p>
           <div class="tiles">
-            <div class="tile correct" :class="`tile-${TILES[0].color}`">
-              <span class="tile-shape" aria-hidden="true">{{ TILES[0].shape }}</span>
+            <div class="tile correct">
+              <span class="tile-shape" aria-hidden="true">{{ SHAPES[0] }}</span>
               <span class="tile-text" :class="{ empty: !tileAnswer.trim() }" data-testid="tile-correct">{{ tileAnswer.trim() || 'Your answer shows here' }}</span>
               <span class="tile-check" aria-label="Correct answer">✓</span>
             </div>
-            <label v-for="(t, i) in tileTraps" :key="i" class="tile" :class="`tile-${TILES[i + 1].color}`">
-              <span class="tile-shape" aria-hidden="true">{{ TILES[i + 1].shape }}</span>
+            <label v-for="(t, i) in tileTraps" :key="i" class="tile">
+              <span class="tile-shape" aria-hidden="true">{{ SHAPES[i + 1] }}</span>
               <input v-model="tileTraps[i]" maxlength="500" :placeholder="`Trap answer ${i + 1}`" :aria-label="`Trap answer ${i + 1}`" :data-testid="`card-trap-${i}`" />
               <span v-if="trapNote(tileTraps, i, tileAnswer)" class="tile-note">{{ trapNote(tileTraps, i, tileAnswer) }}</span>
             </label>
@@ -567,7 +568,7 @@ button.tag-pill { cursor: pointer; }
   cursor: pointer;
 }
 
-.qa { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.qa { display: grid; gap: 12px; } /* stacked: the builder is half width */
 .plus {
   width: 40px;
   height: 40px;
@@ -591,7 +592,6 @@ button.tag-pill { cursor: pointer; }
 .quiz-options summary::before { content: '▸'; color: var(--bark-muted); transition: transform 0.15s ease; }
 .quiz-options[open] summary::before { transform: rotate(90deg); }
 .quiz-options[open] summary { margin-bottom: 8px; }
-.quiz-options > .help { margin-bottom: 8px; }
 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .tile {
   position: relative;
@@ -602,17 +602,14 @@ button.tag-pill { cursor: pointer; }
   min-height: 52px;
   margin: 0;
   padding: 8px 10px;
-  border: 2px solid var(--tile);
+  border: 2px solid var(--linen);
   border-radius: 12px;
-  background: color-mix(in srgb, var(--tile) 22%, var(--paper));
+  background: var(--cream);
 }
-.tile-berry { --tile: var(--berry); }
-.tile-periwinkle { --tile: var(--periwinkle); }
-.tile-butter { --tile: var(--butter-deep); }
-.tile-mint { --tile: var(--mint-deep); }
-.tile-shape { flex: none; width: 18px; text-align: center; color: var(--tile); font-size: 16px; line-height: 1; }
+.tile.correct { border-color: var(--mint-deep); background: var(--mint); }
+.tile-shape { flex: none; width: 18px; text-align: center; color: var(--bark-muted); font-size: 16px; line-height: 1; }
 .tile input { flex: 1; min-width: 0; padding: 6px 8px; border-width: 1px; border-color: transparent; background: var(--paper); font-size: 14px; }
-.tile input:focus { border-color: var(--tile); }
+.tile input:focus { border-color: var(--periwinkle); }
 .tile-text { flex: 1; min-width: 0; font-weight: 700; font-size: 14px; overflow-wrap: anywhere; }
 .tile-text.empty { font-weight: 400; color: var(--bark-muted); }
 .tile-check {
@@ -648,6 +645,7 @@ button.tag-pill { cursor: pointer; }
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  margin-block: auto; /* centred in the spare height next to the taller builder */
   padding: 24px 16px;
   border: 2px dashed var(--linen);
   border-radius: 16px;
@@ -806,7 +804,7 @@ button.tag-pill { cursor: pointer; }
 .ghost-btn:hover { background: var(--linen); }
 
 @media (max-width: 575.98px) {
-  .qa, .flash, .tiles { grid-template-columns: 1fr; }
+  .flash, .tiles { grid-template-columns: 1fr; }
 }
 </style>
 
