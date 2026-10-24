@@ -9,6 +9,7 @@ export const useUiStore = defineStore('ui', () => {
   const seedPicked = ref(false)       // seed packet being dragged, or tapped and waiting for a garden spot
   const seedDragPointerId = ref(null)
   const selectedSeedColor = ref('red')
+  const selectedSeedFlower = ref('tulip')
   const selectedGardenSeedId = ref(null)
   const modal = ref({ open: false, mode: null, seedId: null, draft: null }) // mode: 'create' | 'review'
 
@@ -28,7 +29,7 @@ export const useUiStore = defineStore('ui', () => {
   function closeModal() { modal.value = { open: false, mode: null, seedId: null, draft: null } }
 
   return {
-    activeTool, shedTab, shedOpen, seedPicked, seedDragPointerId, selectedSeedColor, selectedGardenSeedId, modal,
+    activeTool, shedTab, shedOpen, seedPicked, seedDragPointerId, selectedSeedColor, selectedSeedFlower, selectedGardenSeedId, modal,
     setTool, setShedTab, pickDefaultTab, selectGardenSeed, clearGardenSeedSelection,
     openCreate, openReview, closeModal,
   }

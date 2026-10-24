@@ -21,7 +21,13 @@ async function save(details) {
   error.value = ''
   try {
     const { col, row } = ui.modal.draft
-    await garden.plantSeed({ ...details, col, row, color: ui.selectedSeedColor })
+    await garden.plantSeed({
+      ...details,
+      col,
+      row,
+      color: ui.selectedSeedColor,
+      flower: ui.selectedSeedFlower,
+    })
     ui.closeModal() // the new tulip now shows in the garden
   } catch (e) {
     error.value = e.message

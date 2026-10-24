@@ -15,6 +15,9 @@ const selectedColor = computed(() =>
     ? route.query.color
     : ui.selectedSeedColor,
 )
+const selectedFlower = computed(() =>
+  typeof route.query.flower === 'string' ? route.query.flower : ui.selectedSeedFlower,
+)
 const saving = ref(false)
 const loading = ref(true)
 const error = ref('')
@@ -46,7 +49,13 @@ async function save(details) {
   saving.value = true
   error.value = ''
   try {
-    await garden.plantSeed({ ...details, col: col.value, row: row.value, color: selectedColor.value })
+    await garden.plantSeed({
+      ...details,
+      col: col.value,
+      row: row.value,
+      color: selectedColor.value,
+      flower: selectedFlower.value,
+    })
     await router.push({ name: 'garden' })
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e)

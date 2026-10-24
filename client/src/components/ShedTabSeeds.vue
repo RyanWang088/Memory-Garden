@@ -5,16 +5,15 @@ import { useFlowerStore } from '@/stores/flower'
 import { useToastStore } from '@/stores/toast'
 import { tagStyle } from '@/lib/tagColors'
 import { SEED_COLORS } from '@/lib/tagColors'
+import { plantSpriteUrl, BLOOM_STAGE } from '@/lib/plantSprites'
+import coinSvg from '@/assets/ui/coin.svg'
 
 const ui = useUiStore()
 const flower = useFlowerStore()
 const toast = useToastStore()
 const pickedSeedId = ref(null)
-const flowerSprites = import.meta.glob('../assets/foliage/*.svg', {
-  eager: true,
-  import: 'default',
-  query: '?url',
-})
+
+const flowerImage = (seed) => plantSpriteUrl(BLOOM_STAGE, seed.id)
 
 // 1x1 transparent pixel: replaces the browser's own drag picture, so only the garden's ghost shows.
 const blankDragImage = new Image()
@@ -117,14 +116,18 @@ onMounted(() => flower.load())
           @pointerdown="onPointerDown($event, seed)"
         >
           <span class="product-art d-flex justify-content-center align-items-center">
-            <img class="packet-art" :src="flowerSprites[`../assets/foliage/${seed.id}-4.svg`]" alt="" draggable="false" />
+            <img class="packet-art" :src="flowerImage(seed)" alt="" draggable="false" />
           </span>
           <span class="text-label-field product-name">{{ seed.name }} seed</span>
           <span class="tag-pill" :style="tagStyle('mint')">
             {{ seed.price === 0 ? 'Free' : 'Owned' }}
           </span>
-        </button>
-        <div v-if="seed.status === 'owned'" class="d-flex flex-wrap justify-content-center gap-1 mt-2" role="group" aria-label="Choose plant color">
+          <div
+          v-if="seed.status === 'owned'"
+          class="d-flex flex-wrap justify-content-center gap-1 mt-2"
+          role="group"
+          aria-label="Choose plant color"
+        >
           <button
             v-for="color in SEED_COLORS"
             :key="color"
@@ -139,10 +142,11 @@ onMounted(() => flower.load())
           </button>
         </div>
 
+        </button>
+
         <article v-else class="product-card d-flex flex-column align-items-center gap-2 p-2">
-          <div class="product-art product-locked d-flex justify-content-center align-items-center"
-            :data-testid="`seed-${seed.id}`">
-            <img class="packet-art" :src="flowerSprites[`../assets/foliage/${seed.id}-4.svg`]" :alt="seed.name" draggable="false" />
+          <div class="product-art product-locked d-flex justify-content-center align-items-center">
+            <img class="packet-art" :src="flowerImage(seed)" :alt="seed.name" draggable="false" />
             <span class="position-absolute text-display" aria-hidden="true">🔒</span>
           </div>
           <span class="text-label-field product-name">{{ seed.name }} seed</span>

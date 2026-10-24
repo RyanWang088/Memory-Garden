@@ -28,6 +28,7 @@ function cleanSeed(body = {}) {
   const title = text(body.title, 80)
   const subject = text(body.subject, 60)
   const color = text(body.color || 'red', 20)
+  const flower = text(body.flower || 'tulip', 40)
   const exam_date = text(body.exam_date, 10) // optional
   const cards = (Array.isArray(body.cards) ? body.cards : [])
     .map(c => {
@@ -42,12 +43,13 @@ function cleanSeed(body = {}) {
   if (!title) return 'Give your study set a name.'
   if (!subject) return 'Pick a subject.'
   if (!SEED_COLORS.includes(color)) return 'Choose a valid plant color.'
+  if (!/^[a-z0-9-]+$/.test(flower)) return 'Choose a valid plant type.'
   if (exam_date && !isUpcomingDate(exam_date)) return 'Pick an exam date from today onwards.'
   if (!cards.length) return 'Add at least one flashcard.'
   if (cards.length > 200) return 'A study set can have at most 200 cards.'
   if (!isCell(body.col) || !isCell(body.row)) return 'Pick a spot in the garden.'
 
-  return { title, subject, exam_date: exam_date || undefined, tags, cards, col: body.col, row: body.row, flower: 'tulip', color }
+  return { title, subject, exam_date: exam_date || undefined, tags, cards, col: body.col, row: body.row, flower, color }
 }
 
 export const seedsController = {
@@ -58,7 +60,7 @@ export const seedsController = {
     } catch (err) { next(err) }
   },
 
-  // POST /api/seeds  body: { title, subject, exam_date?, tags, cards: [{ question, answer, wrong_options? }], col, row, color? }
+  // POST /api/seeds  body: { title, subject, exam_date?, tags, cards: [{ question, answer, wrong_options? }], col, row, color?, flower? }
   async create(req, res, next) {
     try {
       const seed = cleanSeed(req.body)

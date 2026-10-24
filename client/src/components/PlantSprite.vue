@@ -2,8 +2,15 @@
 import { computed } from 'vue'
 import { plantSpriteUrl } from '@/lib/plantSprites'
 
-const props = defineProps(['stage', 'flower', 'wilting', 'ghost', 'blocked','color','alert'])
-
+const props = defineProps({
+  stage: Number,
+  flower: String,
+  color: String,
+  wilting: Boolean,
+  ghost: Boolean,
+  blocked: Boolean,
+  alert: Boolean,
+})
 const src = computed(() => props.ghost ? plantSpriteUrl(1) : plantSpriteUrl(props.stage, props.flower, props.color))
 </script>
 
@@ -15,9 +22,6 @@ const src = computed(() => props.ghost ? plantSpriteUrl(1) : plantSpriteUrl(prop
     :data-wilting="wilting || undefined"
     data-testid="plant"
   >
-    <div class="shadow"></div>
-    <!-- .sprite never changes: it owns the sway, the click target and the stage-2 browning.
-         Only the <img> inside is swapped, and <Transition> animates old -> new. -->
     <div class="sprite">
       <Transition name="stage">
         <img :key="src" class="art" :class="ghost ? '' : `st-${stage}`" :src="src" alt="" draggable="false" />
@@ -41,8 +45,8 @@ const src = computed(() => props.ghost ? plantSpriteUrl(1) : plantSpriteUrl(prop
   75% { transform: rotate(-3deg); }
   100% { transform: rotate(0deg); }
 }
-.sprite {
-  position: absolute; left: -75px; bottom: 0; width: 150px; height: 150px;
+.sprite{
+  position: absolute; left: -85px; bottom: 0; width: 170px; height: 170px;
   transform-origin: 50% 96%; cursor: pointer;
   transition: filter .9s ease;                      /* the sprout browns gradually, not in a snap */
   animation: plantSway 4s ease-in-out infinite;
@@ -64,10 +68,6 @@ const src = computed(() => props.ghost ? plantSpriteUrl(1) : plantSpriteUrl(prop
   .stage-enter-active, .stage-leave-active, .sprite { transition-duration: .01s; transition-delay: 0s; }
 }
 
-.shadow {
-  position: absolute; left: -33.33px; bottom: -6px;
-  width: 68.18px; height: 18.75px; border-radius: 50%; background: var(--shadow);
-}
 .plant[data-stage="2"][data-wilting] .sprite { filter: sepia(1) saturate(.75) brightness(.88); }
 .plant[data-stage="3"][data-wilting] .sprite { filter: sepia(.5) saturate(1.6) hue-rotate(-25deg) brightness(1.08); }
 /* "!" bubble, sitting just above the top of each stage's sprite */

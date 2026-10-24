@@ -21,7 +21,7 @@ export function useSeedDrag({ scrollerEl, stageEl, ghostRef, ghostBlocked, scree
     return cellFromEvent(e)
   }
 
-  function dropAt(e) {
+  function dropAt(e, flower = ui.selectedSeedFlower) {
     const cell = cellAtPointer(e)
     clearGhost()
     ui.seedPicked = false
@@ -30,7 +30,7 @@ export function useSeedDrag({ scrollerEl, stageEl, ghostRef, ghostBlocked, scree
     router.push({
       name: 'seed-create',
       params: { col: cell.col, row: cell.row },
-      query: { color: ui.selectedSeedColor },
+      query: { color: ui.selectedSeedColor, flower },
     })
   }
 
@@ -62,7 +62,10 @@ export function useSeedDrag({ scrollerEl, stageEl, ghostRef, ghostBlocked, scree
 
   function onDrop(e) {
     const rawSeed = e.dataTransfer.getData(SEED_MIME)
-    if (rawSeed) dropAt(e)
+    if (rawSeed) {
+      const { flower } = JSON.parse(rawSeed)
+      dropAt(e, flower)
+    }
   }
 
   function onPointerMove(e) {
