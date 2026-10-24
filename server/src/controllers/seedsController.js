@@ -70,7 +70,7 @@ export const seedsController = {
   },
 
   // POST /api/seeds/generate  multipart: file, maxCards?, existingQuestions? (JSON array of strings)
-  // Reads the document and returns AI-written { cards: [{ question, answer }] }. Nothing is saved.
+  // Reads the document and returns AI-written { cards: [{ question, answer, wrong_options }] }. Nothing is saved.
   async generate(req, res, next) {
     if (!req.file) return res.status(400).json({ error: 'Choose a file to upload.' })
     const filename = Buffer.from(req.file.originalname, 'latin1').toString('utf8') // multer reads names as latin1
@@ -92,7 +92,8 @@ export const seedsController = {
       if (content.length < 40) {
         return res.status(422).json({ error: "We couldn't find any text in this file. Scanned PDFs and image-only slides aren't supported." })
       }
-      const cards = await generateCards(content, { max, existing, signal: abort.signal })
+      const cards = (await generateCards(content, { max, existing, signal: abort.signal }))
+        .map((c) => ({ ...c, wrong_options: cleanTraps(c.wrong_options, c.answer) }))
       if (!cards.length) return res.status(422).json({ error: "There isn't enough new study content in this file to make flashcards." })
       res.json({ cards })
     } catch (err) {
