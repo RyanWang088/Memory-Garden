@@ -26,11 +26,18 @@ const subjects = computed(() => [...new Set(garden.seeds.filter(s1=>!s1.in_house
 }))])
 // TODO: milestones/deadlines -> add a `milestones` table 
 const milestones = computed(()=>
-  [...new Set(garden.seeds.map(s=>{
-    return {subject:s.subject,exam_date:s.exam_date,in_house:s.in_house}
-  }).filter(s=>!s.in_house))]
+  [...new Set(garden.seeds.filter(s=>!s.in_house).map(s=>{
+    return {title:s.subject,start:s.exam_date,end:s.exam_date}
+  }))]
 ) 
-const events=computed(()=>([...new Set(milestones.value.map(milestone=> ({title:milestone.subject,start:milestone.exam_date,end:milestone.exam_date})))]))
+const nextReviewDates = computed(()=>
+[...new Set(garden.seeds.map(s=>({title:s.title,
+  start:s.cards.map(c=>c.next_review).sort((a,b)=>Date(a?.next_review)-Date(b?.next_review))[0] || new Date().toISOString(),
+  end:s.cards.map(c=>c.next_review).sort((a,b)=>Date(a?.next_review)-Date(b?.next_review))[0] || new Date().toISOString(),
+})
+))] // anything with no next review date is placed at now
+)
+const events=computed(()=> milestones.value.concat(nextReviewDates.value))
 const calendarOptions = computed(()=> ({
   plugins: [themePlugin, dayGridPlugin, interactionPlugin],
   initialView: "dayGridMonth",
@@ -39,6 +46,7 @@ const calendarOptions = computed(()=> ({
  })) // calendarOptions from full calendar, passed in exam dates
 watchEffect(()=>{
   console.log(milestones.value)
+  // console.log(nextReviewDates.value)
   console.log(events.value)
 }) //testing, milestone updates later once fetchSeeds() runs
   
