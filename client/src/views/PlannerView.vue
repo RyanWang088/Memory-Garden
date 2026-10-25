@@ -30,12 +30,18 @@ const milestones = computed(()=>
     return {title:s.subject,start:s.exam_date,end:s.exam_date}
   }))]
 ) 
+// const nextReviewDates = computed(()=>
+// [...new Set(garden.seeds.map(s=>({title:s.title,
+//   start:s.cards.map(c=>c.next_review).sort((a,b)=>Date(a?.next_review)-Date(b?.next_review))[0] || new Date().toISOString(),
+//   end:s.cards.map(c=>c.next_review).sort((a,b)=>Date(a?.next_review)-Date(b?.next_review))[0] || new Date().toISOString(),
+// })
+// ))] // anything with no next review date is placed at now
+// )
 const nextReviewDates = computed(()=>
-[...new Set(garden.seeds.map(s=>({title:s.title,
-  start:s.cards.map(c=>c.next_review).sort((a,b)=>Date(a?.next_review)-Date(b?.next_review))[0] || new Date().toISOString(),
-  end:s.cards.map(c=>c.next_review).sort((a,b)=>Date(a?.next_review)-Date(b?.next_review))[0] || new Date().toISOString(),
-})
-))] // anything with no next review date is placed at now
+  (garden.seeds.map(s=>{
+    const earliest = s.cards.map(c=>c.next_review).filter(Boolean).sort((a,b)=>new Date(a)-new Date(b))[0] || new Date().toISOString()
+    return {title:s.title,start:earliest,end:earliest}
+  }))
 )
 //START
 // SUGGESTED FIX for nextReviewDates (commented out so you can compare):
