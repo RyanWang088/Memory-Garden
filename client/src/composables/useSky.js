@@ -1,12 +1,10 @@
 import { computed, onMounted, onBeforeUnmount } from 'vue'
 import { useWeatherStore } from '@/stores/weather'
 
-export function useSky() {
+// Just the phase, no timer. Anything that only needs to *read* the time of day (the meadow palette) uses this;
+// useSky() below owns the one clock that advances w.nowMin, so it must only be called once (by Skybox).
+export function useSkyPhase() {
     const w = useWeatherStore()
-    let timer
-
-    onMounted(() => { timer = setInterval(() => { w.nowMin = (w.nowMin + 1) % 1440 }, 60000) })
-    onBeforeUnmount(() => clearInterval(timer))
 
     const phase = computed(() => {
         const t = w.nowMin
@@ -14,6 +12,17 @@ export function useSky() {
         if (t >= w.sunset - 60 && t <= w.sunset + 30) return 'dusk'
         return t > w.sunrise && t < w.sunset ? 'day' : 'night'
     })
+
+    return { phase }
+}
+
+export function useSky() {
+    const w = useWeatherStore()
+    const { phase } = useSkyPhase()
+    let timer
+
+    onMounted(() => { timer = setInterval(() => { w.nowMin = (w.nowMin + 1) % 1440 }, 60000) })
+    onBeforeUnmount(() => clearInterval(timer))
 
     // 0..1 progress of whichever body is up (sun by day, moon by night)
     const progress = computed(() => {

@@ -4,14 +4,15 @@ import { useRoute, useRouter } from 'vue-router'
 import { useGardenStore } from '@/stores/garden'
 import { useUiStore } from '@/stores/ui'
 import { useToastStore } from '@/stores/toast'
-import { CELL_SIZE, isOnPath } from '@/lib/floorLayout'
+import { CELL_SIZE } from '@/lib/floorLayout'
 import { createGardenCamera, SCROLL_RANGE } from '@/lib/gardenCamera'
 import { drawMeadow } from '@/lib/meadowRenderer'
-import { loadLogSprite } from '@/lib/logSprite'
 import PlantSprite from './PlantSprite.vue'
 import Modal from './Modal.vue'
+import MeadowCritters from './MeadowCritters.vue'
 import { useSeedDrag } from '@/composables/useSeedDrag'
-// import backdropUrl from '@/assets/backdrop.png'
+import { useSkyPhase } from '@/composables/useSky'
+import { useMeadowPalette } from '@/composables/useMeadowPalette'
 
 const garden = useGardenStore()   // garden.gardenSeeds: { id, col, row, mastery, last_reviewed }, the plants still in the garden
 const ui = useUiStore()
@@ -35,8 +36,9 @@ const ghostBlocked = ref(false)
 let renderQueued = false, resizeObserver
 let scrollIdleTimer
 
-// meadow art: the backdrop sits behind the canvas; the log is drawn as a sprite
-const meadowAssets = { logImg: loadLogSprite(() => requestRender()) }
+// meadow colours follow the sky phase (Skybox runs the clock; this only reads it) and crossfade like the sky does
+const { phase } = useSkyPhase()
+const { palette, mood: meadowMood, shownMood } = useMeadowPalette(phase, requestRender)
 
 const occupiedCells = computed(() => new Set(garden.gardenSeeds.map(seed => `${seed.col},${seed.row}`)))
 const registerPlant = (id, el) => (el ? plantElements.set(id, el) : plantElements.delete(id))
@@ -83,23 +85,35 @@ function render() {
   drawFloor()
   for (const seed of garden.gardenSeeds) {
     const el = plantElements.get(seed.id)
-    const infoEl = plantInfoElements.get(seed.id)
     if (el) placeSprite(el, seed.col, seed.row)
-    if (infoEl) placePlantInfo(infoEl, seed.col, seed.row)
+    // the name bubble only needs a position while it is showing
+    if (isPlantInfoVisible(seed.id)) {
+      const infoEl = plantInfoElements.get(seed.id)
+      if (infoEl) placePlantInfo(infoEl, seed.col, seed.row)
+    }
   }
   updateGhost()
 }
 
+// What was last written to each sprite. Only `transform` changes every frame; display, z-index and the clip
+// are written when they actually change, so scrolling doesn't invalidate style on every plant every frame.
+const placed = new WeakMap()
+
 function placeSprite(el, col, row) {
   const visible = worldToScreen((col + 0.5) * CELL_SIZE, (row + 0.5) * CELL_SIZE)
-  el.style.display = visible ? 'block' : 'none'
+  let last = placed.get(el)
+  if (!last) placed.set(el, last = { display: '', z: null, clipped: null })
+
+  const display = visible ? 'block' : 'none'
+  if (last.display !== display) { el.style.display = display; last.display = display }
   if (!visible) return
-  const { x, y, scale, clipped, zIndex } = screenPoint
+
+  const { x, y, scale, clipped } = screenPoint
   el.style.transform = `translate3d(${x}px,${y}px,0) scale(${scale})`
-  el.style.setProperty('--inverse-plant-scale', String(1 / scale))
-  el.style.setProperty('--plant-label-gap', `${8 / scale}px`)
-  el.style.zIndex = zIndex
-  el.style.setProperty('--clipped', clipped + 'px')
+  // plants are depth-sorted by row and that order never changes while scrolling, so z-index is just the row
+  const z = 2000 - row
+  if (last.z !== z) { el.style.zIndex = z; last.z = z }
+  if (last.clipped !== clipped) { el.style.setProperty('--clipped', clipped + 'px'); last.clipped = clipped }
 }
 
 function placePlantInfo(el, col, row) {
@@ -142,11 +156,12 @@ function drawFloor() {
   const ctx = canvas.getContext('2d')
   ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
   ctx.clearRect(0, 0, viewWidth, viewHeight)
-  drawMeadow(ctx, cam, meadowAssets)
+  drawMeadow(ctx, cam, palette)
 }
 
+// the whole grid is plantable now that the path is gone; only taken cells are blocked
 function isBlocked(col, row) {
-  return isOnPath(col, row) || occupiedCells.value.has(`${col},${row}`)
+  return occupiedCells.value.has(`${col},${row}`)
 }
 
 const seedDrag = useSeedDrag({
@@ -202,6 +217,8 @@ watch(() => garden.gardenSeeds, () => {
   scrollToSeed()
 }, { deep: true, flush: 'post' })
 watch(() => route.query.scrollTo, scrollToSeed, { flush: 'post' })
+// a name bubble that just started showing needs its position before it fades in
+watch([hoveredPlantInfoId, () => ui.selectedGardenSeedId], requestRender, { flush: 'post' })
 onMounted(() => {
   resizeObserver = new ResizeObserver(measureView)
   resizeObserver.observe(scrollerEl.value)
@@ -229,8 +246,7 @@ onBeforeUnmount(() => {
         @dragleave="onDragLeave"
         @drop.prevent="onDrop"
       >
-        <!-- <img class="backdrop" :src="backdropUrl" alt="" draggable="false" /> -->
-        <canvas ref="canvasEl"></canvas>
+        <canvas ref="canvasEl" data-testid="meadow" :data-mood="meadowMood"></canvas>
 
         <PlantSprite
           v-for="seed in garden.gardenSeeds"
@@ -261,6 +277,7 @@ onBeforeUnmount(() => {
         </div>
 
         <PlantSprite ref="ghostRef" ghost :blocked="ghostBlocked" />
+        <MeadowCritters :mood="shownMood" />
       </div>
     </div>
   </div>
@@ -280,10 +297,6 @@ onBeforeUnmount(() => {
 .scroller { height: 100%; overflow: auto; overscroll-behavior: contain;scrollbar-width: none; }
 .track { width: var(--content-width); height: calc(var(--view-height) + var(--scroll-range)); }
 .stage { position: sticky; top: 0; left: 0; width: var(--view-width); height: var(--view-height); overflow: hidden; user-select: none; }
-/* .backdrop {
-  position: absolute; left: 0; bottom: calc(100% - var(--horizon-y)); width: 100%; height: auto;
-  pointer-events: none;
-} */
 canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .plant-info {
   position: absolute; top: 0; left: 0; pointer-events: none;
