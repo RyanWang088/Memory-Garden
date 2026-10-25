@@ -37,6 +37,20 @@ const nextReviewDates = computed(()=>
 })
 ))] // anything with no next review date is placed at now
 )
+//START
+// SUGGESTED FIX for nextReviewDates (commented out so you can compare):
+// 1. After .map(c=>c.next_review), a and b are already date strings, so a?.next_review is undefined.
+// 2. Date(x) without `new` ignores x and returns the CURRENT time as a string; string - string = NaN.
+//    sort() treats NaN as "equal", so the order never changes and [0] is just the first card, not the earliest.
+// Fix: drop empty dates with .filter(Boolean), compare with new Date(a) - new Date(b) (gives milliseconds),
+// and compute the earliest date once since start and end are the same.
+// const nextReviewDates = computed(()=>
+//   garden.seeds.map(s=>{
+//     const earliest = s.cards.map(c=>c.next_review).filter(Boolean).sort((a,b)=>new Date(a)-new Date(b))[0] || new Date().toISOString()
+//     return {title:s.title, start:earliest, end:earliest}
+//   })
+// ) // anything with no next review date is placed at now
+// END
 const events=computed(()=> milestones.value.concat(nextReviewDates.value))
 const calendarOptions = computed(()=> ({
   plugins: [themePlugin, dayGridPlugin, interactionPlugin],
