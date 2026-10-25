@@ -458,3 +458,51 @@ button.product-card.is-picked {
 ::selection {
   background-color: var(--peri-soft);
 }
+/* Review sessions (Structured Quiz, Short Structured): page shell, score pill, progress, results stats, claim button */
+.review-page {
+  min-height: 100vh;
+  padding: 32px 16px 48px;
+  background: var(--cream);
+}
+.review-container {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.score-pill {
+  padding: 2px 14px;
+  border-radius: 999px;
+  background: var(--mint);
+  color: var(--bark);
+  font-variant-numeric: tabular-nums;
+}
+.review-progress-fill {
+  background: var(--mint-deep);
+  transition: width 0.35s var(--spring);
+}
+/* a results box; colour it per stat in the component with border-color + background */
+.review-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 0;
+  max-width: 180px;
+  padding: 14px 8px;
+  border: 2px solid var(--linen);
+  border-radius: 16px;
+  background: var(--paper);
+  color: var(--bark-muted);
+}
+.claim-btn {
+  justify-content: center;
+  width: 100%;
+  max-width: 420px;
+  margin-top: 8px;
+}
+.claim-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+@media (max-width: 480px) {
+  .review-stat .text-stat { font-size: 22px; }
+}

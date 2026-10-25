@@ -16,6 +16,7 @@ const routes = [
     ],
   },
   { path: '/review/:id/structured-quiz', name: 'structured-quiz', component: () => import('@/views/StructuredQuizView.vue'), meta: { requiresAuth: true } },
+  { path: '/review/:id/short-structured', name: 'short-structured', component: () => import('@/views/ShortStructuredView.vue'), meta: { requiresAuth: true } },
   { path: '/review/:id/flexible-deck', name: 'flexible-deck', component: () => import('@/views/FlexibleDeckView.vue'), meta: { requiresAuth: true } },
   { path: '/planner', name: 'planner', component: () => import('@/views/PlannerView.vue'), meta: { requiresAuth: true, showNav: true } },
   { path: '/profile', name: 'profile', component: () => import('@/views/ProfileView.vue'), meta: { requiresAuth: true, showNav: true } },

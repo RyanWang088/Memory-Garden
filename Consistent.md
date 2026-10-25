@@ -101,6 +101,7 @@ The fonts are **Fredoka** (headings, labels, numbers) and **Nunito** (body text)
 | `.badge` | Small butter label |
 | `.overlay` | Fullscreen modal backdrop |
 | `.product-card`, `.product-art`, `.packet-art`, `.product-name`, `.product-empty`, `.product-locked` | Shop and inventory cards |
+| `.review-page`, `.review-container`, `.score-pill`, `.review-progress-fill`, `.review-stat`, `.claim-btn` | Review session pages: page shell, ✓ count pill, progress fill, results stat box, claim button |
 
 ### 2.5 Known style gaps (don't copy these; fix them when you touch them)
 
@@ -159,7 +160,7 @@ flowchart LR
 | Document → flashcards | Browser → `POST /api/seeds/generate` → `lib/ai.js` | Keeps the AI keys on the server |
 | Weather | Browser → `GET /api/weather` | Keeps the API key on the server |
 
-API endpoints today: `POST /api/auth/register`, `GET|POST /api/seeds`, `POST /api/seeds/generate`, `PATCH|DELETE /api/seeds/:id`, `POST /api/seeds/:id/reviews`, `GET /api/weather`.
+API endpoints today: `POST /api/auth/register`, `GET|POST /api/seeds`, `POST /api/seeds/generate`, `PATCH|DELETE /api/seeds/:id`, `POST /api/seeds/:id/grade`, `POST /api/seeds/:id/reviews`, `GET /api/weather`.
 
 ### 3.3 Folder responsibilities
 

@@ -10,13 +10,23 @@ const DAY = 86_400_000
 // How each rating changes ONE card:
 //   points  = added to card_mastery (kept between 0 and 100)
 //   spacing = share of the card's review gap (see reviewInDays) until it is due again; 0 = due again now
-// forgot / hard / easy come from Flexible Deck Mode, correct / wrong from Structured Quiz Mode.
+// forgot / hard / easy come from Flexible Deck Mode, correct / wrong from Structured Quiz Mode,
+// short_* from Short Structured Mode (typed answers, marked by AI; see shortAnswerRating).
+// Typing the answer from memory is the strongest proof, so short_correct earns the most.
 export const RATING_RULES = {
   forgot: { points: -5, spacing: 0 },
   hard: { points: 5, spacing: 0.5 },
   easy: { points: 12, spacing: 1 },
   correct: { points: 5, spacing: 1 },
   wrong: { points: -5, spacing: 0 },
+  short_correct: { points: 15, spacing: 1 },
+  short_partial: { points: 6, spacing: 0.5 },
+  short_wrong: { points: -5, spacing: 0 },
+}
+
+// AI score (0-100) for a typed answer -> its rating: 80+ correct, 50-79 partial, below 50 wrong
+export function shortAnswerRating(score) {
+  return score >= 80 ? 'short_correct' : score >= 50 ? 'short_partial' : 'short_wrong'
 }
 
 // Review gap by the card's mastery after the rating: the better a card is known, the later it comes back
@@ -92,6 +102,12 @@ export const SeedModel = {
       check(await supabase.from('seeds').update({ last_reviewed }).eq('id', seedId).eq('user_id', userId))
     }
     return getOne(userId, seedId)
+  },
+
+  // One card of one of the user's seeds, or null
+  async getCard(userId, seedId, cardId) {
+    return check(await supabase.from('cards').select('id, question, answer')
+      .eq('id', cardId).eq('seed_id', seedId).eq('user_id', userId).maybeSingle())
   },
 
   // Saves one review session. ratings: [{ card_id, rating }], e.g. { card_id: '...', rating: 'easy' }.

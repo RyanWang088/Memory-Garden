@@ -1,9 +1,21 @@
 // Controller: handles seed requests, calls the model, sends the JSON response.
-import { SeedModel, RATING_RULES } from '../models/seedModel.js'
+import { SeedModel, RATING_RULES, shortAnswerRating } from '../models/seedModel.js'
 import { ACCEPTED_TYPES, extOf, extractText } from '../lib/extractText.js'
-import { generateCards } from '../lib/ai.js'
+import { generateCards, gradeAnswer } from '../lib/ai.js'
 
 const MAX_AI_CARDS = 50 // per uploaded file
+const MAX_RESPONSE = 1000 // characters of a typed answer sent for marking
+const GRADES_PER_MINUTE = 30 // per user, so a spammed button can't run up the AI bill
+
+// user id -> times (ms) of their marking requests in the last minute. In memory: resets when the server restarts.
+const recentGrades = new Map()
+function tooManyGrades(userId) {
+  const now = Date.now()
+  const times = (recentGrades.get(userId) ?? []).filter(t => now - t < 60_000)
+  if (times.length >= GRADES_PER_MINUTE) return true
+  recentGrades.set(userId, [...times, now])
+  return false
+}
 
 const text = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 const same = (a, b) => a.toLowerCase() === b.toLowerCase()
@@ -115,8 +127,34 @@ export const seedsController = {
     } catch (err) { next(err) }
   },
 
+  // POST /api/seeds/:id/grade  body: { card_id, response }
+  // Short Structured Mode: AI marks a typed answer against the card's saved answer (never one sent by the client).
+  // Returns { score, rating, feedback }. Nothing is saved here: the client sends the ratings to /reviews at the end.
+  async grade(req, res, next) {
+    const card_id = req.body?.card_id
+    const response = text(req.body?.response, MAX_RESPONSE)
+    if (!isUuid(req.params.id) || !isUuid(card_id)) return res.status(400).json({ error: 'Send a valid card_id.' })
+    // a blank answer is wrong without asking the AI
+    if (!response) return res.json({ score: 0, rating: shortAnswerRating(0), feedback: "You didn't write an answer." })
+    if (tooManyGrades(req.user.id)) return res.status(429).json({ error: 'Slow down a little. Try again in a minute.' })
+
+    // stop the AI call if the user leaves the page (the browser cancels the request)
+    const abort = new AbortController()
+    res.on('close', () => { if (!res.writableEnded) abort.abort() })
+
+    try {
+      const card = await SeedModel.getCard(req.user.id, req.params.id, card_id)
+      if (!card) return res.status(404).json({ error: 'Card not found.' })
+      const { score, feedback } = await gradeAnswer(card, response, abort.signal)
+      res.json({ score, rating: shortAnswerRating(score), feedback })
+    } catch (err) {
+      if (!abort.signal.aborted) next(err)
+    }
+  },
+
   // POST /api/seeds/:id/reviews  body: { ratings: [{ card_id, rating }] }
-  // rating: forgot | hard | easy (Flexible Deck) or correct | wrong (Structured Quiz)
+  // rating: forgot | hard | easy (Flexible Deck), correct | wrong (Structured Quiz)
+  // or short_correct | short_partial | short_wrong (Short Structured)
   async review(req, res, next) {
     try {
       const ratings = req.body?.ratings

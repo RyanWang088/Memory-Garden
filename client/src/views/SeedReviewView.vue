@@ -27,6 +27,10 @@ function startStructuredQuiz() {
   router.push({ name: 'structured-quiz', params: { id: route.params.id } })
 }
 
+function startShortStructured() {
+  router.push({ name: 'short-structured', params: { id: route.params.id } })
+}
+
 function startFlexibleDeck() {
   router.push({ name: 'flexible-deck', params: { id: route.params.id } })
 }
@@ -62,6 +66,14 @@ function backToGarden() {
           <span class="d-flex flex-column text-start">
             <span class="text-button">Flexible Deck Mode</span>
             <span class="text-body-small">Flip through up to 20 flashcards.</span>
+          </span>
+        </button>
+
+        <button type="button" class="goal-option" data-testid="goal-short-structured" @click="startShortStructured">
+          <span class="goal-icon" aria-hidden="true">✍️</span>
+          <span class="d-flex flex-column text-start">
+            <span class="text-button">Short Structured Mode</span>
+            <span class="text-body-small">Think you've mastered 'em all? Try this out</span>
           </span>
         </button>
       </template>

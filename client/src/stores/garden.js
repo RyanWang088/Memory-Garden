@@ -106,8 +106,15 @@ export const useGardenStore = defineStore('garden', () => {
     refreshPriority()
   }
 
+  // Short Structured Mode: the server has AI mark one typed answer. Saves nothing.
+  // Returns { score, rating: 'short_correct' | 'short_partial' | 'short_wrong', feedback }
+  async function gradeAnswer(seedId, cardId, response, signal) {
+    return apiFetch(`/api/seeds/${encodeURIComponent(seedId)}/grade`, { method: 'POST', body: { card_id: cardId, response }, signal })
+  }
+
   // Saves a review session card by card. ratings: [{ card_id, rating }]
-  // rating: forgot | hard | easy (Flexible Deck) or correct | wrong (Structured Quiz)
+  // rating: forgot | hard | easy (Flexible Deck), correct | wrong (Structured Quiz)
+  // or short_correct | short_partial | short_wrong (Short Structured)
   async function saveReview(seedId, ratings) {
     const seed = seeds.value.find(s => s.id === seedId)
     if (!seed) throw new Error('Seed not found. Refresh the garden and try again.')
@@ -157,6 +164,6 @@ export const useGardenStore = defineStore('garden', () => {
 
   return {
     seeds, loaded, gardenSeeds, hasPlants, housedSubjects, shelfSlots, freeShelfSlots, examsOver,
-    stageOf, isWilted, fetchSeeds, plantSeed, rateReview, saveReview, deleteSeed, chooseExamOutcome, unlockShelf, readiness,
+    stageOf, isWilted, fetchSeeds, plantSeed, rateReview, gradeAnswer, saveReview, deleteSeed, chooseExamOutcome, unlockShelf, readiness,
   }
 })

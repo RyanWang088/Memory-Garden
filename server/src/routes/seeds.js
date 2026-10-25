@@ -18,6 +18,7 @@ router.get('/', seedsController.list)
 router.post('/', seedsController.create)
 router.post('/generate', uploadFile, seedsController.generate)
 router.patch('/:id', seedsController.update)
+router.post('/:id/grade', seedsController.grade)
 router.post('/:id/reviews', seedsController.review)
 router.delete('/:id', seedsController.remove)
 

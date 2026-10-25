@@ -6,13 +6,12 @@ import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
 import { shuffle } from '@/lib/shuffle'
 import { useStudyTimer } from '@/composables/useStudyTimer'
+import ConfettiBurst from '@/components/ConfettiBurst.vue'
 
 // "Structured Quiz Mode" review session: up to 10 multiple-choice questions from one seed,
 // then a results screen where the user claims coins for their score.
 const MAX_QUESTIONS = 10
 const LETTERS = ['A', 'B', 'C', 'D']
-const CONFETTI_MS = 3000
-const CONFETTI_COLORS = ['var(--peach)', 'var(--mint-deep)', 'var(--berry)', 'var(--periwinkle)', 'var(--butter)', 'var(--lilac)']
 
 const route = useRoute()
 const router = useRouter()
@@ -30,11 +29,10 @@ const correctCount = ref(0)
 const finished = ref(false)
 const startedAt = ref(0)
 const elapsedMs = ref(0)
-const confetti = ref([])
+const confetti = ref(null) // <ConfettiBurst>, rained on a score of 75%+
 const claiming = ref(false)
 const coinsClaimed = ref(false) // so a retry after a failed claim never pays twice
 const results = [] // one { card_id, rating: 'correct' | 'wrong' } per question, saved on claim
-let confettiTimer
 
 const seed = computed(() => garden.seeds.find(item => item.id === route.params.id))
 const current = computed(() => questions.value[index.value])
@@ -103,7 +101,6 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeydown)
-  clearTimeout(confettiTimer)
 })
 
 function choose(optionIndex) {
@@ -126,21 +123,7 @@ function next() {
 function finish() {
   elapsedMs.value = Date.now() - startedAt.value
   finished.value = true
-  if (accuracy.value >= 75) rainConfetti()
-}
-
-function rainConfetti() {
-  confetti.value = Array.from({ length: 90 }, (_, id) => ({
-    id,
-    style: {
-      left: `${Math.random() * 100}%`,
-      background: CONFETTI_COLORS[id % CONFETTI_COLORS.length],
-      animationDelay: `${Math.random() * 1.2}s`,
-      animationDuration: `${1.6 + Math.random() * 1.2}s`,
-      transform: `rotate(${Math.random() * 360}deg)`,
-    },
-  }))
-  confettiTimer = setTimeout(() => { confetti.value = [] }, CONFETTI_MS)
+  if (accuracy.value >= 75) confetti.value?.rain()
 }
 
 // 1-4 or A-D picks an option, Enter goes to the next question
@@ -192,8 +175,8 @@ function backToGarden() {
 </script>
 
 <template>
-  <main class="quiz-page">
-    <div class="quiz-container">
+  <main class="review-page">
+    <div class="review-container">
       <p v-if="loading" role="status">Getting your questions ready…</p>
 
       <section v-else-if="!questions.length" class="text-center d-flex flex-column align-items-center gap-3 pt-5">
@@ -211,7 +194,7 @@ function backToGarden() {
             <span class="score-pill text-button" data-testid="quiz-correct" :aria-label="`${correctCount} correct`">✓ {{ correctCount }}</span>
           </div>
           <div class="progress" role="progressbar" :aria-valuenow="answered" aria-valuemin="0" :aria-valuemax="total">
-            <div class="progress-fill quiz-progress-fill" :style="{ width: `${(answered / total) * 100}%` }" />
+            <div class="progress-fill review-progress-fill" :style="{ width: `${(answered / total) * 100}%` }" />
           </div>
         </header>
 
@@ -255,15 +238,15 @@ function backToGarden() {
         </div>
 
         <div class="stats d-flex gap-3 w-100 justify-content-center">
-          <div class="stat stat-coins">
+          <div class="review-stat stat-coins">
             <span class="text-label-field">Coins</span>
             <span class="text-stat" data-testid="quiz-reward">+{{ reward }}</span>
           </div>
-          <div class="stat stat-accuracy">
+          <div class="review-stat stat-accuracy">
             <span class="text-label-field">Accuracy</span>
             <span class="text-stat">{{ accuracy }}%</span>
           </div>
-          <div class="stat stat-time">
+          <div class="review-stat stat-time">
             <span class="text-label-field">Time</span>
             <span class="text-stat">{{ timeTaken }}</span>
           </div>
@@ -279,39 +262,13 @@ function backToGarden() {
       </section>
     </div>
 
-    <div v-if="confetti.length" class="confetti" aria-hidden="true">
-      <span v-for="piece in confetti" :key="piece.id" class="confetti-piece" :style="piece.style" />
-    </div>
+    <ConfettiBurst ref="confetti" />
   </main>
 </template>
 
 <style scoped>
-.quiz-page {
-  min-height: 100vh;
-  padding: 32px 16px 48px;
-  background: var(--cream);
-}
-
-.quiz-container {
-  max-width: 720px;
-  margin: 0 auto;
-}
-
 .bark-muted {
   color: var(--bark-muted);
-}
-
-.score-pill {
-  padding: 2px 14px;
-  border-radius: 999px;
-  background: var(--mint);
-  color: var(--bark);
-  font-variant-numeric: tabular-nums;
-}
-
-.quiz-progress-fill {
-  background: var(--mint-deep);
-  transition: width 0.35s var(--spring);
 }
 
 .option {
@@ -431,19 +388,6 @@ function backToGarden() {
 .tier-low .ring-fill { stroke: var(--berry); }
 .tier-low .ring-label { color: var(--berry-ink); }
 
-.stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  flex: 1 1 0;
-  max-width: 180px;
-  padding: 14px 8px;
-  border: 2px solid;
-  border-radius: 16px;
-  color: var(--bark-muted);
-}
-
 .stat-coins {
   border-color: var(--butter);
   background: color-mix(in srgb, var(--butter) 25%, var(--paper));
@@ -465,59 +409,9 @@ function backToGarden() {
 
 .stat-time .text-stat { color: color-mix(in srgb, var(--periwinkle) 55%, var(--bark)); }
 
-.claim-btn {
-  justify-content: center;
-  width: 100%;
-  max-width: 420px;
-  margin-top: 8px;
-}
-
-.claim-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* confetti */
-.confetti {
-  position: fixed;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 1100;
-}
-
-.confetti-piece {
-  position: absolute;
-  top: -16px;
-  width: 8px;
-  height: 14px;
-  border-radius: 2px;
-  animation-name: confetti-fall;
-  animation-timing-function: linear;
-  animation-fill-mode: forwards;
-}
-
-@keyframes confetti-fall {
-  to {
-    top: 105vh;
-    rotate: 720deg;
-    translate: 40px 0;
-  }
-}
-
 @media (max-width: 480px) {
   .stats {
     gap: 8px !important;
-  }
-
-  .stat .text-stat {
-    font-size: 22px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .confetti {
-    display: none;
   }
 }
 </style>
