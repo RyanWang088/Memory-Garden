@@ -1,0 +1,209 @@
+SPROUTLY - CHANGES (matches the "Sproutly Journey v2" prototype)
+==================================================================
+
+Summary
+-------
+- New pages: landing, sign-up / log-in, onboarding, Journal.
+- New "garden journal" look across the app.
+- Restyled Garden and Focus. Their stores, flows and API calls are kept.
+- Profile now has account settings.
+- One new server route: delete account.
+
+Not changed
+- client/package.json, the pnpm lockfiles, vite.config.js, index.html, public/ and tests/.
+  There are no new dependencies.
+- The database schema.
+
+The two e2e tests still use the same test ids (nav-coins, shed-tab-*, ...).
+
+Unchanged since the prototype, on request
+- The onboarding avatar was removed. Its space is kept empty (see 6).
+- Preview-only parts were removed. That covers:
+  - the "Preview" side tab and the stand-in browser backend
+  - the single-file build config
+  - the "Sky preview · dev only" bar
+  - the landing page's "Interactive preview" journal demo
+
+
+1. DESIGN SYSTEM ("garden journal" look)
+-----------------------------------------
+NEW   client/src/styles/theme.css
+      - Paper/ink palette, fonts and the new button, chip, segmented-control, input and washi-tape styles
+        (.sp-btn, .sp-chip, .sp-seg, .sp-input, .sp-tape).
+      - Fonts: Fraunces (headings), Caveat (handwriting), Nunito (body).
+      - Meadow "scenery" moods.
+      - Classes that would clash with Bootstrap or style.css have an "sp-" prefix.
+      - The paper colour is --sheet. --paper stays the white card colour.
+      - The existing team tokens (--bark, --cream, --linen, --peach, --mint, --periwinkle, --berry-ink ...)
+        are re-pointed at the new palette, so existing components follow it.
+      - Defines --font-heading and --font-body, which were used but missing.
+      - Honours "reduce motion".
+CHG   client/src/main.js     imports styles/theme.css after style.css.
+CHG   client/src/style.css
+      - Google Fonts import adds Fraunces, Caveat and Nunito 600-900.
+      - Fixes the .segmented-tab active shadow.
+      - Adds focus outlines on buttons.
+NEW   client/src/lib/scenery.js and components/SceneryBackdrop.vue
+      The illustrated meadow behind pages: sky moods, hills, tulips, butterflies, fireflies.
+NEW   client/src/lib/burst.js       leaf burst on button press (v-burst).
+NEW   client/src/lib/greeting.js    greeting and time-of-day sky mood.
+NEW   client/src/lib/icons.js and components/SproutIcon.vue
+      Small line icons used on the Focus and Journal pages (play, pause, chevrons, + / -).
+CHG   client/src/lib/plantSprites.js
+      Adds foliageUrl(name) for illustrations. The existing exports are unchanged.
+NEW   client/src/assets/ui/pot.svg   brand mark.
+
+
+2. APP SHELL AND NAVIGATION
+---------------------------
+CHG   client/src/components/NavBar.vue
+      - Now a top bar: brand, Journal / Garden / Focus, streak, coins, music and profile.
+      - Keeps the L / R keyboard shortcut.
+      - Original icons: fire emoji, coin.svg, house emoji, MusicToggle.
+NEW   client/src/components/AppDock.vue
+      - Bottom dock: Journal, Garden, Focus and Profile, using the original icons
+        (planner.svg, sprout.svg, focus.svg, house emoji).
+      - It is the main navigation on phones.
+CHG   client/src/App.vue        shows the dock on pages that show the nav.
+CHG   client/src/router/index.js
+      - New /journal route. /planner now redirects to /journal.
+        PlannerView.vue is kept in the project but no longer routed.
+      - Onboarding is shown only right after sign-up. Logging in never shows it.
+        A finished onboarding can't be reopened.
+      - Signed-in users skip the landing and login pages.
+      - Logged-out users sent to log in come back to the page they asked for (?next=).
+CHG   client/src/components/ToastHost.vue      paper styling; sits under the top bar.
+CHG   client/src/components/FocusPlayer.vue    journal styling; sits above the dock.
+
+
+3. LANDING PAGE
+---------------
+CHG   client/src/views/LandingView.vue
+      - Static landing page: hero with preview cards, "Why Sproutly" notes,
+        garden-tools showcase, a 20-second focus demo, how it works, call to action, footer.
+      - "Start growing" goes to sign-up and "Log in" to log-in.
+      - Sample courses: Statistics, Calculus, UI/UX Design, WAD, Finance, Data Analytics.
+
+
+4. LOG IN / SIGN UP
+-------------------
+CHG   client/src/views/AuthView.vue
+      - Split card with "Sprig" the pot: it follows the email and covers its eyes for the password.
+      - Log in / Sign up switch, show-password toggle, password growth meter, inline errors.
+      - Still calls auth.signIn / auth.signUp, so it uses Supabase Auth and POST /api/auth/register.
+      - After sign-up it goes to onboarding. After log-in it goes to the garden (or ?next).
+      - No "Forgot password" link: nothing in the backend supports it yet.
+
+
+5. JOURNAL (new; replaces the Planner page)
+-------------------------------------------
+NEW   client/src/views/JournalView.vue
+NEW   client/src/components/JournalBook.vue
+      - An open book: to-do list on the left page, month calendar on the right.
+      - Cover opening animation, page-turn between months, single-page tabs on phones,
+        arrow / PgUp / PgDn keyboard control.
+      - To-do filters: This Week / This Month / All. Week and month follow the date picked on
+        the calendar, and the week is tinted on the calendar.
+      - Tasks: add (subject + date), tick, star, double-click to edit, delete.
+      - The calendar shows task dots, EXAM stamps (from subject exam dates) and a water drop on
+        days with seeds due for review (from card next_review).
+      - The day ticket under the calendar has "Focus on this" (fills the Focus topic) and
+        "Water seeds" (opens the garden).
+      - The legend shows each subject's readiness %. It uses garden.readiness(), as the Planner did.
+NEW   client/src/stores/journal.js
+      - Tasks are saved per user in localStorage for now, because there is no tasks table yet.
+      - Subjects, exams and reviews due come from the garden store.
+
+
+6. ONBOARDING
+-------------
+CHG   client/src/views/OnboardingView.vue
+      - Six steps: Welcome, Journal, Focus, Seeds, About you, Ready.
+      - Step list on the left, thumbnails, swipe and arrow keys.
+      - "About you" asks: what you study for, hours per week, name, flower colour.
+      - Saved with auth.completeOnboarding(answers, flower). The name is saved as display_name.
+      - The last step has one button: "Go to my garden". It waits until the answers are saved.
+      - AVATAR: removed. Its space is kept as empty .avatar-slot elements:
+          welcome step: the centre of the picture
+          steps 2-5:    a bottom-left corner slot
+          Ready step:   beside the flower
+        To add an avatar later, put an <img> inside .avatar-slot.
+      - Sample course names in the illustrations.
+
+
+7. GARDEN (flow, canvas, stores and API unchanged)
+--------------------------------------------------
+CHG   client/src/views/GardenView.vue
+      - Greeting and status chips over the sky: plants needing a quiz (opens Study),
+        next exam, number planted.
+      - The "exam is over" prompt now sits under the chips, so it no longer covers the plants.
+CHG   client/src/components/ShedPanel.vue
+      - The shed is a paper card on the right with folder tabs on top, and can fold away.
+      - Phones: a sheet above the dock.
+      - Same tabs and ui-store state as before.
+      - Original icons: seed, wateringCanIcon, shop, shovel.
+CHG   client/src/components/ShedTabSeeds.vue    petal colours are round swatches (same ui.selectedSeedColor).
+CHG   client/src/components/ExamOverPrompt.vue  phone layout; original shovel icon.
+CHG   client/src/views/SeedReviewView.vue       paper styling, entrance animation; original icons.
+CHG   client/src/components/Skybox.vue
+      - Sets body[data-sky] so text on the sky stays readable at dusk and night.
+      - REMOVED the "Sky preview · dev only" time/weather bar (it was marked
+        "delete later only used for development").
+CHG   client/src/components/PlantSeedForm.vue   heading font only.
+
+
+8. FOCUS
+--------
+CHG   client/src/views/PomodoroView.vue
+      - Opens on "Set your focus & break": two big time boxes with - / + and typing.
+        Classic and Deep work are quick picks.
+      - Steps: Rhythm, then Topic (with one-click subjects from your garden), then Length.
+      - Length is ROUNDS ONLY. The total-time option was removed.
+      - Minimum focus is 1 minute. Minimum break is 0 minutes, and then focus blocks run back to back.
+      - The page meadow turns to night while focusing and back to day on breaks.
+      - A plant grows inside the timer ring, with one plant per block under the ring.
+      - The finish screen shows a bouquet.
+      - The BREAK IDEAS card was REMOVED. The BreakIdeas.vue file is kept but not used.
+CHG   client/src/components/DurationInput.vue   new allowZero prop, so a break can be 0.
+CHG   client/src/stores/pomodoro.js
+      - errors.rhythm adds "Focus for at least 1 minute."
+      - buildBlocks skips breaks when the break is 0.
+      - Everything else is unchanged.
+CHG   client/src/components/SessionTodo.vue and GardenRadio.vue   journal styling (vinyl, handwriting).
+
+
+9. PROFILE - ACCOUNT & SETTINGS
+-------------------------------
+CHG   client/src/views/ProfileView.vue
+      - New "Account & settings" box, always visible:
+          Change password: asks for the current password, the new one and a repeat.
+          Log out
+          Delete account:  asks for the password and for typing DELETE.
+      - Log out now goes to the landing page through the router (works with any base path).
+CHG   client/src/stores/auth.js
+      - changePassword(current, next): checks the current password by signing in,
+        then calls supabase.auth.updateUser.
+      - deleteAccount(password): checks the password, calls DELETE /api/auth/account, then signs out.
+
+SERVER
+CHG   server/src/routes/auth.js
+      DELETE /api/auth/account (requires login), next to POST /register.
+CHG   server/src/controllers/authController.js    deleteAccount.
+CHG   server/src/models/userModel.js
+      remove(userId): deletes the user's seeds first (seeds -> subjects is ON DELETE RESTRICT),
+      then supabase.auth.admin.deleteUser. Profiles, subjects, cards and inventory then cascade.
+
+
+10. NOTES
+---------
+- Sample courses (Statistics, Calculus, UI/UX Design, Web Application Development, Finance,
+  Data Analytics) appear in the landing and onboarding illustrations.
+  Real users' courses come from their own seeds in Supabase, as before.
+- Garden Radio, rewards, streaks, the flower shelf, reviews (quiz, flexible deck, short answer)
+  and seed planting are unchanged.
+- Tested: the client production build (vite build) passes.
+  - The full journey was clicked through in a browser against a stand-in backend on desktop and
+    phone sizes: sign-up, onboarding, garden, journal filters, a focus session with 1-minute focus
+    and 0-minute break, password change and the delete dialog.
+  - The new delete-account route has NOT been run against a real Supabase project yet.
+    Please test it there first.

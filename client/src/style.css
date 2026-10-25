@@ -1,0 +1,523 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+:root {
+  --peach: #FFB5A7;
+  --mint: #BFEBD6;
+  --mint-deep:#7FC9A6;
+  --berry: #F27A8E;
+  --berry-ink:#A8304A;
+  --periwinkle: #8FA4FF;
+  --peri-soft:#E6EBFF;
+  --lilac:#C7B5FF;
+  --butter: #FFE484;
+  --butter-deep:#E0A93A;
+  --bark: #5A3E36;
+  --bs-body-color: var(--bark);
+  /*text color*/
+  --bark-muted: #8A7268;
+  --paper: #fff;
+  --cream: #FFF7F0;
+  --linen: #F3E3D8;
+  --spring: cubic-bezier(.34, 1.56, .64, 1);
+  --radius-pill: 10px;
+  --shadow:rgba(39, 49, 30, .48);
+  --shadow-card:rgba(107, 74, 58, 0.18);
+  /* named in Consistent.md / used by .segmented-tab, but were never defined */
+  --font-heading: 'Fredoka', sans-serif;
+  --font-body: 'Nunito', sans-serif;
+}
+
+img {
+  height: 100%;
+}
+
+* {
+  font-family: nunito;
+}
+
+body {
+  color: var(--bark);
+}
+
+body.tool-shovel .garden-stage,
+body.tool-shovel .garden-stage * {
+  cursor: url('./assets/ui/shovel.png') 16 44, auto;
+}
+
+body.tool-wateringCan .garden-stage,
+body.tool-wateringCan .garden-stage * {
+  cursor: url('./assets/ui/wateringcan.png') 4 32, auto;
+}
+
+/* =========================================
+   DISPLAY & HEADINGS (Fredoka)
+   ========================================= */
+
+.text-display {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  /* SemiBold */
+  font-size: 48px;
+  line-height: 56px;
+}
+
+h1 {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  /* SemiBold */
+  font-size: 36px;
+  line-height: 44px;
+}
+
+h2 {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  /* SemiBold */
+  font-size: 28px;
+  line-height: 36px;
+}
+
+h3 {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 500;
+  /* Medium */
+  font-size: 22px;
+  line-height: 30px;
+}
+
+/* =========================================
+   UI LABELS & NUMBERS (Fredoka)
+   ========================================= */
+
+.text-button {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  /* SemiBold */
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.text-timer {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 500;
+  /* Medium */
+  font-size: 64px;
+  line-height: 64px;
+  font-variant-numeric: tabular-nums;
+  /* Prevents timer text width from jumping */
+}
+
+.text-stat {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  /* SemiBold */
+  font-size: 28px;
+  line-height: 32px;
+}
+
+/* =========================================
+   BODY TEXT & FIELDS (Nunito)
+   ========================================= */
+
+p {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 400;
+  /* Regular */
+  font-size: 16px;
+  line-height: 26px;
+}
+
+.text-body-strong {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  /* Bold */
+  font-size: 16px;
+  line-height: 26px;
+}
+
+.text-body-small {
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--bark-muted);
+}
+
+.text-label-field {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  /* Bold */
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.text-label-caption {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  /* Bold */
+  font-size: 12px;
+  line-height: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  /* +4% */
+}
+.text-danger {
+  color:var(--berry-ink);
+}
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--shadow);
+  backdrop-filter: blur(3px);
+}
+
+/* pill with number */
+.counter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px 4px 6px;
+  min-width: 74px;
+  height: 32px;
+  background: var(--cream);
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+  box-shadow: 0 3px 8px -4px var(--shadow-card);
+  text-decoration: none;
+  transition: transform .2s var(--spring);
+}
+
+/* segmented control bar slider pill */
+.segmented-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--linen);
+  padding: 4px;
+  width: 100%;
+  max-width: 374px;
+  height: 44px;
+  border-radius: var(--radius-pill);
+  position: relative;
+  user-select: none;
+}
+
+/* Individual tab button */
+.segmented-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: transparent;
+  color: var(--bark);
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 24px;
+  cursor: pointer;
+  transition: color 0.18s ease, transform 0.15s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.segmented-tab:hover {
+  transform: translateY(-1px);
+}
+
+/* Active tab style */
+.segmented-tab.is-active {
+  background-color: var(--paper);
+  box-shadow: 0 2px 6px var(--shadow-card); /* was the bare colour, which is not a valid shadow */
+  font-weight: 600;
+}
+
+
+.btn-primary {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 10px 22px;
+  gap: 8px;
+
+  width: 193px;
+  height: 44px;
+
+  background: var(--peach);
+  box-shadow: 0px 4px 0px var(--berry);
+  border-radius: 999px;
+
+  /* Inside auto layout */
+  flex: none;
+  order: 4;
+  flex-grow: 0;
+  color: var(--berry-ink);
+
+}
+
+.btn-primary:focus-visible { outline: 3px solid var(--periwinkle); outline-offset: 3px; }
+.btn-primary, .btn-secondary { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+
+.btn-primary:hover {
+  box-shadow: 0px 6px 0px var(--berry);
+  transform: translateY(-2px);
+}
+
+.btn-primary:active {
+  box-shadow: 0px 2px 0px var(--berry);
+  transform: translateY(2px);
+}
+.progress {
+  width: 100%;
+  height: 12px;
+  background: var(--linen);
+  border-radius: 999px;
+  overflow: hidden;
+}
+ 
+.progress-fill {
+  height: 100%;
+  background: var(--mint);
+  border-radius: 999px;
+}
+
+.tag-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 4px 12px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--butter);
+  color: var(--bark);
+  font-weight: 700;
+}
+.plant.is-highlighted .sprite {
+  /* change ltr to something nicer */
+  filter: brightness(1.25) saturate(1.12) drop-shadow(0 0 8px var(--paper));
+}
+
+.navlabel {
+  position: absolute;
+  left: 50%;
+  top: -14px;
+  font-weight: 600;
+  background-color: var(--butter);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 6px) scale(.6);
+  transition: opacity .2s, transform .35s var(--spring);
+}
+
+/*  shop cards */
+.product-card {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 212px;
+  border: 1px solid var(--linen);
+  border-radius: 16px;
+  background: var(--paper);
+  box-shadow: 0 8px 24px -6px var(--shadow-card), 0 2px 4px var(--shadow-card);
+  color: var(--bark);
+}
+
+button.product-card {
+  cursor: grab;
+  touch-action: none;
+  transition: transform 0.18s var(--spring), box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+button.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 26px -6px var(--shadow-card), 0 3px 6px var(--shadow-card);
+}
+
+button.product-card:focus-visible,
+.btn-secondary:focus-visible {
+  outline: 3px solid var(--periwinkle);
+  outline-offset: 3px;
+}
+
+button.product-card:active {
+  cursor: grabbing;
+  transform: translateY(1px);
+}
+
+button.product-card.is-picked {
+  background: var(--paper);
+  border-color: var(--peach);
+}
+
+.product-art {
+  position: relative;
+  flex: 0 0 96px;
+  width: 100%;
+  border-radius: 10px;
+  background: var(--cream);
+  overflow: hidden;
+}
+
+.packet-art {
+  display: block;
+  width: auto;
+  max-width: 76%;
+  height: 80px;
+  object-fit: contain;
+}
+
+.product-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-locked .packet-art {
+  opacity: 0.72;
+  filter: grayscale(1);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 96px;
+  min-height: 40px;
+  padding: 7px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--butter);
+  box-shadow: 0 4px 0 var(--butter-deep);
+  color: var(--bark);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--butter);
+  box-shadow: 0 6px 0 var(--butter-deep);
+  color: var(--bark);
+  transform: translateY(-2px);
+}
+
+.btn-secondary:active:not(:disabled) {
+  box-shadow: 0 2px 0 var(--butter-deep);
+  transform: translateY(2px);
+}
+
+.btn-secondary:disabled {
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.product-empty {
+  border: 1px dashed var(--linen);
+  border-radius: 16px;
+  background: var(--paper);
+}
+
+/* scrollbar style */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: var(--linen);
+  border-radius: var(--radius-pill);
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: var(--peach);
+  border-radius: var(--radius-pill);
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: var(--berry);
+}
+::selection {
+  background-color: var(--peri-soft);
+}
+/* Review sessions (Structured Quiz, Short Structured): page shell, score pill, progress, results stats, claim button */
+.review-page {
+  min-height: 100vh;
+  padding: 32px 16px 48px;
+  background: var(--cream);
+}
+.review-container {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.score-pill {
+  padding: 2px 14px;
+  border-radius: 999px;
+  background: var(--mint);
+  color: var(--bark);
+  font-variant-numeric: tabular-nums;
+}
+.review-progress-fill {
+  background: var(--mint-deep);
+  transition: width 0.35s var(--spring);
+}
+/* a results box; colour it per stat in the component with border-color + background */
+.review-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 0;
+  max-width: 180px;
+  padding: 14px 8px;
+  border: 2px solid var(--linen);
+  border-radius: 16px;
+  background: var(--paper);
+  color: var(--bark-muted);
+}
+.claim-btn {
+  justify-content: center;
+  width: 100%;
+  max-width: 420px;
+  margin-top: 8px;
+}
+.claim-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+@media (max-width: 480px) {
+  .review-stat .text-stat { font-size: 22px; }
+}
+
+.avatar:hover { transform: scale(1.08) rotate(-4deg); }
+
+/* motion is decoration only: honour the system setting */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

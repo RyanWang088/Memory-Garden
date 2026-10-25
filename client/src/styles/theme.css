@@ -1,0 +1,419 @@
+/* ==========================================================================
+   Sproutly "garden journal" theme
+   Ported from the reviewed Sproutly Interactive HTML (assets/sproutly.css).
+   - Classes that would clash with Bootstrap or our own style.css are prefixed sp- (.sp-btn, .sp-card, .sp-chip ...).
+   - The reference's paper colour is --sheet here; --paper stays the white card colour used by our components.
+   - The team tokens in style.css are re-pointed at this palette below, so existing components follow it.
+   ========================================================================== */
+/* ==========================================================================
+   Sproutly design system — "garden journal"
+   Layout concept: illustrated meadow scenery behind paper surfaces; one
+   persistent top bar + a bottom dock (adapted from the cake-shop reference),
+   content sits on cream paper with washi tape, ink and highlighter details.
+   ========================================================================== */
+:root {
+  /* paper & ink */
+  --sheet: #FCF6EC;
+  --sheet-2: #F5EAD8;
+  --sheet-3: #EBDCC4;
+  --ink: #4A362E;
+  --ink-soft: #85695C;
+  --ink-faint: #B49E8E;
+  /* garden accents (from the tulip & stem art already in the app) */
+  --berry: #E0546A;
+  --berry-deep: #B13A51;
+  --berry-soft: #FBE3E2;
+  --leaf: #3E8B57;
+  --leaf-deep: #2A6640;
+  --leaf-soft: #DDEFD8;
+  --butter: #F7CD5D;
+  --butter-deep: #D99E2B;
+  --butter-soft: #FFF2C6;
+  --sky: #BFE2F1;
+  --lilac: #B9A7E8;
+  /* journal paper */
+  --rule: #D7E3EA;
+  --margin: #F0A9AE;
+  --line: #E7D6BF;
+
+  --f-display: 'Fraunces', 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
+  --f-hand: 'Caveat', 'Segoe Print', 'Bradley Hand', cursive;
+  --f-body: 'Nunito', 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 26px;
+  --shadow-1: 0 1px 2px rgba(74, 54, 46, .08), 0 6px 18px -6px rgba(74, 54, 46, .22);
+  --shadow-2: 0 2px 4px rgba(74, 54, 46, .08), 0 22px 50px -18px rgba(74, 54, 46, .45);
+  --spring: cubic-bezier(.34, 1.56, .64, 1);
+  --ease: cubic-bezier(.22, .8, .24, 1);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .18 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --dock-h: 64px;
+
+  /* spacing scale (4px base) */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-7: 32px; --s-8: 48px; --s-9: 72px;
+  /* type scale */
+  --fs-xs: .72rem; --fs-sm: .85rem; --fs-md: 1rem; --fs-lg: 1.15rem; --fs-xl: 1.4rem;
+  --fs-2xl: clamp(1.7rem, 3vw, 2.2rem); --fs-3xl: clamp(1.9rem, 3.6vw, 2.9rem); --fs-4xl: clamp(2.4rem, 5.4vw, 4.4rem);
+  /* motion */
+  --t-fast: .18s; --t-med: .45s; --t-slow: .9s;
+  --r-pill: 999px;
+  color-scheme: light;
+}
+
+/* ---------- type ---------- */
+.sp-display { font-family: var(--f-display); font-weight: 600; letter-spacing: -.01em; text-wrap: balance; margin: 0; color: var(--ink); }
+.sp-display em { font-style: italic; font-weight: 500; color: var(--berry); }
+.sp-hand { font-family: var(--f-hand); font-weight: 600; letter-spacing: .01em; }
+.sp-eyebrow {
+  font-family: var(--f-body); font-weight: 800; font-size: .72rem; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink-soft);
+  display: inline-flex; align-items: center; gap: .5em;
+}
+.sp-eyebrow::before { content: ""; width: 18px; height: 2px; border-radius: 2px; background: currentColor; opacity: .6; }
+.sp-lede { font-size: 1.12rem; color: var(--ink-soft); max-width: 52ch; margin: 0; }
+.sp-muted { color: var(--ink-soft); }
+.sp-tnum { font-variant-numeric: tabular-nums; }
+.sr-only { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- buttons (keeps the app's tactile "pressable" button, refined) ---------- */
+.sp-btn {
+  --bg: var(--berry); --fg: #fff; --edge: var(--berry-deep);
+  display: inline-flex; align-items: center; justify-content: center; gap: .55em;
+  min-height: 46px; padding: .7em 1.4em;
+  border: 0; border-radius: 999px;
+  background: var(--bg); color: var(--fg);
+  font-family: var(--f-body); font-weight: 800; font-size: .95rem; letter-spacing: .01em;
+  text-decoration: none; white-space: nowrap;
+  box-shadow: 0 4px 0 var(--edge), 0 10px 22px -10px var(--edge);
+  transform: translateY(0);
+  transition: transform .18s var(--spring), box-shadow .18s ease, background-color .2s;
+  position: relative; isolation: isolate;
+}
+.sp-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--edge), 0 14px 26px -10px var(--edge); }
+.sp-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge), 0 4px 10px -6px var(--edge); }
+.sp-btn[disabled] { opacity: .55; cursor: not-allowed; transform: none; }
+.sp-btn .arrow { transition: transform .25s var(--spring); }
+.sp-btn:hover .arrow { transform: translateX(4px); }
+.sp-btn-leaf { --bg: var(--leaf); --edge: var(--leaf-deep); }
+.sp-btn-butter { --bg: var(--butter); --fg: var(--ink); --edge: var(--butter-deep); }
+.sp-btn-ghost {
+  --bg: color-mix(in srgb, var(--sheet) 80%, transparent); --fg: var(--ink); --edge: var(--sheet-3);
+  backdrop-filter: blur(6px);
+}
+.sp-btn-sm { min-height: 36px; padding: .45em 1em; font-size: .85rem; }
+.sp-btn-block { width: 100%; }
+/* ripple of leaves on press */
+.sp-burst { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.sp-burst i {
+  position: absolute; left: 50%; top: 50%; width: 9px; height: 13px;
+  background: var(--leaf); border-radius: 0 100% 0 100%;
+  animation: leafpop .7s var(--ease) forwards;
+}
+@keyframes leafpop {
+  from { transform: translate(-50%, -50%) rotate(var(--r)) translateY(0) scale(.4); opacity: 1; }
+  to   { transform: translate(-50%, -50%) rotate(var(--r)) translateY(-46px) scale(1); opacity: 0; }
+}
+
+.sp-icon-btn {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: inline-grid; place-items: center;
+  border: 1.5px solid var(--line); background: var(--sheet); color: var(--ink);
+  transition: transform .2s var(--spring), background .2s, border-color .2s;
+}
+.sp-icon-btn:hover { transform: translateY(-2px) rotate(-4deg); border-color: var(--berry); color: var(--berry-deep); }
+.sp-icon-btn:active { transform: scale(.92); }
+.sp-icon-btn svg { width: 18px; height: 18px; }
+
+/* ---------- chips & segmented tabs ---------- */
+.sp-chip {
+  display: inline-flex; align-items: center; gap: .4em;
+  padding: .25em .8em; border-radius: 999px;
+  border: 1.5px solid var(--line); background: var(--sheet);
+  font-size: .82rem; font-weight: 700; color: var(--ink-soft);
+}
+.sp-chip.is-on, button.sp-chip[aria-pressed="true"] { background: var(--berry-soft); border-color: var(--berry); color: var(--berry-deep); }
+button.sp-chip { transition: transform .18s var(--spring), background .2s, border-color .2s; }
+button.sp-chip:hover { transform: translateY(-1px); }
+
+.sp-seg {
+  position: relative; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  padding: 4px; border-radius: 999px; background: var(--sheet-2);
+  border: 1px solid var(--line);
+}
+.sp-seg button {
+  position: relative; z-index: 1; border: 0; background: none;
+  padding: .45em 1.1em; border-radius: 999px; font-weight: 800; font-size: .85rem; color: var(--ink-soft);
+  transition: color .25s;
+}
+.sp-seg button[aria-selected="true"], .sp-seg button[aria-pressed="true"] { color: var(--ink); }
+.sp-seg .sp-seg-thumb {
+  position: absolute; z-index: 0; top: 4px; bottom: 4px; left: 4px;
+  border-radius: 999px; background: var(--sheet); box-shadow: var(--shadow-1);
+  transition: transform .45s var(--spring), width .3s var(--ease);
+}
+
+/* ---------- fields ---------- */
+.sp-field { display: grid; gap: .35rem; }
+.sp-field label, .sp-label { font-weight: 800; font-size: .8rem; letter-spacing: .04em; color: var(--ink-soft); }
+.sp-input {
+  width: 100%; min-height: 48px; padding: .7em 1em;
+  border-radius: 14px; border: 1.5px solid var(--line);
+  background: color-mix(in srgb, #fff 55%, var(--sheet));
+  transition: border-color .2s, box-shadow .25s, background .2s;
+}
+.sp-input::placeholder { color: var(--ink-faint); }
+.sp-input:hover { border-color: var(--sheet-3); }
+.sp-input:focus { outline: none; border-color: var(--leaf); box-shadow: 0 0 0 4px color-mix(in srgb, var(--leaf) 18%, transparent); background: #fff; }
+.sp-input.is-invalid { border-color: var(--berry); box-shadow: 0 0 0 4px color-mix(in srgb, var(--berry) 14%, transparent); }
+.sp-field-msg { min-height: 1.2em; font-size: .82rem; color: var(--berry-deep); font-weight: 700; margin: 0; }
+
+/* ---------- paper surfaces ---------- */
+.sp-paper {
+  position: relative;
+  background: var(--sheet);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-2);
+  isolation: isolate;
+}
+.sp-paper::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1;
+  background-image: var(--grain); opacity: .18; mix-blend-mode: multiply;
+}
+.sp-tape {
+  position: absolute; width: 92px; height: 26px; z-index: 3;
+  background: repeating-linear-gradient(45deg, rgba(255,255,255,.35) 0 6px, transparent 6px 12px), color-mix(in srgb, var(--berry) 45%, var(--sheet));
+  opacity: .85; box-shadow: 0 1px 2px rgba(0,0,0,.08);
+  clip-path: polygon(3% 0, 97% 4%, 100% 50%, 96% 100%, 2% 96%, 0 50%);
+}
+.sp-tape.is-leaf { background: repeating-linear-gradient(90deg, rgba(255,255,255,.3) 0 4px, transparent 4px 10px), color-mix(in srgb, var(--leaf) 45%, var(--sheet)); }
+.sp-tape.is-butter { background: radial-gradient(circle at 6px 6px, rgba(255,255,255,.55) 2px, transparent 2.5px) 0 0/12px 12px, color-mix(in srgb, var(--butter) 70%, var(--sheet)); }
+
+/* ==========================================================================
+   Scenery — responsive layered meadow (scenery.js draws it to the real size)
+   ========================================================================== */
+.scenery {
+  position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+  background: linear-gradient(180deg, var(--s-top) 0%, var(--s-mid) 55%, var(--s-bot) 100%);
+  transition: --s-top 2.5s ease, --s-mid 2.5s ease, --s-bot 2.5s ease;
+}
+@property --s-top { syntax: '<color>'; inherits: true; initial-value: #9fd3ef; }
+@property --s-mid { syntax: '<color>'; inherits: true; initial-value: #dff1f2; }
+@property --s-bot { syntax: '<color>'; inherits: true; initial-value: #f6f3e2; }
+.scenery[data-mood="day"]     { --s-top: #8fcbea; --s-mid: #d8eff1; --s-bot: #f3f4df; --sun: #fffbe8; --glow: rgba(255, 246, 205, .9); --h1: #b3d5a9; --h2: #8fc373; --h3: #69ad55; --h4: #4b9446; --h5: #377c3a; --tree: #3f7f45; --tree2: #2f6b3a; --cloud: #ffffff; --fl-o: 1; }
+.scenery[data-mood="morning"] { --s-top: #a9d6ec; --s-mid: #f6dccd; --s-bot: #fbefdc; --sun: #fff6dc; --glow: rgba(255, 214, 170, .95); --h1: #bcd6ae; --h2: #9cc67f; --h3: #79b25e; --h4: #589c4c; --h5: #3f833f; --tree: #4b8a4d; --tree2: #36723f; --cloud: #fff7f2; --fl-o: 1; }
+.scenery[data-mood="blush"]   { --s-top: #f2b9c4; --s-mid: #f9dcd2; --s-bot: #fbeee0; --sun: #fff8ea; --glow: rgba(255, 226, 205, .95); --h1: #c8d3b0; --h2: #a9c48c; --h3: #86b26c; --h4: #669c58; --h5: #4d8549; --tree: #5b8f56; --tree2: #467a48; --cloud: #fff3f3; --fl-o: 1; }
+.scenery[data-mood="dusk"]    { --s-top: #6f6aa6; --s-mid: #e9a3a3; --s-bot: #f6c99e; --sun: #ffe3b5; --glow: rgba(255, 190, 140, .85); --h1: #8b8f8e; --h2: #6e8b66; --h3: #557a50; --h4: #3f6741; --h5: #2f5534; --tree: #3b5c3e; --tree2: #2d4a32; --cloud: #f7d3d6; --fl-o: .85; }
+.scenery[data-mood="night"]   { --s-top: #0f1736; --s-mid: #27325f; --s-bot: #3d3f6b; --sun: #fdf6dd; --glow: rgba(150, 175, 255, .35); --h1: #2a3a55; --h2: #223a45; --h3: #1b3537; --h4: #152d2b; --h5: #0f2420; --tree: #14302a; --tree2: #0f261f; --cloud: #3b4673; --fl-o: .55; }
+
+.scenery .sun {
+  position: absolute; width: 120px; height: 120px; border-radius: 50%;
+  background: var(--sun); box-shadow: 0 0 80px 40px var(--glow), 0 0 200px 120px color-mix(in srgb, var(--glow) 50%, transparent);
+  transition: background 2.5s, box-shadow 2.5s, top 2.5s var(--ease), left 2.5s var(--ease);
+}
+.scenery[data-mood="night"] .sun { width: 70px; height: 70px; box-shadow: 0 0 40px 10px var(--glow), inset -14px -6px 0 0 #e9e0c0; }
+.scenery .stars { position: absolute; inset: 0 0 45% 0; opacity: 0; transition: opacity 2.5s; }
+.scenery[data-mood="night"] .stars { opacity: 1; }
+.scenery[data-mood="dusk"] .stars { opacity: .35; }
+.scenery .stars i { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #fff; animation: twinkle 3s ease-in-out infinite alternate; }
+@keyframes twinkle { from { opacity: .25; } to { opacity: 1; } }
+.scenery .cloud {
+  position: absolute; height: 40px; border-radius: 40px; background: var(--cloud); opacity: .85;
+  filter: blur(.3px); transition: background 2.5s, opacity 2.5s;
+  animation: cloud-drift linear infinite;
+}
+.scenery .cloud::before, .scenery .cloud::after { content: ""; position: absolute; border-radius: 50%; background: inherit; }
+.scenery .cloud::before { width: 46%; height: 160%; left: 14%; bottom: 20%; }
+.scenery .cloud::after { width: 36%; height: 130%; right: 16%; bottom: 25%; }
+@keyframes cloud-drift { from { transform: translateX(-30vw); } to { transform: translateX(130vw); } }
+.scenery svg.land { position: absolute; left: 0; bottom: 0; width: 100%; height: 100%; display: block; }
+.scenery svg.land .h1 { fill: var(--h1); } .scenery svg.land .h2 { fill: var(--h2); }
+.scenery svg.land .h3 { fill: var(--h3); } .scenery svg.land .h4 { fill: var(--h4); }
+.scenery svg.land .h5 { fill: var(--h5); }
+.scenery svg.land .tr { fill: var(--tree); } .scenery svg.land .tr2 { fill: var(--tree2); }
+.scenery svg.land path, .scenery svg.land circle, .scenery svg.land ellipse { transition: fill 2.5s ease; }
+.scenery svg.land .fl { opacity: var(--fl-o); transition: opacity 2.5s; }
+.scenery .tulip { position: absolute; transform-origin: 50% 100%; animation: sway 5s ease-in-out infinite alternate; filter: saturate(.95); transition: filter 2.5s, opacity 2.5s; }
+.scenery[data-mood="night"] .tulip { filter: brightness(.45) saturate(.6) hue-rotate(-10deg); }
+.scenery[data-mood="dusk"] .tulip { filter: brightness(.82) saturate(.85); }
+@keyframes sway { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+.scenery .bfly { position: absolute; width: 26px; height: 22px; animation: flutter-path 18s ease-in-out infinite; transition: opacity 2s; }
+.scenery .bfly svg { width: 100%; height: 100%; overflow: visible; }
+.scenery .bfly .wing { transform-origin: 50% 50%; animation: flap .22s ease-in-out infinite alternate; }
+.scenery .bfly .wing.r { animation-delay: 0s; }
+@keyframes flap { from { transform: scaleX(1); } to { transform: scaleX(.25); } }
+@keyframes flutter-path {
+  0% { transform: translate(0, 0) rotate(-6deg); }
+  25% { transform: translate(18vw, -6vh) rotate(8deg); }
+  50% { transform: translate(34vw, 4vh) rotate(-4deg); }
+  75% { transform: translate(16vw, 10vh) rotate(6deg); }
+  100% { transform: translate(0, 0) rotate(-6deg); }
+}
+.scenery[data-mood="night"] .bfly { opacity: 0; }
+.scenery .flies { position: absolute; inset: 0; opacity: 0; transition: opacity 2.5s; }
+.scenery[data-mood="night"] .flies { opacity: 1; }
+.scenery[data-mood="dusk"] .flies { opacity: .5; }
+.scenery .flies i {
+  position: absolute; width: 6px; height: 6px; border-radius: 50%;
+  background: #fff6b0; box-shadow: 0 0 10px 4px rgba(255, 236, 140, .7);
+  animation: firefly var(--d, 9s) ease-in-out infinite alternate, glow 2.2s ease-in-out infinite alternate;
+}
+@keyframes firefly { 0% { transform: translate(0, 0); } 50% { transform: translate(var(--x1), var(--y1)); } 100% { transform: translate(var(--x2), var(--y2)); } }
+@keyframes glow { from { opacity: .15; } to { opacity: 1; } }
+.scenery .petal {
+  position: absolute; top: -20px; width: 10px; height: 8px; border-radius: 80% 0 80% 0;
+  background: color-mix(in srgb, var(--berry) 55%, #fff); opacity: .8;
+  animation: petal-fall linear infinite;
+}
+@keyframes petal-fall { to { transform: translate(var(--drift, -20vw), 110vh) rotate(540deg); } }
+.scenery .veil { position: absolute; inset: 0; pointer-events: none; }
+.scenery.soft svg.land, .scenery.soft .tulip { filter: blur(2px) saturate(.9); }
+
+/* ---------- note badge used to mark preview-only behaviour ---------- */
+.sp-note-preview {
+  display: flex; gap: .6em; align-items: flex-start;
+  padding: .7em .9em; border-radius: 12px; font-size: .82rem; line-height: 1.45;
+  background: var(--butter-soft); color: #6b4b12; border: 1px dashed var(--butter-deep);
+}
+.sp-note-preview b { font-weight: 800; }
+
+/* ==========================================================================
+   Shared components (used across pages — see styleguide.html)
+   ========================================================================== */
+.sp-ic { width: 1.15em; height: 1.15em; flex: none; vertical-align: -.2em; }
+.sp-page-top { display: flex; justify-content: space-between; align-items: center; gap: var(--s-3); max-width: 1180px; width: 100%; margin: 0 auto; padding: var(--s-4) 0; }
+.sp-pill-link { white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; font-weight: 800; font-size: var(--fs-sm); color: var(--ink); text-decoration: none; padding: .5em 1em; border-radius: var(--r-pill); background: color-mix(in srgb, var(--sheet) 70%, transparent); backdrop-filter: blur(8px); transition: background var(--t-fast); }
+.sp-pill-link:hover { background: var(--sheet); }
+.sp-app-main { max-width: 1260px; margin: 0 auto; padding: var(--s-6) max(16px, env(safe-area-inset-right, 0px)) calc(var(--dock-h) + 50px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.sp-page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; margin-bottom: var(--s-6); }
+.sp-greet { font-family: var(--f-hand); font-size: var(--fs-2xl); line-height: 1; color: var(--ink); text-shadow: 0 1px 0 rgba(255,255,255,.6); margin: 0; font-weight: 600; }
+.sp-greet small { display: block; font-family: var(--f-body); font-size: var(--fs-xs); font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 6px; }
+
+/* text that sits straight on the sky stays readable at dusk and night */
+body[data-sky="night"] .sp-greet, body[data-sky="dusk"] .sp-greet, body[data-sky="night"] .on-sky, body[data-sky="dusk"] .on-sky { color: #fdf3d6; text-shadow: 0 1px 3px rgba(10, 15, 40, .45); }
+body[data-sky="night"] .sp-greet small, body[data-sky="dusk"] .sp-greet small, body[data-sky="night"] .sp-eyebrow.on-sky, body[data-sky="dusk"] .sp-eyebrow.on-sky { color: #e6def2; }
+.sp-card { position: relative; background: var(--sheet); border-radius: 22px; box-shadow: var(--shadow-2); padding: var(--s-5); isolation: isolate; }
+.sp-card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background-image: var(--grain); opacity: .14; mix-blend-mode: multiply; pointer-events: none; z-index: -1; }
+.sp-card-title { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); font-size: var(--fs-lg); margin: 0 0 var(--s-3); }
+.sp-card-title small { font-family: var(--f-body); font-size: var(--fs-xs); font-weight: 800; color: var(--ink-soft); }
+
+/* vertical pill menu (cake reference: red active pill) */
+.sp-menu { display: grid; gap: var(--s-2); align-content: start; }
+.sp-menu-btn {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border: 1.5px solid var(--line); border-radius: 12px;
+  background: #fff; text-align: left; font-weight: 800; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft);
+  transition: transform .25s var(--spring), background .25s, color .25s, border-color .25s, box-shadow .25s;
+}
+.sp-menu-btn:hover { transform: translateX(3px); border-color: var(--sheet-3); }
+.sp-menu-btn .mi { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--sheet-2); flex: none; overflow: hidden; }
+.sp-menu-btn .mi img { width: 22px; height: 22px; }
+.sp-menu-btn .mi img.s { transform: scale(1.8) translateY(-1px); }
+.sp-menu-btn[aria-current="step"], .sp-menu-btn[aria-selected="true"] { background: var(--berry); border-color: var(--berry); color: #fff; box-shadow: 0 4px 0 var(--berry-deep); transform: translateX(4px); }
+.sp-menu-btn[aria-current="step"] .mi, .sp-menu-btn[aria-selected="true"] .mi { background: rgba(255,255,255,.9); }
+.sp-menu-btn .chev { margin-left: auto; opacity: .55; }
+
+/* thumbnail strip (cake reference: product thumbnails) */
+.sp-thumbs { display: flex; gap: var(--s-2); align-items: flex-end; flex-wrap: wrap; }
+.sp-thumb { width: 60px; height: 60px; border-radius: 14px; border: 2px solid var(--line); background: #fff; padding: 4px; display: grid; place-items: center; overflow: hidden; transition: transform .3s var(--spring), border-color .2s, box-shadow .2s; }
+.sp-thumb img { width: 46px; height: 46px; transition: filter .3s; }
+.sp-thumb img.s { transform: scale(1.8); transform-origin: 50% 92%; }
+.sp-thumb:hover { transform: translateY(-3px) rotate(-3deg); }
+.sp-thumb[aria-current="step"], .sp-thumb[aria-selected="true"] { border-color: var(--berry); box-shadow: 0 0 0 3px var(--berry-soft); transform: translateY(-4px); }
+.sp-thumb.dim img { filter: grayscale(1) opacity(.35); }
+
+.sp-plate { position: absolute; width: min(400px, 92%); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 50% 44%, #fff 0, var(--sheet-2) 62%, transparent 63%); }
+.sp-plate::after { content: ""; position: absolute; left: 12%; right: 12%; bottom: 8%; height: 12%; border-radius: 50%; background: radial-gradient(rgba(74,54,46,.16), transparent 70%); }
+
+.sp-stat { display: grid; gap: 2px; padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: #fff; box-shadow: var(--shadow-1); }
+.sp-stat b { font-family: var(--f-display); font-weight: 600; font-size: 1.8rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.sp-stat span { font-size: var(--fs-xs); font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+
+.sp-tag { display: inline-flex; align-items: center; gap: 5px; font-size: var(--fs-xs); font-weight: 800; color: var(--ink-soft); }
+.sp-tag::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--leaf)); }
+.sp-meter-bar { height: 6px; border-radius: 6px; background: var(--sheet-3); overflow: hidden; }
+.sp-meter-bar i { display: block; height: 100%; border-radius: inherit; background: var(--leaf); transition: width .6s var(--spring); }
+
+/* modal sheet */
+.sp-modal { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: var(--s-4); background: rgba(46, 34, 28, .42); backdrop-filter: blur(4px); animation: fade-in .25s ease; }
+.sp-modal[hidden] { display: none; }
+.sp-modal-sheet { position: relative; width: min(640px, 100%); max-height: min(90vh, 860px); overflow: auto; background: var(--sheet); border-radius: 26px; box-shadow: var(--shadow-2); padding: var(--s-7) var(--s-6) var(--s-6); animation: sheet-in .5s var(--spring); }
+.sp-modal-sheet .sp-tape { top: -10px; left: calc(50% - 46px); transform: rotate(-3deg); }
+.sp-modal-close { position: absolute; top: 14px; right: 14px; }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes sheet-in { from { transform: translateY(30px) scale(.96); opacity: 0; } }
+
+/* shared motion */
+@keyframes pop-in { from { transform: scale(0); } }
+@keyframes copy-in { from { opacity: 0; transform: translateX(22px); } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(16px); } }
+@keyframes bob { to { transform: translateY(-10px) rotate(2deg); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+
+.sp-note-preview .sp-ic { color: var(--butter-deep); margin-top: 2px; }
+.sp-counter-streak .sp-ic { width: 20px; height: 20px; color: #E8743B; fill: #FBC15A; stroke-width: 1.8; }
+
+/* ==========================================================================
+   Team tokens (style.css / Consistent.md) re-pointed at the journal palette,
+   so every existing component (shed, reviews, seed form, toasts …) follows it.
+   ========================================================================== */
+:root {
+  --bark: var(--ink);
+  --bs-body-color: var(--ink);
+  --bark-muted: var(--ink-soft);
+  --paper: #FFFDF8;            /* white card on paper */
+  --cream: var(--sheet);       /* page / panel paper */
+  --linen: var(--line);
+  --peach: #F3A3AE;            /* soft berry: focus ring fill, highlights */
+  --mint: var(--leaf-soft);
+  --mint-deep: var(--leaf);
+  --periwinkle: var(--leaf);   /* selected / focus states are leaf green in the journal look */
+  --peri-soft: var(--leaf-soft);
+  --berry-ink: var(--berry-deep);
+  --shadow: rgba(46, 34, 28, .42);
+  --shadow-card: rgba(74, 54, 46, .18);
+  --font-heading: var(--f-display);
+  --font-body: var(--f-body);
+  --radius-pill: 12px;
+}
+/* style.css sets Nunito on every element (* { font-family }), which stops headings' <em> and spans
+   from inheriting Fraunces / Caveat. Inherit instead, from a Nunito body. */
+* { font-family: inherit; }
+body { font-family: var(--f-body); background: var(--sheet); color: var(--ink); -webkit-font-smoothing: antialiased; }
+::selection { background: var(--butter-soft); }
+
+/* headings and numbers: Fraunces instead of Fredoka; buttons and labels: Nunito heavy */
+h1, h2, h3, .text-display, .text-stat, .text-timer { font-family: var(--f-display); letter-spacing: -.01em; }
+h1 em, h2 em, h3 em { font-style: italic; font-weight: 500; color: var(--berry); }
+.text-display, h1, h2 { font-weight: 600; }
+.text-timer { font-weight: 500; }
+.text-button { font-family: var(--f-body); font-weight: 800; letter-spacing: .01em; }
+.text-label-caption { font-family: var(--f-body); font-weight: 800; letter-spacing: .14em; color: var(--ink-soft); }
+.text-body-small { color: var(--ink-soft); }
+
+/* the team's pressable buttons, re-skinned to the journal buttons */
+.btn-primary {
+  min-height: 46px; height: auto; width: auto; padding: .7em 1.4em; border: 0 !important;
+  background: var(--berry) !important; color: #fff !important;
+  box-shadow: 0 4px 0 var(--berry-deep), 0 10px 22px -10px var(--berry-deep) !important;
+  transition: transform .18s var(--spring), box-shadow .18s ease;
+}
+.btn-primary:hover { box-shadow: 0 6px 0 var(--berry-deep), 0 14px 26px -10px var(--berry-deep) !important; transform: translateY(-2px); }
+.btn-primary:active { box-shadow: 0 1px 0 var(--berry-deep) !important; transform: translateY(3px); }
+.btn-primary:disabled { opacity: .55; }
+.btn-secondary { font-family: var(--f-body); font-weight: 800; }
+.counter { font-family: var(--f-body); font-weight: 800; }
+.progress { background: var(--sheet-3); height: 8px; }
+.progress-fill { background: var(--leaf); }
+.badge { font-family: var(--f-body); font-weight: 800; }
+.overlay { background: rgba(46, 34, 28, .42); backdrop-filter: blur(4px); }
+.form-control { border: 1.5px solid var(--line); border-radius: 14px; background: color-mix(in srgb, #fff 55%, var(--sheet)); }
+.form-control:focus { border-color: var(--leaf); box-shadow: 0 0 0 4px color-mix(in srgb, var(--leaf) 18%, transparent); }
+::-webkit-scrollbar-thumb { background: var(--sheet-3); }
+::-webkit-scrollbar-thumb:hover { background: var(--berry); }
+::-webkit-scrollbar-track { background: transparent; }
+
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+}
