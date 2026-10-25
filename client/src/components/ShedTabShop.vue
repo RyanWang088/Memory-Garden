@@ -2,8 +2,9 @@
 import { onMounted } from 'vue'
 import { useShopStore } from '@/stores/shop'
 import { useToastStore } from '@/stores/toast'
+import { burst } from '@/lib/burst'
 import shopSvg from '@/assets/ui/shop.svg'
-import { tagStyle } from '@/lib/tagColors'
+import coinSvg from '@/assets/ui/coin.svg'
 
 const shop = useShopStore()
 const toast = useToastStore()
@@ -13,13 +14,18 @@ const supplySprites = import.meta.glob('../assets/ui/*.{svg,png}', {
   query: '?url',
 })
 
+const TAPES = ['', 'is-leaf', 'is-butter']
+const tapeOf = (n) => TAPES[n % TAPES.length]
+
 function supplyImage(item) {
   return supplySprites[`../assets/ui/${item.id}.svg`]
     ?? supplySprites[`../assets/ui/${item.id}.png`]
     ?? shopSvg
 }
+const short = (item) => Math.max(0, item.price - shop.coins)
+const pct = (item) => (item.price > 0 ? Math.min(100, Math.round((shop.coins / item.price) * 100)) : 100)
 
-async function buy(item) {
+async function buy(item, e) {
   if (shop.buying !== null) return
   if (item.status === 'too-expensive') {
     toast.show({
@@ -30,6 +36,7 @@ async function buy(item) {
     return
   }
 
+  const button = e.currentTarget
   if (!await shop.buy(item.id)) {
     toast.show({
       type: 'warning',
@@ -39,6 +46,7 @@ async function buy(item) {
     return
   }
 
+  burst(button)
   toast.show({
     type: 'success',
     title: 'Supply purchased',
@@ -50,12 +58,11 @@ onMounted(() => shop.load())
 </script>
 
 <template>
-  <section class="product" data-testid="shed-shop">
-    <header class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-      <h3 class="m-0">Shed Supplies</h3>
-      <p class="text-body-small m-0">
-        Tend your garden with the help of these tools
-      </p>
+  <section class="shed-shop" data-testid="shed-shop">
+    <header class="d-grid gap-2 pb-3 border-bottom">
+      <span class="sp-eyebrow">Garden shed</span>
+      <h3 class="m-0 fs-3">Shed <em>supplies</em></h3>
+      <p class="small text-body-secondary m-0">Tend your garden with a little help from these tools.</p>
     </header>
 
     <p v-if="shop.loading && !shop.items.length" class="text-body-small" role="status">
@@ -69,29 +76,34 @@ onMounted(() => shop.load())
       <p class="text-body-small m-0">No supplies are available right now. Please check back soon.</p>
     </div>
 
-    <div v-if="shop.catalogue.length" class="row row-cols-2 g-3">
-      <div v-for="item in shop.catalogue" :key="item.id" class="col">
-        <article class="product-card d-flex flex-column align-items-center gap-2 p-2">
-          <span class="product-art d-flex justify-content-center align-items-center">
-            <img class="packet-art" :src="supplyImage(item)" :alt="item.name" draggable="false" />
-          </span>
-          <span class="text-label-field product-name">{{ item.name }}</span>
-          <span class="tag-pill" :style="tagStyle('mint')">
-            In bag: {{ item.qty }}
-          </span>
+    <div v-if="shop.catalogue.length" class="sp-packet-grid">
+      <div v-for="(item, n) in shop.catalogue" :key="item.id" class="sp-reveal" :style="{ '--i': Math.min(n, 8) }">
+        <article class="sp-packet">
+          <span class="sp-tape" :class="tapeOf(n)" aria-hidden="true"></span>
+          <span class="sp-packet-art"><img :src="supplyImage(item)" alt="" draggable="false" /><span class="sp-ledge"></span></span>
+          <span class="sp-packet-name">{{ item.name }}</span>
+          <span class="sp-chip bag-chip" :class="{ has: item.qty > 0 }">In bag <b :key="item.qty">{{ item.qty }}</b></span>
+
+          <div v-if="item.status === 'too-expensive'" class="sp-short">
+            <div class="sp-meter-bar" role="progressbar" :aria-valuenow="shop.coins" aria-valuemin="0" :aria-valuemax="item.price" :aria-label="`${item.name} savings`"><i :style="{ width: `${pct(item)}%` }"></i></div>
+            <small>{{ short(item) }} more coin{{ short(item) === 1 ? '' : 's' }}</small>
+          </div>
+
           <button
-            class="btn btn-secondary text-button"
-            type="button"
-            :disabled="shop.buying !== null"
-            :aria-label="`Buy ${item.name} for ${item.price} coins`"
-            :data-testid="`buy-${item.id}`"
-            @click="buy(item)"
+            class="sp-btn sp-btn-sm buy-btn" :class="item.status === 'too-expensive' ? 'sp-btn-ghost' : 'sp-btn-butter'" type="button"
+            :disabled="shop.buying !== null" :aria-label="`Buy ${item.name} for ${item.price} coins`"
+            :data-testid="`buy-${item.id}`" @click="buy(item, $event)"
           >
-            <img src="../assets/ui/coin.svg" width="30px" alt="" />
-            {{ shop.buying === item.id ? 'Buying…' : item.price }}
+            <img :src="coinSvg" width="22" height="22" alt="" />{{ shop.buying === item.id ? 'Buying…' : item.price }}
           </button>
         </article>
       </div>
     </div>
   </section>
 </template>
+
+<style scoped>
+.bag-chip { padding: .1em .7em; font-size: .72rem; }
+.bag-chip b { display: inline-block; font-variant-numeric: tabular-nums; animation: pop-in .45s var(--spring); }
+.bag-chip.has { background: var(--leaf-soft); border-color: var(--leaf); color: var(--leaf-deep); }
+</style>

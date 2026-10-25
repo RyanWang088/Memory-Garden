@@ -417,3 +417,86 @@ h1 em, h2 em, h3 em { font-style: italic; font-weight: 500; color: var(--berry);
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
 }
+/* ==========================================================================
+   Shed panels (seeds, supplies, library)
+   ========================================================================== */
+
+/* ---------- panel header: eyebrow, serif title with an <em>, handwritten note ---------- */
+.sp-panel-head { display: grid; gap: 6px; margin: 0 0 var(--s-5); padding-bottom: var(--s-3); border-bottom: 1.5px dashed var(--line); }
+.sp-panel-head h3 { margin: 0; font-size: 1.75rem; line-height: 1.05; text-wrap: balance; }
+.sp-panel-head .sp-hand { margin: 0; font-size: 1.2rem; line-height: 1.1; color: var(--ink-soft); }
+
+/* ---------- scroll reveal ----------
+   Staggered rise-in on mount (set --i on the element); browsers with scroll-driven
+   animations also reveal items as they scroll into view. */
+.sp-reveal { animation: rise-in .6s var(--ease) backwards; animation-delay: calc(var(--i, 0) * 70ms); }
+@keyframes sp-reveal { from { opacity: 0; transform: translateY(34px) scale(.9) rotate(var(--rv, 2.5deg)); } }
+@keyframes sp-sway { from { rotate: -5deg; } to { rotate: 5deg; } }
+@supports (animation-timeline: view()) {
+  .sp-reveal {
+    animation: rise-in .6s var(--ease) calc(var(--i, 0) * 70ms) backwards, sp-reveal linear backwards;
+    animation-timeline: auto, view();
+    animation-range: normal, entry 0% entry 60%;
+  }
+  .sp-packet-art img { animation: sp-sway linear both; animation-timeline: view(); }
+}
+
+/* ---------- packet grid + paper packet (a seed packet, a supply tin, anything on a shelf) ---------- */
+.sp-packet-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-6) var(--s-3); align-items: start; padding-top: var(--s-3); }
+.sp-packet-grid > :nth-child(odd) { --r: -1.2deg; --rv: -2.5deg; }
+.sp-packet-grid > :nth-child(even) { --r: 1.2deg; --rv: 2.5deg; }
+
+.sp-packet {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--s-2);
+  width: 100%; min-width: 0; padding: var(--s-5) var(--s-3) var(--s-3);
+  border-radius: 6px 6px 16px 16px; background: var(--paper); color: var(--ink); text-align: center;
+  box-shadow: var(--shadow-1); isolation: isolate;
+  transform: rotate(var(--r, 0deg));
+  transition: transform .35s var(--spring), box-shadow .3s var(--ease), opacity .3s, filter .3s;
+}
+.sp-packet::before { content: ""; position: absolute; inset: 6px; z-index: -1; border: 1.5px dashed var(--line); border-radius: 4px 4px 11px 11px; pointer-events: none; }
+.sp-packet::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background-image: var(--grain); opacity: .12; mix-blend-mode: multiply; pointer-events: none; }
+.sp-packet > .sp-tape { top: -10px; left: 50%; margin-left: -46px; transform: rotate(var(--tape-r, -3deg)); transition: transform .35s var(--spring); }
+.sp-packet-grid > :nth-child(even) .sp-packet > .sp-tape { --tape-r: 4deg; }
+.sp-packet:hover, .sp-packet:focus-within { transform: translateY(-4px) rotate(calc(var(--r, 0deg) * -1)); box-shadow: var(--shadow-2); }
+.sp-packet:hover > .sp-tape { transform: translateY(-2px) rotate(calc(var(--tape-r, -3deg) * -1)); }
+.sp-packet.is-active { transform: translateY(-3px) rotate(0deg); box-shadow: 0 0 0 3px var(--berry-soft), var(--shadow-2); }
+.sp-packet.is-picked { opacity: .5; filter: saturate(.7); transform: scale(.94) rotate(-3deg); }
+.sp-packet.is-locked { background: color-mix(in srgb, var(--paper) 60%, var(--sheet-2)); }
+
+.sp-packet-name { font-family: var(--f-hand); font-weight: 700; font-size: 1.3rem; line-height: 1; overflow-wrap: anywhere; }
+
+/* art plate with a little wooden ledge for the thing to stand on */
+.sp-packet-art { position: relative; width: 100%; aspect-ratio: 1; display: grid; grid-template: 1fr / 1fr; padding: 10% 10% 15%; background: radial-gradient(circle at 50% 46%, #fff 0, var(--sheet-2) 64%, transparent 65%); }
+.sp-packet-art img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; transform-origin: 50% 100%; transition: transform .45s var(--spring), filter .3s; }
+.sp-packet:hover .sp-packet-art img { transform: scale(1.08); }
+.sp-ledge {
+  position: absolute; left: 6%; right: 6%; bottom: 9%; height: 10px; border-radius: 3px;
+  background: repeating-linear-gradient(90deg, rgba(0,0,0,.06) 0 2px, transparent 2px 9px), linear-gradient(#a8744f, #7b4e36);
+  box-shadow: 0 3px 0 rgba(74, 54, 46, .22), inset 0 1px 0 rgba(255, 255, 255, .25);
+}
+
+/* ---------- colour swatches ---------- */
+.sp-swatches { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.sp-swatch { width: 24px; height: 24px; padding: 0; border-radius: 50%; border: 2px solid #fff; background: var(--sw, var(--berry)); box-shadow: 0 0 0 1.5px var(--line); transition: transform .25s var(--spring), box-shadow .2s; }
+.sp-swatch:hover { transform: scale(1.18); }
+.sp-swatch[aria-pressed="true"] { box-shadow: 0 0 0 2.5px var(--ink); transform: scale(1.15) translateY(-2px); }
+.sp-swatch:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
+
+/* ---------- drawer: content that slides open (0fr -> 1fr), hidden from tab order when shut ---------- */
+.sp-drawer { display: grid; grid-template-rows: 0fr; width: 100%; opacity: 0; visibility: hidden; transition: grid-template-rows .45s var(--ease), opacity .3s, visibility 0s .45s; }
+.sp-drawer.is-open { grid-template-rows: 1fr; opacity: 1; visibility: visible; transition-delay: 0s; }
+.sp-drawer > * { min-height: 0; overflow: hidden; }
+
+/* ---------- "not enough coins yet": a small meter and a handwritten line ---------- */
+.sp-short { width: 100%; display: grid; gap: 4px; justify-items: center; }
+.sp-short .sp-meter-bar { width: 80%; }
+.sp-short .sp-meter-bar i { background: var(--butter-deep); }
+.sp-short small { font-family: var(--f-hand); font-size: 1.05rem; line-height: 1; color: var(--ink-soft); }
+
+/* ---------- search field with a leading icon (put an <svg> before the .sp-input) ---------- */
+.sp-search { position: relative; display: block; margin-top: var(--s-2); }
+.sp-search > svg { position: absolute; left: 16px; top: 50%; width: 18px; height: 18px; margin-top: -9px; color: var(--ink-faint); pointer-events: none; transition: color .2s, transform .3s var(--spring); }
+.sp-search:focus-within > svg { color: var(--leaf); transform: rotate(-12deg) scale(1.12); }
+.sp-search .sp-input { padding-left: 2.8em; padding-right: 2.6em; border-radius: var(--r-pill); }
+.sp-search .sp-input::-webkit-search-cancel-button { display: none; }

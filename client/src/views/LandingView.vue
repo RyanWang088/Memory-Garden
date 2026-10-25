@@ -42,8 +42,8 @@ const FEATURES = [
     text: 'Plant a seed for a topic with cards from your notes. Review it on time and it grows; leave it too long and it wilts. After the exam, it goes on your shelf.', chips: ['Structured quizzes', 'Flexible decks', 'Flower shelf'], viz: 'flash' },
   { name: 'Garden Radio', icon: potArt, eyebrow: 'Listen', title: 'Garden Radio', spec: 'Calm lo-fi, matched to the weather',
     text: 'Quiet music for studying that follows the sky: bright tracks on sunny days, softer ones when it rains.', chips: ['Weather-matched', 'Volume control', 'CC0 music'], viz: 'vinyl' },
-  { name: 'Streaks & coins', icon: coinArt, eyebrow: 'Rewards', title: 'Streaks and coins', spec: 'Daily streak · Coins · EXP',
-    text: 'Come back each day to grow your streak. Finishing focus blocks and quizzes earns coins to spend on new seeds in the garden shop.', chips: ['Daily streak', 'Garden shop', 'EXP'], viz: 'coins' },
+  { name: 'Streaks & coins', icon: coinArt, eyebrow: 'Rewards', title: 'Streaks and coins', spec: 'Daily streak · Coins',
+    text: 'Come back each day to grow your streak. Finishing focus blocks and quizzes earns coins to spend on new seeds in the garden shop.', chips: ['Daily streak', 'Garden shop'], viz: 'coins' },
 ]
 const fi = ref(0)
 const feature = computed(() => FEATURES[fi.value])
@@ -379,7 +379,7 @@ section { position: relative; }
 /* features */
 .showcase { display: grid; grid-template-columns: 210px 1fr; gap: 26px; }
 .tools { display: grid; gap: 8px; align-content: start; }
-.stage-card { position: relative; border-radius: 28px; background: linear-gradient(135deg, #fff 0%, var(--sheet) 50%, var(--berry-soft) 140%); box-shadow: var(--shadow-2); padding: 34px; display: grid; grid-template-columns: 1.1fr 1fr; grid-template-rows: 1fr auto; gap: 24px; min-height: 520px; overflow: hidden; }
+.stage-card { position: relative; border-radius: 28px; background: linear-gradient(135deg, var(--paper)0%, var(--sheet) 50%, var(--berry-soft) 140%); box-shadow: var(--shadow-2); padding: 34px; display: grid; grid-template-columns: 1.1fr 1fr; grid-template-rows: 1fr auto; gap: 24px; min-height: 520px; overflow: hidden; }
 .viz { position: relative; display: grid; place-items: center; min-height: 340px; touch-action: pan-y; }
 .viz .sp-plate { width: min(360px, 90%); }
 .viz > .v { position: relative; animation: viz-in .7s var(--spring); }

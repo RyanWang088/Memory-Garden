@@ -13,7 +13,7 @@ export const PRESETS = [
 ]
 export const MAX_ROUNDS = 12
 export const COUNTDOWN_FROM = 5 // beep each second for the last 5 seconds of every block, then TING
-export const FOCUS_REWARD = { coins: 10, exp: 25 } // given each time a focus block finishes
+export const FOCUS_REWARD = { coins: 10 } // given each time a focus block finishes
 
 // mm:ss, or h:mm:ss once it is an hour or more
 export function formatSeconds(total) {
@@ -227,7 +227,6 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     if (finished.type === 'focus') {
       await auth.updateProfile({
         coins: auth.profile.coins + FOCUS_REWARD.coins,
-        exp: auth.profile.exp + FOCUS_REWARD.exp,
       }).catch(console.error)
       await auth.addStudyTime(finished.seconds).catch(console.error)
     }

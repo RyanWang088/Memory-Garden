@@ -18,9 +18,9 @@ function add() {
 const coinIcon = new URL('../assets/ui/coin.svg', import.meta.url).href
 // during a break, show what's been earned so far (break n comes right after focus block n)
 const reward = computed(() => {
-  if (pomo.mode === 'focus') return `+${FOCUS_REWARD.coins} coins · +${FOCUS_REWARD.exp} EXP when it ends`
+  if (pomo.mode === 'focus') return `+${FOCUS_REWARD.coins} coins when it ends`
   const blocksDone = pomo.current.number
-  return `Earned so far: +${blocksDone * FOCUS_REWARD.coins} coins · +${blocksDone * FOCUS_REWARD.exp} EXP`
+  return `Earned so far: +${blocksDone * FOCUS_REWARD.coins} coins`
 })
 </script>
 

@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, computed, ref } from 'vue'
+import { onMounted, onBeforeUnmount, computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useGardenStore } from '@/stores/garden'
 import { useUiStore } from '@/stores/ui'
@@ -35,6 +35,10 @@ const hud = computed(() => {
 })
 function openStudy() { ui.setShedTab('study'); ui.shedOpen = true }
 
+watch(() => route.query.q, (query) => {
+  if (typeof query === 'string' && query) openStudy()
+}, { immediate: true })
+
 // "Exam is over": one subject at a time, oldest exam first, only on the garden itself (not over a seed page)
 const examChoice = ref('')  // the choice being saved
 const examError = ref('')
@@ -65,6 +69,7 @@ onMounted(async () => {
   weather.load()
   await garden.fetchSeeds()
   ui.pickDefaultTab(garden.hasPlants)
+  if (typeof route.query.q === 'string' && route.query.q) openStudy()
 })
 
 onBeforeUnmount(() => {

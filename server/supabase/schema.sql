@@ -480,5 +480,4 @@ INSERT INTO public.flowers (id, name, price) VALUES
 
 INSERT INTO public.shop_items (id, name, description, price, kind, icon, sort_order, is_active) VALUES
   ('fertiliser', 'Fertiliser', 'Helps a plant grow faster.', 20, 'booster', '🧪', 1, true),
-  ('double-exp', 'Double EXP (1h)', 'Earn double EXP for one hour.', 40, 'booster', '⚡', 2, true),
-  ('streak-freeze', 'Streak freeze', 'Protects your streak for one day.', 30, 'booster', '🧊', 3, true);  
+  ('streak-freeze', 'Streak freeze', 'Protects your streak for one day.', 30, 'booster', '🧊', 2, true);

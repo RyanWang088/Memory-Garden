@@ -1,25 +1,42 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useUiStore } from '@/stores/ui'
 import { useFlowerStore } from '@/stores/flower'
 import { useToastStore } from '@/stores/toast'
-import { tagStyle } from '@/lib/tagColors'
 import { SEED_COLORS } from '@/lib/tagColors'
 import { plantSpriteUrl, BLOOM_STAGE } from '@/lib/plantSprites'
+import { burst } from '@/lib/burst'
 import coinSvg from '@/assets/ui/coin.svg'
 
 const ui = useUiStore()
 const flower = useFlowerStore()
 const toast = useToastStore()
-const pickedSeedId = ref(null)
 
-const flowerImage = (seed) => plantSpriteUrl(BLOOM_STAGE, seed.id)
+const root = ref(null)
+const pickedSeedId = ref(null) // being dragged right now
+const chosenId = ref(null)     // the one packet that shows its colour swatches
+const justBought = ref(null)
+
+const TAPES = ['', 'is-leaf', 'is-butter']
+const tapeOf = (n) => TAPES[n % TAPES.length]
+
+// exactly one owned packet is "active": the one you chose, else the first you own
+const owned = computed(() => flower.flowers.filter((s) => s.status === 'owned'))
+const activeId = computed(() => (owned.value.some((s) => s.id === chosenId.value) ? chosenId.value : owned.value[0]?.id ?? null))
+
+// the active packet previews the petal colour you pick
+const art = (seed) => plantSpriteUrl(BLOOM_STAGE, seed.id, seed.id === activeId.value ? ui.selectedSeedColor : undefined)
+const short = (seed) => Math.max(0, seed.price - flower.coins)
+const pct = (seed) => (seed.price > 0 ? Math.min(100, Math.round((flower.coins / seed.price) * 100)) : 100)
 
 // 1x1 transparent pixel: replaces the browser's own drag picture, so only the garden's ghost shows.
 const blankDragImage = new Image()
 blankDragImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
 
+function pick(seed) { chosenId.value = seed.id }
+
 function onDragStart(e, seed) {
+  pick(seed)
   pickedSeedId.value = seed.id
   if (e.dataTransfer) {
     e.dataTransfer.setData('application/x-sproutly-seed', JSON.stringify({ flower: seed.id }))
@@ -76,18 +93,25 @@ async function buy(seed) {
     title: 'New plant species unlocked',
     message: `${seed.id.charAt(0).toUpperCase() + seed.id.slice(1).toLowerCase()} now yours forever`,
   })
+
+  // the new packet pops in, takes the swatches and bursts into leaves
+  chosenId.value = seed.id
+  justBought.value = seed.id
+  setTimeout(() => { if (justBought.value === seed.id) justBought.value = null }, 1400)
+  await nextTick()
+  const face = root.value?.querySelector(`[data-testid="seed-${seed.id}"]`)
+  if (face) burst(face)
 }
 
 onMounted(() => flower.load())
 </script>
 
 <template>
-  <section class="product" data-testid="shed-seeds">
-    <header class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-      <h3 class="m-0">Plant a new seed</h3>
-      <p class="text-body-small m-0">
-        Drag a plant to the field to create a new deck of flashcards
-      </p>
+  <section ref="root" class="shed-seeds" data-testid="shed-seeds">
+    <header class="d-grid gap-2 pb-3 border-bottom">
+      <span class="sp-eyebrow">Seed shed</span>
+      <h3 class="m-0 fs-3">Plant a <em>new seed</em></h3>
+      <p class="small text-body-secondary m-0">Drag a packet onto the field to start a new deck of flashcards.</p>
     </header>
 
     <p v-if="flower.loading && !flower.catalog.length" class="text-body-small" role="status">
@@ -101,63 +125,64 @@ onMounted(() => flower.load())
       <p class="text-body-small m-0">No seeds are available right now. Please check back soon.</p>
     </div>
 
-    <div v-if="flower.flowers.length" class="row row-cols-2 g-3">
-      <div v-for="seed in flower.flowers" :key="seed.id" class="col">
-        <button
-          v-if="seed.status === 'owned'"
-          type="button"
-          class="product-card packet d-flex flex-column align-items-center gap-2 p-2"
-          :class="{ 'is-picked': ui.seedPicked && pickedSeedId === seed.id }"
-          :aria-pressed="ui.seedPicked && pickedSeedId === seed.id"
-          :data-testid="`seed-${seed.id}`"
-          draggable="true"
-          @dragstart="onDragStart($event, seed)"
-          @dragend="onDragEnd"
-          @pointerdown="onPointerDown($event, seed)"
+    <div v-if="flower.flowers.length" class="sp-packet-grid">
+      <div v-for="(seed, n) in flower.flowers" :key="seed.id" class="sp-reveal" :style="{ '--i': Math.min(n, 8) }">
+        <!-- owned: draggable packet; only the active one opens its swatch drawer -->
+        <article
+          v-if="seed.status === 'owned'" class="sp-packet"
+          :class="{ 'is-active': activeId === seed.id, 'is-picked': ui.seedPicked && pickedSeedId === seed.id, 'is-new': justBought === seed.id }"
         >
-          <span class="product-art d-flex justify-content-center align-items-center">
-            <img class="packet-art" :src="flowerImage(seed)" alt="" draggable="false" />
-          </span>
-          <span class="text-label-field product-name">{{ seed.name }} seed</span>
-          <span class="tag-pill" :style="tagStyle('mint')">
-            {{ seed.price === 0 ? 'Free' : 'Owned' }}
-          </span>
+          <span class="sp-tape" :class="tapeOf(n)" aria-hidden="true"></span>
           <div
-          v-if="seed.status === 'owned'"
-          class="swatches d-flex flex-wrap justify-content-center gap-2 mt-1"
-          role="group"
-          aria-label="Choose plant color"
-        >
-          <button
-            v-for="color in SEED_COLORS"
-            :key="color"
-            type="button"
-            class="swatch"
-            :class="[`swatch--${color}`, { active: ui.selectedSeedColor === color }]"
-            :aria-pressed="ui.selectedSeedColor === color"
-            :aria-label="`${color} plant color`"
-            :title="color"
-            @click="ui.selectedSeedColor = color"
-          ></button>
-        </div>
-
-        </button>
-
-        <article v-else class="product-card d-flex flex-column align-items-center gap-2 p-2">
-          <div class="product-art product-locked d-flex justify-content-center align-items-center">
-            <img class="packet-art" :src="flowerImage(seed)" :alt="seed.name" draggable="false" />
-            <span class="position-absolute text-display" aria-hidden="true">🔒</span>
-          </div>
-          <span class="text-label-field product-name">{{ seed.name }} seed</span>
-          <button
-            class="btn btn-secondary text-button"
-            type="button"
-            :disabled="flower.buying !== null"
-            :aria-label="`Buy ${seed.name} for ${seed.price} coins`"
-            :data-testid="`buy-${seed.id}`"
-            @click="buy(seed)"
+            class="packet-face" role="button" tabindex="0" draggable="true"
+            :aria-pressed="activeId === seed.id" :aria-label="`${seed.name} seed. Drag to the field to plant`"
+            :data-testid="`seed-${seed.id}`"
+            @click="pick(seed)" @keydown.enter.space.prevent="pick(seed)"
+            @dragstart="onDragStart($event, seed)" @dragend="onDragEnd" @pointerdown="onPointerDown($event, seed)"
           >
-            <img src="../assets/ui/coin.svg" width="30px">{{ flower.buying === seed.id ? 'Buying…' : seed.price }}
+            <span class="sp-packet-art"><img :src="art(seed)" alt="" draggable="false" /><span class="sp-ledge"></span></span>
+            <span class="sp-packet-name">{{ seed.name }} seed</span>
+          </div>
+          <span class="sp-chip owned-chip">{{ seed.price === 0 ? 'Free' : 'Owned' }}</span>
+
+          <div class="sp-drawer" :class="{ 'is-open': activeId === seed.id }">
+            <div>
+              <p class="swatch-label">Petal colour · {{ ui.selectedSeedColor }}</p>
+              <div class="sp-swatches" role="group" aria-label="Choose plant color">
+                <button
+                  v-for="(color, k) in SEED_COLORS" :key="color" type="button" class="sp-swatch"
+                  :class="`swatch-${color}`" :style="{ '--k': k }" :aria-pressed="ui.selectedSeedColor === color"
+                  :aria-label="`${color} plant color`" :title="color" @click="ui.selectedSeedColor = color"
+                ></button>
+              </div>
+              <p class="drag-hint">drag me to the field
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+              </p>
+            </div>
+          </div>
+        </article>
+
+        <!-- locked: greyed packet with a lock and a price -->
+        <article v-else class="sp-packet is-locked">
+          <span class="sp-tape" :class="tapeOf(n)" aria-hidden="true"></span>
+          <div class="sp-packet-art">
+            <img :src="art(seed)" alt="" draggable="false" />
+            <span class="sp-ledge"></span>
+            <span class="sp-lock" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.5" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>
+            </span>
+          </div>
+          <span class="sp-packet-name">{{ seed.name }} seed</span>
+          <div v-if="seed.status === 'too-expensive'" class="sp-short">
+            <div class="sp-meter-bar" role="progressbar" :aria-valuenow="flower.coins" aria-valuemin="0" :aria-valuemax="seed.price" :aria-label="`${seed.name} savings`"><i :style="{ width: `${pct(seed)}%` }"></i></div>
+            <small>{{ short(seed) }} more coin{{ short(seed) === 1 ? '' : 's' }}</small>
+          </div>
+          <button
+            class="sp-btn sp-btn-sm buy-btn" :class="seed.status === 'too-expensive' ? 'sp-btn-ghost' : 'sp-btn-butter'" type="button"
+            :disabled="flower.buying !== null" :aria-label="`Buy ${seed.name} for ${seed.price} coins`"
+            :data-testid="`buy-${seed.id}`" @click="buy(seed)"
+          >
+            <img :src="coinSvg" width="22" height="22" alt="" />{{ flower.buying === seed.id ? 'Buying…' : seed.price }}
           </button>
         </article>
       </div>
@@ -166,26 +191,36 @@ onMounted(() => flower.load())
 </template>
 
 <style scoped>
-/* petal colour picker: round swatches instead of text buttons (same ui.selectedSeedColor) */
-.swatch {
-  width: 22px; height: 22px; padding: 0;
-  border: 2px solid var(--paper); border-radius: 50%;
-  box-shadow: 0 0 0 2px var(--linen);
-  cursor: pointer;
-  transition: transform .2s var(--spring), box-shadow .15s;
-}
-.swatch:hover { transform: scale(1.15); }
-.swatch.active { box-shadow: 0 0 0 3px var(--bark); transform: scale(1.12); }
-.swatch:focus-visible { outline: 3px solid var(--periwinkle); outline-offset: 2px; }
-/* petal colours sampled from the flower art */
-.swatch--red { background: #E8566C; }
-.swatch--white { background: #FFFFFF; box-shadow: 0 0 0 2px var(--linen), inset 0 0 0 1px var(--linen); }
-.swatch--white.active { box-shadow: 0 0 0 3px var(--bark); }
-.swatch--purple { background: #A58BE8; }
-.swatch--yellow { background: var(--butter); }
-.swatch--pink { background: #F7A3C0; }
+.packet-face { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; border-radius: 10px; cursor: grab; user-select: none; -webkit-user-select: none; outline: none; }
+.packet-face:active { cursor: grabbing; }
+.packet-face:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--leaf) 35%, transparent); }
 
-.packet { cursor: grab; }
-.packet:hover .packet-art { animation: wiggle .6s ease-in-out; }
-@keyframes wiggle { 30% { transform: rotate(-5deg); } 60% { transform: rotate(4deg); } }
+.owned-chip { padding: .1em .7em; font-size: .72rem; background: var(--leaf-soft); border-color: var(--leaf); color: var(--leaf-deep); }
+.owned-chip::before { content: ""; width: 9px; height: 9px; background: var(--leaf); border-radius: 0 100% 0 100%; transform: rotate(-10deg); }
+
+/* swatch drawer (only ever open on the active packet) */
+.swatch-label { margin: 8px 0 8px; font-family: var(--f-hand); font-size: 1.15rem; line-height: 1; color: var(--ink-soft); text-transform: capitalize; }
+.swatch-red { --sw: var(--berry); }
+.swatch-white { --sw: var(--paper); }
+.swatch-yellow { --sw: var(--butter); }
+.swatch-pink { --sw: var(--margin); }
+.swatch-purple { --sw: var(--lilac); }
+.sp-drawer.is-open .sp-swatch { animation: pop-in .45s var(--spring) both; animation-delay: calc(var(--k) * 55ms + 160ms); }
+.drag-hint { display: inline-flex; align-items: center; gap: 6px; margin: 12px 0 2px; font-family: var(--f-hand); font-size: 1.1rem; line-height: 1; color: var(--berry-deep); }
+.drag-hint svg { animation: nudge 1s ease-in-out infinite alternate; }
+@keyframes nudge { to { transform: translateX(5px); } }
+
+/* just bought: the packet pops in */
+.sp-packet.is-new { animation: pack-pop .8s var(--spring); }
+@keyframes pack-pop {
+  0% { transform: scale(.6) rotate(-8deg); box-shadow: 0 0 0 0 var(--butter); }
+  60% { transform: scale(1.06) rotate(2deg); box-shadow: 0 0 0 10px color-mix(in srgb, var(--butter) 45%, transparent); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* locked packet */
+.is-locked .sp-packet-art img { filter: grayscale(.85) brightness(1.04); opacity: .6; }
+.sp-lock { position: absolute; z-index: 2; top: 6%; right: 6%; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: var(--sheet); box-shadow: 0 3px 0 #2c201b; }
+.is-locked:hover .sp-lock { animation: lock-shake .5s ease; }
+@keyframes lock-shake { 20% { transform: rotate(-14deg); } 40% { transform: rotate(12deg); } 60% { transform: rotate(-8deg); } 80% { transform: rotate(5deg); } }
 </style>

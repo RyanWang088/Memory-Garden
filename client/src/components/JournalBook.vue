@@ -221,7 +221,8 @@ const ticket = computed(() => {
     if (next) { const days = Math.round((parse(next.date) - d) / DAY); line += ` · ${next.title} in ${days} day${days === 1 ? '' : 's'}` }
   }
   const topic = exam ? exam.subject : tasks.find((t) => !t.done)?.text || ''
-  return { d, heading, line, topic, due: due.length }
+  const dueSubject = src.subjects.find((s) => s.name === due[0]?.subject)?.name
+  return { d, heading, line, topic, due: due.length, dueSubject }
 })
 
 function select(k) {
@@ -404,7 +405,7 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
                       <p>{{ ticket.line }}</p>
                       <div v-if="!compact && (ticket.topic || ticket.due)" class="d-flex flex-wrap gap-2">
                         <button v-if="ticket.topic" v-burst type="button" class="sp-btn sp-btn-sm" @click="focusOnThis">Focus on this <span class="arrow">→</span></button>
-                        <RouterLink v-if="ticket.due" :to="{ name: 'garden' }" class="sp-btn sp-btn-sm sp-btn-leaf">Water seeds</RouterLink>
+                        <RouterLink v-if="ticket.due" :to="{ name: 'garden', query: { q: ticket.topic||ticket.dueSubject } }" class="sp-btn sp-btn-sm sp-btn-leaf">Water seeds</RouterLink>
                       </div>
                     </div>
                   </div>
@@ -637,7 +638,7 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 .ticket { flex: 1; display: grid; grid-template-columns: 64px 1fr; min-width: 0; border-radius: 14px; background: #fff; box-shadow: var(--shadow-1); overflow: hidden; animation: ticket-in .45s var(--spring); }
 @keyframes ticket-in { from { transform: translateY(8px) rotate(-1deg); opacity: 0; } }
 .ticket-date { display: grid; place-content: center; text-align: center; color: #fff; background: var(--berry); position: relative; line-height: 1; padding: 8px 0; }
-.ticket-date::after { content: ""; position: absolute; right: -6px; top: 0; bottom: 0; width: 12px; background: radial-gradient(circle at 6px 8px, #fff 4px, transparent 4.5px) 0 0/12px 16px; }
+.ticket-date::after { content: ""; position: absolute; right: -6px; top: 0; bottom: 0; width: 12px; background: radial-gradient(circle at 6px 8px, var(--paper)4px, transparent 4.5px) 0 0/12px 16px; }
 .ticket-date b { font-family: var(--f-display); font-size: 1.7rem; font-weight: 600; display: block; margin: 3px 0; }
 .ticket-date small { font-size: .6rem; font-weight: 800; letter-spacing: .14em; }
 .ticket-body { padding: 10px 14px 10px 18px; min-width: 0; display: grid; gap: 4px; align-content: center; }

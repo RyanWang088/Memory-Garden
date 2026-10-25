@@ -300,6 +300,5 @@ erDiagram
 
 ### 3.6 Known gaps in the logical design
 
-- `stores/pomodoro.js:229` writes `exp`, which isn't a `profiles` column, so focus-block coins aren't saved. We're leaving this for now.
 - The quiz and Pomodoro rewards update `coins` directly from the client (allowed by the column grant), so a user could change their own coins. Moving the rewards into an RPC would close this.
 - Several stores catch errors with `.catch(console.error)`, so failures are silent. Prefer showing a warning with `useToastStore().show({ type: 'warning', message })`.

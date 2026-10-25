@@ -243,7 +243,7 @@ onMounted(() => { if (next.value) status.value = { tone: 'ok', text: 'Log in to 
 .window .sp-lede { position: relative; margin-top: 10px; color: #5f4b42; }
 .meadow { position: absolute; left: -10%; right: -10%; bottom: 0; height: 40%; pointer-events: none;
   background:
-    radial-gradient(circle, #fff 1.6px, transparent 2.2px) 0 30px / 38px 26px,
+    radial-gradient(circle, var(--paper)1.6px, transparent 2.2px) 0 30px / 38px 26px,
     radial-gradient(circle, #f9c9d3 1.8px, transparent 2.4px) 12px 40px / 46px 30px,
     radial-gradient(circle, #f7d86e 1.6px, transparent 2.2px) 22px 52px / 52px 34px,
     radial-gradient(120% 60% at 30% 0%, #a9cf8c 0 48%, transparent 49%),
