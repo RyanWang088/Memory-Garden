@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { usePomodoroStore, FOCUS_REWARD } from '@/stores/pomodoro'
+import { usePomodoroStore, coinsFor, MIN_COIN_MINUTES } from '@/stores/pomodoro'
 
 // Left card on the running Focus page: the session topic, its to-do list and the reward.
 // The tasks live in the pomodoro store and are cleared when a new session starts.
@@ -16,11 +16,14 @@ function add() {
 }
 
 const coinIcon = new URL('../assets/ui/coin.svg', import.meta.url).href
-// during a break, show what's been earned so far (break n comes right after focus block n)
+// coins for this session's own plan, e.g. "+8 coins so far · +18 when you finish"
 const reward = computed(() => {
-  if (pomo.mode === 'focus') return `+${FOCUS_REWARD.coins} coins when it ends`
-  const blocksDone = pomo.current.number
-  return `Earned so far: +${blocksDone * FOCUS_REWARD.coins} coins`
+  const plannedSeconds = pomo.blocks.filter(b => b.type === 'focus').reduce((sum, b) => sum + b.seconds, 0)
+  const planned = coinsFor(Math.floor(plannedSeconds / 60))  // if every focus block is finished
+  const earned = coinsFor(Math.floor(pomo.focusDoneSeconds / 60)) // for the blocks finished so far
+  if (!planned) return `Focus ${MIN_COIN_MINUTES}+ min in a session to earn coins`
+  if (earned === planned) return `+${earned} coins earned`
+  return earned ? `+${earned} coins so far · +${planned} when you finish` : `+${planned} coins when you finish`
 })
 </script>
 

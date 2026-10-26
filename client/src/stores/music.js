@@ -12,7 +12,6 @@ export const MOODS = [
   { key: 'cloudy', icon: '☁️', label: 'Cloudy' },
   { key: 'rainy', icon: '🌧️', label: 'Rainy' },
   { key: 'stormy', icon: '⛈️', label: 'Stormy' },
-  { key: 'snowy', icon: '❄️', label: 'Snowy' },
 ]
 const STORAGE_KEY = 'sproutly.music' // on/off, mood and volume, remembered per browser
 
@@ -102,8 +101,11 @@ export const useMusicStore = defineStore('music', () => {
   }
   // like most players: restart the track if it's past 3 s, otherwise go back one
   function previous() {
-    if (position.value > 3 || !history.length) { if (audio) audio.currentTime = 0; return }
-    if (track.value) queue.unshift(track.value)
+    if (position.value > 3 || !history.length) {
+      if (audio) audio.currentTime = 0
+      return
+    }
+    if (track.value) queue.unshift(track.value) // put the current track back so it comes up next
     start(history.pop())
   }
   function setMood(key) {

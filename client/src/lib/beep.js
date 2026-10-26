@@ -4,7 +4,7 @@
 // Sounds are booked ahead (`at` = seconds from now), which keeps them exactly in time and still on
 // time when the tab is in the background. `at` is converted to the moment you'd hear it (audioTimeIn).
 let ctx = null
-const booked = new Set() // sounds that haven't finished yet, so they can be cancelled
+const booked = new Map() // sound -> the audio-clock time it starts, so ones still to come can be cancelled
 
 // Browsers only allow sound after the user clicks something, so call this from a click
 // (e.g. Start or Resume) before booking any sounds. Safe to call many times.
@@ -59,7 +59,7 @@ function strike({ freq, at, length, volume, attack = 0.003 }) {
   osc.connect(gain).connect(ctx.destination)
   osc.start(t)
   osc.stop(t + length)
-  booked.add(osc)
+  booked.set(osc, t)
   osc.onended = () => booked.delete(osc)
 }
 
@@ -105,10 +105,12 @@ export function fanfare() {
   }
 }
 
-// stops every booked sound that hasn't played yet (used on pause / end)
+// stops the booked sounds that haven't started yet (used on pause, and before booking again);
+// a sound already playing, like a TING still ringing, is left to finish
 export function cancelSounds() {
-  for (const osc of booked) {
+  for (const [osc, startsAt] of booked) {
+    if (ctx && startsAt <= ctx.currentTime) continue
     try { osc.stop() } catch { /* already stopped */ }
+    booked.delete(osc)
   }
-  booked.clear()
 }

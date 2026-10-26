@@ -13,7 +13,14 @@ export const PRESETS = [
 ]
 export const MAX_ROUNDS = 12
 export const COUNTDOWN_FROM = 5 // beep each second for the last 5 seconds of every block, then TING
-export const FOCUS_REWARD = { coins: 10 } // given each time a focus block finishes
+// Coins for the focus minutes finished in one session: 2 coins for every full 5 minutes,
+// nothing under 20 minutes, at most 48 (reached at 2 hours). 25 min -> 10, 50 min -> 20.
+export const MIN_COIN_MINUTES = 20
+export const MAX_FOCUS_COINS = 48
+export function coinsFor(minutes) {
+  if (minutes < MIN_COIN_MINUTES) return 0
+  return Math.min(MAX_FOCUS_COINS, Math.floor(minutes / 5) * 2)
+}
 
 // mm:ss, or h:mm:ss once it is an hour or more
 export function formatSeconds(total) {
@@ -105,6 +112,8 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     if (setupError.value) return
     blocks.value = [...plan.value]
     tasks.value = [] // every session starts with a fresh to-do list
+    focusDoneSeconds.value = 0
+    rebookedBlock = -1 // block 0 of this new session hasn't been re-booked yet
     phase.value = 'running'
     beginBlock(0)
     resume()
@@ -129,19 +138,20 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
   function pause() {
     running.value = false
     clearInterval(timer)
-    bookingId++ // drop a booking that's still waiting for the audio
     cancelSounds()
   }
 
-  // Books every remaining countdown beep and end-of-block TING ahead of time in one go.
-  // tick() only runs about 4x a second, so sounding from there came up to 250 ms late now and then
-  // (5 -> 4 sounded rushed); booked sounds are exactly a second apart, even in a background tab.
-  let bookingId = 0 // only the latest booking counts (an older one may still be waiting for the audio)
+  // seconds left in the current block, worked out from the clock
+  function secondsLeft() {
+    return Math.max(0, Math.ceil((endsAt - Date.now()) / 1000))
+  }
+
+  // Books all the remaining countdown beeps and end-of-block TINGs in one go, so they play exactly
+  // on time (even in a background tab). Called on Start / Resume.
   async function bookSounds() {
-    const id = ++bookingId
-    await audioReady() // the sound device must be running, or every sound would come late
-    if (id !== bookingId || !running.value) return // paused, or booked again, while waiting
-    cancelSounds()
+    await audioReady() // wait for the speakers to wake up, or every sound would come late
+    if (!running.value) return // paused while waiting
+    cancelSounds() // clear any older booking, so nothing plays twice
     let end = (endsAt - Date.now()) / 1000 // seconds from now until the current block ends
     for (let i = index.value; i < blocks.value.length; i++) {
       // 5, 4, 3, 2, 1: beep the moment the timer shows that number (none longer than the block itself)
@@ -157,6 +167,7 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
   // (Custom starts again from the Classic times); the session length answers are kept
   function endSession() {
     pause()
+    if (phase.value === 'running') awardCoins() // End early still pays for the focus blocks already finished
     topic.value = ''
     preset.value = null
     focusSeconds.value = PRESETS[0].focus
@@ -184,8 +195,8 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     const toast = useToastStore()
     if (phase.value === 'done') {
       toast.show({
-        type: 'reward', title: 'Session complete 🌱', duration: 8000,
-        message: `${focusTotal.value} focus block${focusTotal.value === 1 ? '' : 's'} done · +${focusTotal.value * FOCUS_REWARD.coins} coins`,
+        type: 'success', title: 'Session complete 🌱', duration: 8000,
+        message: `${focusTotal.value} focus block${focusTotal.value === 1 ? '' : 's'} done.`,
       })
     } else if (mode.value === 'break') {
       toast.show({
@@ -200,14 +211,14 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     }
   }
 
-  // breaks are scheduled, so the timer rolls straight into the next block
-  let resyncedBlock = -1
+  // runs 4x a second; breaks are scheduled, so the timer rolls straight into the next block
+  let rebookedBlock = -1
   async function tick() {
-    remaining.value = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000))
-    // the audio clock can drift from the real clock over a long block, so line the sounds up again
-    // a few seconds before each countdown starts
-    if (remaining.value <= COUNTDOWN_FROM + 3 && resyncedBlock !== index.value) {
-      resyncedBlock = index.value
+    remaining.value = secondsLeft()
+    // A few seconds before each countdown, book the beeps again from the real clock. Over a long block
+    // the computer's sound clock can drift (Bluetooth earbuds especially), which made the beeps late.
+    if (remaining.value <= COUNTDOWN_FROM + 3 && rebookedBlock !== index.value) {
+      rebookedBlock = index.value
       bookSounds()
     }
     if (remaining.value > 0) return
@@ -216,19 +227,37 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
       beginBlock(index.value + 1)
       // the next block starts exactly when this one ended (not when tick noticed), matching the booked sounds
       endsAt += current.value.seconds * 1000
-      remaining.value = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000))
+      remaining.value = secondsLeft()
     } else {
-      pause()
+      // session over: stop the timer, but not pause(), which would cut off the final TING
+      running.value = false
+      clearInterval(timer)
       phase.value = 'done'
     }
     announce()
-    // Focus reward: persisted via the profile (swap to an RPC if you want server-side validation).
-    // The finished block also counts as study time (after the reward, which re-reads the whole profile).
+    // a finished focus block counts towards the session's coins and the profile's study time
     if (finished.type === 'focus') {
-      await auth.updateProfile({
-        coins: auth.profile.coins + FOCUS_REWARD.coins,
-      }).catch(console.error)
+      focusDoneSeconds.value += finished.seconds
       await auth.addStudyTime(finished.seconds).catch(console.error)
+    }
+    if (phase.value === 'done') awardCoins()
+  }
+
+  /* ---------- coins ----------
+     Coins are given once per session, when it ends (finished or End early), for the focus minutes
+     finished, worked out by coinsFor() at the top. */
+  const focusDoneSeconds = ref(0) // focus time finished so far this session
+  async function awardCoins() {
+    const seconds = focusDoneSeconds.value
+    focusDoneSeconds.value = 0 // so the same minutes are never paid twice
+    const coins = coinsFor(Math.floor(seconds / 60))
+    if (!coins) return
+    const toast = useToastStore()
+    try {
+      await auth.updateProfile({ coins: auth.profile.coins + coins })
+      toast.show({ type: 'reward', title: `+${coins} coins`, message: `For ${lengthText(seconds)} of focus.` })
+    } catch {
+      toast.show({ type: 'warning', message: "Your focus coins couldn't be saved. Please try again later." })
     }
   }
 
@@ -241,11 +270,12 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
         phase: phase.value, topic: topic.value, blocks: blocks.value, index: index.value,
         running: running.value, endsAt, remaining: remaining.value, tasks: tasks.value, nextTaskId,
+        focusDoneSeconds: focusDoneSeconds.value,
       }))
     } catch { /* storage blocked (e.g. private mode): the session just won't survive a refresh */ }
   }
   // remaining isn't watched (it changes every second); endsAt covers a running timer, and pause() changes running
-  watch([phase, index, running, topic, tasks], save, { deep: true })
+  watch([phase, index, running, topic, tasks, focusDoneSeconds], save, { deep: true })
 
   // called once when the app starts (App.vue): picks the saved session back up after a refresh
   function restore() {
@@ -260,6 +290,7 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     remaining.value = saved.remaining
     tasks.value = saved.tasks
     nextTaskId = saved.nextTaskId
+    focusDoneSeconds.value = saved.focusDoneSeconds ?? 0
     if (saved.phase === 'running' && saved.running) {
       endsAt = saved.endsAt
       startTicking() // no sound yet: the new page hasn't been clicked, so the browser blocks it
@@ -272,7 +303,7 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     topic, preset, focusSeconds, breakSeconds, endBy, rounds, totalSeconds, errors, setupError, plan, choosePreset,
     phase, blocks, index, remaining, running, current, next, mode, focusTotal, breakTotal, progress, label,
     startSession, resume, pause, endSession, restore,
-    tasks, addTask, toggleTask, removeTask,
+    tasks, addTask, toggleTask, removeTask, focusDoneSeconds,
   }
 })
 
