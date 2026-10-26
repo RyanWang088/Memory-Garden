@@ -2,8 +2,9 @@
 import { ref, computed } from 'vue'
 import { usePomodoroStore, coinsFor, MIN_COIN_MINUTES } from '@/stores/pomodoro'
 
-// Left card on the running Focus page: the session topic, its to-do list and the reward.
-// The tasks live in the pomodoro store and are cleared when a new session starts.
+// Left card on the Focus page (before Start and while running): the to-do list and the coin reward.
+// The tasks live in the pomodoro store: the recommended reviews are added before Start, the user can add
+// their own, and the list is cleared when a session ends.
 const pomo = usePomodoroStore()
 const draft = ref('')
 const doneCount = computed(() => pomo.tasks.filter(t => t.done).length)
@@ -18,7 +19,8 @@ function add() {
 const coinIcon = new URL('../assets/ui/coin.svg', import.meta.url).href
 // coins for this session's own plan, e.g. "+8 coins so far · +18 when you finish"
 const reward = computed(() => {
-  const plannedSeconds = pomo.blocks.filter(b => b.type === 'focus').reduce((sum, b) => sum + b.seconds, 0)
+  const blocks = pomo.phase === 'setup' ? pomo.plan : pomo.blocks // before Start: the times being picked
+  const plannedSeconds = blocks.filter(b => b.type === 'focus').reduce((sum, b) => sum + b.seconds, 0)
   const planned = coinsFor(Math.floor(plannedSeconds / 60))  // if every focus block is finished
   const earned = coinsFor(Math.floor(pomo.focusDoneSeconds / 60)) // for the blocks finished so far
   if (!planned) return `Focus ${MIN_COIN_MINUTES}+ min in a session to earn coins`
@@ -30,10 +32,10 @@ const reward = computed(() => {
 <template>
   <section aria-labelledby="todo-title" data-testid="session-todo">
     <div class="d-flex justify-content-between align-items-baseline">
-      <span id="todo-title" class="text-label-caption">Focusing on</span>
+      <span id="todo-title" class="text-label-caption">This session</span>
       <span v-if="pomo.tasks.length" class="text-body-small" data-testid="todo-count">{{ doneCount }} / {{ pomo.tasks.length }} done</span>
     </div>
-    <div class="text-body-strong mb-3" data-testid="pomodoro-topic-label">{{ pomo.topic }}</div>
+    <div class="text-body-strong mb-3" data-testid="todo-heading">To-do list</div>
 
     <ul v-if="pomo.tasks.length" class="list-unstyled d-grid gap-2 mb-2">
       <li
@@ -45,6 +47,11 @@ const reward = computed(() => {
           :checked="task.done" @change="pomo.toggleTask(task.id)"
         />
         <label :for="`task-${task.id}`" class="flex-fill">{{ task.text }}</label>
+        <!-- a recommended review links to that seed's review page -->
+        <RouterLink
+          v-if="task.seedId" :to="{ name: 'seed-review', params: { id: task.seedId } }" class="review-link"
+          :aria-label="`Open ${task.text}`" title="Open this review"
+        >↗</RouterLink>
         <button type="button" class="remove" :aria-label="`Remove ${task.text}`" @click="pomo.removeTask(task.id)">×</button>
       </li>
     </ul>
@@ -86,6 +93,10 @@ const reward = computed(() => {
 .remove:hover { color: var(--berry-ink); }
 @media (hover: none) { .remove { opacity: 1; } }
 
+/* the ↗ on a recommended review: opens that seed's review */
+.review-link { color: var(--ink-soft); text-decoration: none; font-weight: 700; }
+.review-link:hover, .review-link:focus-visible { color: var(--leaf); }
+
 .add-input {
   width: 100%;
   padding: 8px 12px;
@@ -105,7 +116,7 @@ const reward = computed(() => {
   font-weight: 500;
   font-size: 14px;
 }
-.text-body-strong[data-testid="pomodoro-topic-label"] { font-family: var(--f-hand); font-size: 1.7rem; line-height: 1.1; font-weight: 600; overflow-wrap: anywhere; }
+.text-body-strong[data-testid="todo-heading"] { font-family: var(--f-hand); font-size: 1.7rem; line-height: 1.1; font-weight: 600; overflow-wrap: anywhere; }
 .task label { font-family: var(--f-hand); font-size: 1.3rem; line-height: 1.1; }
 .task { background: transparent; }
 .task.current { background: var(--butter-soft); border-color: transparent; }

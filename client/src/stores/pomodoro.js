@@ -58,7 +58,6 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
   const auth = useAuthStore()
 
   // setup answers
-  const topic = ref('')
   const preset = ref(null) // a PRESETS key, 'custom', or null = not picked yet
   const focusSeconds = ref(PRESETS[0].focus)
   const breakSeconds = ref(PRESETS[0].rest)
@@ -87,7 +86,6 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
 
   // the problem with each setup step ('' = fine)
   const errors = computed(() => ({
-    topic: topic.value.trim() ? '' : 'Tell us what you are focusing on.',
     rhythm: !preset.value ? 'Pick a rhythm to continue.'
       : focusSeconds.value < 60 ? 'Focus for at least 1 minute.'
       : breakSeconds.value > focusSeconds.value ? "Your break can't be longer than your focus block." : '',
@@ -111,7 +109,6 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
   function startSession() {
     if (setupError.value) return
     blocks.value = [...plan.value]
-    tasks.value = [] // every session starts with a fresh to-do list
     focusDoneSeconds.value = 0
     rebookedBlock = -1 // block 0 of this new session hasn't been re-booked yet
     phase.value = 'running'
@@ -163,12 +160,17 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     }
   }
 
-  // back to setup for a fresh session: topic and rhythm are cleared so each session is chosen anew
-  // (Custom starts again from the Classic times); the session length answers are kept
+  // back to setup for a fresh session: the rhythm and the to-do list are cleared so each session starts
+  // anew (Custom starts again from the Classic times); the number of rounds is kept
   function endSession() {
     pause()
     if (phase.value === 'running') awardCoins() // End early still pays for the focus blocks already finished
-    topic.value = ''
+    tasks.value = [] // the list can be filled in before Start, so it's cleared here, not when starting
+    reviewsAdded = false // the next session gets fresh recommendations
+    // forget the old blocks too, or the ring keeps the last block's look (e.g. a break) after End early
+    blocks.value = []
+    index.value = 0
+    remaining.value = 0
     preset.value = null
     focusSeconds.value = PRESETS[0].focus
     breakSeconds.value = PRESETS[0].rest
@@ -189,6 +191,17 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
   function removeTask(id) {
     tasks.value = tasks.value.filter(t => t.id !== id)
   }
+  // recommended reviews (the garden's "!" seeds) as normal tasks that remember their seed, so the
+  // list can link to its review. Added once per session, so one the user removed doesn't come back.
+  let reviewsAdded = false
+  function addReviewTasks(seeds) {
+    if (reviewsAdded) return
+    reviewsAdded = true
+    for (const seed of seeds) {
+      if (tasks.value.some(t => t.seedId === seed.id)) continue
+      tasks.value.push({ id: nextTaskId++, text: `Review: ${seed.title}`, done: false, seedId: seed.id })
+    }
+  }
 
   // pop-up on whatever page the user is on, saying what just started (the TING plays at the same time)
   function announce() {
@@ -206,7 +219,7 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     } else {
       toast.show({
         type: 'warning', title: "Break's over 🌱", duration: 8000,
-        message: `Back to ${topic.value} for ${lengthText(current.value.seconds)}.`,
+        message: `Back to focus for ${lengthText(current.value.seconds)}.`,
       })
     }
   }
@@ -268,14 +281,14 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     try {
       if (phase.value === 'setup') return sessionStorage.removeItem(STORAGE_KEY)
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
-        phase: phase.value, topic: topic.value, blocks: blocks.value, index: index.value,
+        phase: phase.value, blocks: blocks.value, index: index.value,
         running: running.value, endsAt, remaining: remaining.value, tasks: tasks.value, nextTaskId,
         focusDoneSeconds: focusDoneSeconds.value,
       }))
     } catch { /* storage blocked (e.g. private mode): the session just won't survive a refresh */ }
   }
   // remaining isn't watched (it changes every second); endsAt covers a running timer, and pause() changes running
-  watch([phase, index, running, topic, tasks, focusDoneSeconds], save, { deep: true })
+  watch([phase, index, running, tasks, focusDoneSeconds], save, { deep: true })
 
   // called once when the app starts (App.vue): picks the saved session back up after a refresh
   function restore() {
@@ -284,7 +297,6 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     try { saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY)) } catch { return }
     if (!saved?.blocks?.length) return
     phase.value = saved.phase
-    topic.value = saved.topic
     blocks.value = saved.blocks
     index.value = saved.index
     remaining.value = saved.remaining
@@ -300,10 +312,10 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
   }
 
   return {
-    topic, preset, focusSeconds, breakSeconds, endBy, rounds, totalSeconds, errors, setupError, plan, choosePreset,
+    preset, focusSeconds, breakSeconds, endBy, rounds, totalSeconds, errors, setupError, plan, choosePreset,
     phase, blocks, index, remaining, running, current, next, mode, focusTotal, breakTotal, progress, label,
     startSession, resume, pause, endSession, restore,
-    tasks, addTask, toggleTask, removeTask, focusDoneSeconds,
+    tasks, addTask, toggleTask, removeTask, addReviewTasks, focusDoneSeconds,
   }
 })
 

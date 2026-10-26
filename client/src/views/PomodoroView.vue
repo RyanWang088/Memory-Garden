@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { usePomodoroStore, PRESETS, MAX_ROUNDS, lengthText } from '@/stores/pomodoro'
-import { useGardenStore } from '@/stores/garden'
+import { usePomodoroStore, PRESETS, MAX_ROUNDS, lengthText, formatSeconds } from '@/stores/pomodoro'
 import DurationInput from '@/components/DurationInput.vue'
 import SessionTodo from '@/components/SessionTodo.vue'
 import GardenRadio from '@/components/GardenRadio.vue'
@@ -11,6 +10,7 @@ import { foliageUrl } from '@/lib/plantSprites'
 import { moodNow } from '@/lib/greeting'
 import { vBurst } from '@/lib/burst'
 import { useAuthStore } from '@/stores/auth'
+import { useGardenStore } from '@/stores/garden'
 const pomo = usePomodoroStore()
 const garden = useGardenStore()
 const auth = useAuthStore()
@@ -31,36 +31,36 @@ const blockArt = (n) => (n < pomo.current.number || (n === pomo.current.number &
   ? { src: foliageUrl(`tulip-${flower.value}-4`), cls: 'done' }
   : n === pomo.current.number ? { src: foliageUrl('sprout'), cls: 'now s' } : { src: foliageUrl('seed'), cls: 'todo s' })
 
-/* ---------- setup: one question per step ----------
-   Same three questions and the same store checks as before; the page now opens on the
-   custom focus/break times (the step people change most), then the topic, then the length. */
-const STEPS = [
-  { key: 'rhythm', title: 'Set your focus & break', short: 'Rhythm', icon: 'clock' },
-  { key: 'topic', title: 'What are you focusing on?', short: 'Topic', icon: 'todo' },
-  { key: 'length', title: 'How long is this session?', short: 'Length', icon: 'target' },
-]
-const QUICK_PICKS = PRESETS.map(p => ({ ...p, detail: `${lengthText(p.focus)} · ${lengthText(p.rest)}` }))
-const step = ref(0)
-const isLast = computed(() => step.value === STEPS.length - 1)
-const stepError = computed(() => pomo.errors[STEPS[step.value].key])
-const showError = ref(false) // errors show only after the user tries to move on
+/* ---------- before Start ----------
+   No setup steps: the page opens on the timer screen with the ring not started yet. The focus, break and
+   rounds controls sit under the ring until Start is pressed (Start runs the same store checks as before). */
+const idle = computed(() => pomo.phase === 'setup')
+const showError = ref(false) // the error shows only after Start is pressed
 
 // open straight on Custom, keeping whatever times are already there (25/5 the first time)
 function openOnCustom() {
   if (!pomo.preset) pomo.choosePreset('custom')
 }
+// the garden marks the seeds most worth revising with "!"; offer them as to-do items before each session
+// (seeds come from the Express API through the garden store, like everywhere else)
+async function suggestReviews() {
+  try { await garden.fetchSeeds() } catch { return } // can't load them: the list just has the user's own tasks
+  const due = garden.seeds.filter(s => s.alert).sort((a, b) => b.priority - a.priority)
+  pomo.addReviewTasks(due)
+}
+
 onMounted(() => {
   pomo.endBy = 'rounds' // sessions are set by rounds only
   openOnCustom()
-  if (!garden.seeds.length) garden.fetchSeeds().catch(() => {}) // only for the topic suggestions
+  if (idle.value) suggestReviews()
 })
 
-// back to setup (Start another, End early, or the mini player's session ending): begin again at step 1
+// back to setup (Start another, End early, or the mini player's session ending)
 watch(() => pomo.phase, (phase) => {
   if (phase !== 'setup') return
-  step.value = 0
   showError.value = false
   openOnCustom()
+  suggestReviews()
 })
 
 // typing or nudging a time after picking Classic / Deep work turns it into your own rhythm
@@ -69,19 +69,11 @@ watch(() => [pomo.focusSeconds, pomo.breakSeconds], ([focus, rest]) => {
   if (p && (p.focus !== focus || p.rest !== rest)) pomo.choosePreset('custom')
 })
 
-function nextStep() {
+function start() {
   showError.value = true
-  if (stepError.value) return
+  if (pomo.setupError) return
   showError.value = false
-  if (isLast.value) pomo.startSession()
-  else step.value += 1
-}
-function backStep() {
-  showError.value = false
-  step.value -= 1
-}
-function goTo(i) {
-  if (i < step.value) { showError.value = false; step.value = i }
+  pomo.startSession()
 }
 
 // − / + buttons next to each time box (typing still works: click the time and type digits)
@@ -95,33 +87,6 @@ function nudge(which, dir) {
   const next = Math.round(pomo[key] / size) * size + dir * size
   pomo[key] = Math.min(Math.max(next, min), 4 * 3600)
 }
-
-const hint = computed(() => ({
-  topic: 'Name it, or pick a subject from your garden.',
-  rhythm: 'Focus from 1 minute, breaks from 0. Click a time to type it, or use − / +.',
-  length: pomo.breakSeconds > 0
-    ? 'One round is one focus block. Breaks go in between.'
-    : 'One round is one focus block. With a 0-minute break they run back to back.',
-}[STEPS[step.value].key]))
-
-// a quick look at one round: focus then break, drawn to scale
-const roundShare = computed(() => {
-  const sum = pomo.focusSeconds + pomo.breakSeconds
-  return { focus: (pomo.focusSeconds / sum) * 100, rest: (pomo.breakSeconds / sum) * 100 }
-})
-
-// subjects already planted, offered as one-click topics
-const subjects = computed(() => [...new Set(garden.gardenSeeds.map(s => s.subject).filter(Boolean))].slice(0, 6))
-
-// shown on the last step: "4 focus blocks · 3 breaks · 1h 55 min · ends at 4:50 pm"
-const planSeconds = computed(() => pomo.plan.reduce((sum, b) => sum + b.seconds, 0))
-const preview = computed(() => {
-  const focus = pomo.plan.filter(b => b.type === 'focus').length
-  const breaks = pomo.plan.length - focus
-  const end = new Date(Date.now() + planSeconds.value * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-  return `${focus} focus block${focus === 1 ? '' : 's'} · ${breaks ? `${breaks} break${breaks === 1 ? '' : 's'}` : 'no breaks'}`
-    + ` · ${lengthText(planSeconds.value)} · ends at ${end}`
-})
 
 /* ---------- running ---------- */
 const RADIUS = 136, CIRCUMFERENCE = 2 * Math.PI * RADIUS
@@ -137,6 +102,12 @@ const nextLabel = computed(() => {
   return next.type === 'break' ? `then a break of ${lengthText(next.seconds)}` : `then focus block ${next.number}`
 })
 
+// the ring's text: before Start it describes the session you've set, then it follows the timer
+const ringCaption = computed(() => (idle.value ? `Ready · ${pomo.rounds} round${pomo.rounds === 1 ? '' : 's'}` : caption.value))
+const ringNext = computed(() => (idle.value
+  ? (pomo.breakSeconds ? `breaks of ${lengthText(pomo.breakSeconds)}` : 'no breaks')
+  : nextLabel.value))
+
 // one dot per focus block, filled once it has started (break n comes right after focus block n)
 const focusStarted = computed(() => pomo.current.number)
 
@@ -149,150 +120,13 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
     <SceneryBackdrop :mood="mood" :options="{ seed: 31, tulips: narrow ? 3 : 10, butterflies: 2, horizon: 0.64 }" />
 
     <div class="container position-relative py-4 d-flex flex-column align-items-center">
-      <!-- 1. setup questions -->
-      <section v-if="pomo.phase === 'setup'" class="panel setup" data-testid="pomodoro-setup">
-        <span class="sp-tape" aria-hidden="true"></span>
-        <ol class="stepper-track list-unstyled d-flex justify-content-center gap-2 mb-4" aria-label="Setup steps">
-          <li v-for="(s, i) in STEPS" :key="s.key">
-            <button
-              type="button" class="step-chip" :class="{ current: i === step, done: i < step }"
-              :aria-current="i === step ? 'step' : undefined" :disabled="i > step" @click="goTo(i)"
-            >
-              <SproutIcon :name="s.icon" :size="22" />
-              <span class="text-label-field">{{ s.short }}</span>
-            </button>
-          </li>
-        </ol>
-
-        <div class="text-center">
-          <div class="text-label-caption step-count mb-1">Step {{ step + 1 }} of {{ STEPS.length }}</div>
-          <h2 class="mb-1">{{ STEPS[step].title }}</h2>
-          <p class="text-body-small mb-4">{{ hint }}</p>
-        </div>
-
-        <Transition name="step" mode="out-in">
-          <!-- step 1: custom focus & break first; the presets are quick picks that fill both boxes -->
-          <div v-if="STEPS[step].key === 'rhythm'" key="rhythm">
-            <div class="dials">
-              <div class="dial focus-dial">
-                <div class="dial-head">
-                  <SproutIcon name="focus" :size="34" />
-                  <span class="text-label-caption">Focus</span>
-                </div>
-                <DurationInput
-                  v-model="pomo.focusSeconds" class="text-display dial-time" aria-label="Focus length, type digits"
-                  data-testid="pomodoro-focus" @enter="nextStep"
-                />
-                <div class="dial-nudge">
-                  <button type="button" class="nudge" aria-label="5 minutes less focus" @click="nudge('focus', -1)"><SproutIcon glyph="minus" :size="18" /></button>
-                  <span class="text-body-small">5 min steps</span>
-                  <button type="button" class="nudge" aria-label="5 minutes more focus" @click="nudge('focus', 1)"><SproutIcon glyph="plus" :size="18" /></button>
-                </div>
-              </div>
-
-              <div class="dial break-dial">
-                <div class="dial-head">
-                  <SproutIcon name="coffee" :size="34" />
-                  <span class="text-label-caption">Break</span>
-                </div>
-                <DurationInput
-                  v-model="pomo.breakSeconds" allow-zero class="text-display dial-time" aria-label="Break length, type digits"
-                  data-testid="pomodoro-break" @enter="nextStep"
-                />
-                <div class="dial-nudge">
-                  <button type="button" class="nudge" aria-label="1 minute less break" @click="nudge('break', -1)"><SproutIcon glyph="minus" :size="18" /></button>
-                  <span class="text-body-small">1 min steps</span>
-                  <button type="button" class="nudge" aria-label="1 minute more break" @click="nudge('break', 1)"><SproutIcon glyph="plus" :size="18" /></button>
-                </div>
-              </div>
-            </div>
-
-            <div class="round-bar mt-3" aria-hidden="true">
-              <span class="seg focus" :style="{ flexBasis: `${roundShare.focus}%` }"></span>
-              <span class="seg rest" :style="{ flexBasis: `${roundShare.rest}%` }"></span>
-            </div>
-            <div class="d-flex justify-content-between text-body-small mt-1">
-              <span>one round</span><span>{{ lengthText(pomo.focusSeconds + pomo.breakSeconds) }}</span>
-            </div>
-
-            <div class="quick mt-4" role="radiogroup" aria-label="Focus rhythm">
-              <span class="text-label-caption quick-label">Quick picks</span>
-              <button
-                type="button" role="radio" class="quick-chip" :class="{ active: pomo.preset === 'custom' }"
-                :aria-checked="pomo.preset === 'custom'" data-testid="pomodoro-rhythm-custom" @click="pomo.choosePreset('custom')"
-              >
-                <SproutIcon glyph="edit" :size="14" /> Custom
-              </button>
-              <button
-                v-for="r in QUICK_PICKS" :key="r.key" type="button" role="radio" class="quick-chip"
-                :class="{ active: pomo.preset === r.key }" :aria-checked="pomo.preset === r.key"
-                :data-testid="`pomodoro-rhythm-${r.key}`" @click="pomo.choosePreset(r.key)"
-              >
-                <b>{{ r.name }}</b> <span>{{ r.detail }}</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- step 2: topic -->
-          <div v-else-if="STEPS[step].key === 'topic'" key="topic">
-            <input
-              v-model="pomo.topic" type="text" maxlength="60"
-              class="form-control form-control-lg text-center topic-input" placeholder="e.g. Statistics, Week 3" autofocus
-              data-testid="pomodoro-topic" @keydown.enter.prevent="nextStep"
-            />
-            <div v-if="subjects.length" class="quick justify-content-center mt-3">
-              <span class="text-label-caption quick-label text-center">From your garden</span>
-              <button
-                v-for="s in subjects" :key="s" type="button" class="quick-chip" :class="{ active: pomo.topic === s }"
-                @click="pomo.topic = s"
-              >
-                <SproutIcon name="leaf" :size="16" /> {{ s }}
-              </button>
-            </div>
-          </div>
-
-          <!-- step 3: how many rounds -->
-          <div v-else key="length">
-            <!-- the session is set by rounds only (the total-time option was removed) -->
-            <div class="d-flex justify-content-center align-items-center gap-4">
-              <button type="button" class="nudge big" aria-label="One round less" :disabled="pomo.rounds <= 1" @click="pomo.rounds--"><SproutIcon glyph="minus" /></button>
-              <div class="text-center">
-                <div class="text-display rounds" data-testid="pomodoro-rounds">{{ pomo.rounds }}</div>
-                <div class="text-label-caption">round{{ pomo.rounds === 1 ? '' : 's' }}</div>
-              </div>
-              <button type="button" class="nudge big" aria-label="One round more" :disabled="pomo.rounds >= MAX_ROUNDS" @click="pomo.rounds++"><SproutIcon glyph="plus" /></button>
-            </div>
-
-            <!-- the whole session drawn to scale: focus blocks and the breaks between them -->
-            <div v-if="!stepError" class="timeline mt-4" aria-hidden="true">
-              <span
-                v-for="(b, i) in pomo.plan" :key="i" class="seg" :class="b.type === 'focus' ? 'focus' : 'rest'"
-                :style="{ flexGrow: b.seconds }" :title="`${b.type} ${lengthText(b.seconds)}`"
-              ></span>
-            </div>
-            <p v-if="!stepError" class="text-body-strong text-center mt-2 mb-0" data-testid="pomodoro-preview">{{ preview }}</p>
-          </div>
-        </Transition>
-
-        <p class="text-body-small text-danger text-center mt-3 mb-0 error-line" role="alert" data-testid="pomodoro-error">{{ showError && stepError ? stepError : ' ' }}</p>
-
-        <div class="d-flex justify-content-center gap-3 mt-2">
-          <button v-if="step > 0" type="button" class="btn-secondary text-button" @click="backStep">
-            <SproutIcon glyph="chevron-left" :size="16" /> Back
-          </button>
-          <button type="button" class="btn-primary border-0 text-button justify-content-center" data-testid="pomodoro-next" @click="nextStep">
-            <template v-if="isLast"><SproutIcon glyph="play" :size="16" /> Start</template>
-            <template v-else>Next <SproutIcon glyph="chevron-right" :size="16" /></template>
-          </button>
-        </div>
-      </section>
-
-      <!-- 2. running: tasks | timer | break ideas (stacked on small screens, timer first) -->
-      <div v-else-if="pomo.phase === 'running'" class="session w-100">
+      <!-- 1 + 2. before Start and while running: tasks | timer | music (stacked on small screens, timer first) -->
+      <div v-if="pomo.phase !== 'done'" class="session w-100">
         <SessionTodo class="side-card area-tasks" />
 
         <div class="area-timer d-flex flex-column align-items-center">
-          <div class="ring" :class="[pomo.mode, { paused: !pomo.running }]">
+          <!-- the timer ring: before Start it shows the chosen focus time, then it counts down -->
+          <div class="ring" :class="[pomo.mode, { paused: !idle && !pomo.running }]">
             <svg viewBox="0 0 300 300" aria-hidden="true">
               <circle class="track" cx="150" cy="150" :r="RADIUS" />
               <circle
@@ -301,31 +135,86 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
               />
             </svg>
             <div class="ring-text text-center">
-              <div class="text-label-caption ring-cap" data-testid="pomodoro-mode">{{ caption }}<span v-if="!pomo.running"> · paused</span></div>
-              <div class="text-timer my-2" data-testid="pomodoro-time">{{ pomo.label }}</div>
-              <div class="ring-next">{{ nextLabel }}</div>
+              <div class="text-label-caption ring-cap" data-testid="pomodoro-mode">{{ ringCaption }}<span v-if="!idle && !pomo.running"> · paused</span></div>
+              <div class="text-timer my-2" data-testid="pomodoro-time">{{ idle ? formatSeconds(pomo.focusSeconds) : pomo.label }}</div>
+              <div class="ring-next">{{ ringNext }}</div>
             </div>
             <img :key="ringPlant.src" class="ring-plant" :class="{ s: ringPlant.small }" :src="ringPlant.src" alt="" />
           </div>
-          <div class="blocks mt-3" :aria-label="`Focus block ${focusStarted} of ${pomo.focusTotal}`">
-            <img v-for="n in pomo.focusTotal" :key="n" :class="blockArt(n).cls" :src="blockArt(n).src" alt="" />
+
+          <!-- before Start: just the Start button here (the timer settings are in the right column) -->
+          <div v-if="idle" class="mt-4">
+            <button type="button" class="btn-primary border-0 text-button justify-content-center" data-testid="pomodoro-start" @click="start">
+              <SproutIcon glyph="play" :size="16" /> Start
+            </button>
           </div>
 
-          <div class="d-flex gap-3 mt-4">
-            <button v-if="pomo.running" type="button" class="btn-primary border-0 text-button justify-content-center" @click="pomo.pause()">
-              <SproutIcon glyph="pause" :size="16" /> Pause
-            </button>
-            <button v-else type="button" class="btn-primary border-0 text-button justify-content-center" @click="pomo.resume()">
-              <SproutIcon glyph="play" :size="16" /> Resume
-            </button>
-            <button type="button" class="btn-secondary text-button" @click="pomo.endSession()">End early</button>
-          </div>
+          <!-- running: one plant per focus block, and the pause / end buttons -->
+          <template v-else>
+            <div class="blocks mt-3" :aria-label="`Focus block ${focusStarted} of ${pomo.focusTotal}`">
+              <img v-for="n in pomo.focusTotal" :key="n" :class="blockArt(n).cls" :src="blockArt(n).src" alt="" />
+            </div>
+            <div class="d-flex gap-3 mt-4">
+              <button v-if="pomo.running" type="button" class="btn-primary border-0 text-button justify-content-center" @click="pomo.pause()">
+                <SproutIcon glyph="pause" :size="16" /> Pause
+              </button>
+              <button v-else type="button" class="btn-primary border-0 text-button justify-content-center" @click="pomo.resume()">
+                <SproutIcon glyph="play" :size="16" /> Resume
+              </button>
+              <button type="button" class="btn-secondary text-button" @click="pomo.endSession()">End early</button>
+            </div>
+          </template>
         </div>
 
         <!-- right column: music -->
         <div class="area-side d-grid gap-4">
           <GardenRadio class="side-card" />
         </div>
+
+        <!-- timer settings, only before Start: under Garden Radio on wide screens, right under Start on phones -->
+        <section v-if="idle" class="side-card area-settings" aria-labelledby="settings-title" data-testid="pomodoro-setup">
+          <div id="settings-title" class="text-label-caption settings-label mb-3">Timer settings</div>
+          <div class="d-flex gap-2 mb-2" role="radiogroup" aria-label="Focus rhythm">
+            <button
+              v-for="r in PRESETS" :key="r.key" type="button" role="radio" class="quick-chip flex-fill justify-content-center"
+              :class="{ active: pomo.preset === r.key }" :aria-checked="pomo.preset === r.key"
+              :data-testid="`pomodoro-rhythm-${r.key}`" @click="pomo.choosePreset(r.key)"
+            >
+              <b>{{ r.name }}</b> <span>{{ r.focus / 60 }}/{{ r.rest / 60 }}</span>
+            </button>
+          </div>
+
+          <!-- one row each: label on the left, then - value + -->
+          <div class="settings">
+            <div class="setting d-flex align-items-center justify-content-between gap-2">
+              <span class="d-flex align-items-center gap-2"><SproutIcon name="focus" :size="22" /><span class="text-label-caption">Focus</span></span>
+              <div class="d-flex align-items-center gap-2">
+                <button type="button" class="nudge sm" aria-label="5 minutes less focus" @click="nudge('focus', -1)"><SproutIcon glyph="minus" :size="14" /></button>
+                <DurationInput v-model="pomo.focusSeconds" class="text-button time-box" aria-label="Focus length, type digits" data-testid="pomodoro-focus" />
+                <button type="button" class="nudge sm" aria-label="5 minutes more focus" @click="nudge('focus', 1)"><SproutIcon glyph="plus" :size="14" /></button>
+              </div>
+            </div>
+            <div class="setting d-flex align-items-center justify-content-between gap-2">
+              <span class="d-flex align-items-center gap-2"><SproutIcon name="coffee" :size="22" /><span class="text-label-caption">Break</span></span>
+              <div class="d-flex align-items-center gap-2">
+                <button type="button" class="nudge sm" aria-label="1 minute less break" @click="nudge('break', -1)"><SproutIcon glyph="minus" :size="14" /></button>
+                <DurationInput v-model="pomo.breakSeconds" allow-zero class="text-button time-box" aria-label="Break length, type digits" data-testid="pomodoro-break" />
+                <button type="button" class="nudge sm" aria-label="1 minute more break" @click="nudge('break', 1)"><SproutIcon glyph="plus" :size="14" /></button>
+              </div>
+            </div>
+            <div class="setting d-flex align-items-center justify-content-between gap-2">
+              <span class="d-flex align-items-center gap-2"><SproutIcon name="target" :size="22" /><span class="text-label-caption">Rounds</span></span>
+              <div class="d-flex align-items-center gap-2">
+                <button type="button" class="nudge sm" aria-label="One round less" :disabled="pomo.rounds <= 1" @click="pomo.rounds--"><SproutIcon glyph="minus" :size="14" /></button>
+                <span class="text-button time-box" data-testid="pomodoro-rounds">{{ pomo.rounds }}</span>
+                <button type="button" class="nudge sm" aria-label="One round more" :disabled="pomo.rounds >= MAX_ROUNDS" @click="pomo.rounds++"><SproutIcon glyph="plus" :size="14" /></button>
+              </div>
+            </div>
+          </div>
+          <!-- shown after Start is pressed with a time that isn't allowed -->
+          <p v-if="showError && pomo.setupError" class="text-body-small text-danger text-center mt-2 mb-0" role="alert" data-testid="pomodoro-error">{{ pomo.setupError }}</p>
+          <p class="text-body-small text-center mt-2 mb-0">Tip: click a time to type it</p>
+        </section>
       </div>
 
       <!-- 3. finished -->
@@ -336,7 +225,7 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
         </div>
         <h2 class="mb-2">Session complete</h2>
         <p class="text-body-small mb-4">
-          You focused on {{ pomo.topic }} for {{ pomo.focusTotal }} block{{ pomo.focusTotal === 1 ? '' : 's' }}.
+          You focused for {{ pomo.focusTotal }} block{{ pomo.focusTotal === 1 ? '' : 's' }}.
           <template v-if="pomo.tasks.length">
             <br />You ticked off {{ tasksDone }} of {{ pomo.tasks.length }} task{{ pomo.tasks.length === 1 ? '' : 's' }}.
           </template>
@@ -360,48 +249,8 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
 }
 .panel::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background-image: var(--grain); opacity: .14; mix-blend-mode: multiply; pointer-events: none; z-index: -1; }
 .panel > .sp-tape { top: -12px; left: calc(50% - 46px); transform: rotate(-3deg); }
-.setup h2 { font-size: clamp(1.8rem, 3.4vw, 2.4rem); line-height: 1.1; }
-.topic-input { font-family: var(--f-hand) !important; font-size: 1.7rem; min-height: 58px; }
-.setup { max-width: 640px; padding: 28px 32px 32px; }
-@media (max-width: 575.98px) { .setup, .panel { padding: 22px 18px 24px; border-radius: 20px; } }
+@media (max-width: 575.98px) { .panel { padding: 22px 18px 24px; border-radius: 20px; } }
 
-/* step chips: done steps can be clicked to go back */
-.stepper-track li { position: relative; }
-.stepper-track li + li::before {
-  content: ''; position: absolute; left: -10px; top: 50%; width: 12px; height: 2px; background: var(--linen);
-}
-.step-chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 4px 12px 4px 6px;
-  border: 2px solid var(--linen); border-radius: 999px;
-  background: var(--paper); color: var(--bark-muted);
-  transition: background .2s, border-color .2s, transform .2s var(--spring);
-}
-.step-chip.current { border-color: var(--peach); background: var(--cream); color: var(--bark); transform: scale(1.04); }
-.step-chip.done { border-color: var(--mint-deep); color: var(--bark); }
-.step-chip.done:hover { background: var(--mint); }
-.step-chip:disabled { opacity: .6; cursor: default; }
-.step-count { color: var(--berry-ink); }
-
-/* focus & break dials */
-.dials { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-@media (max-width: 479.98px) { .dials { grid-template-columns: 1fr; } }
-.dial {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  padding: 16px 12px 12px;
-  border-radius: 20px;
-  border: 2px solid transparent;
-  transition: border-color .2s, transform .25s var(--spring);
-}
-.dial:focus-within { transform: translateY(-2px); }
-.focus-dial { background: color-mix(in srgb, var(--peach) 28%, var(--paper)); }
-.focus-dial:focus-within { border-color: var(--peach); }
-.break-dial { background: color-mix(in srgb, var(--mint) 45%, var(--paper)); }
-.break-dial:focus-within { border-color: var(--mint-deep); }
-.dial-head { display: flex; align-items: center; gap: 8px; }
-.dial-time { max-width: 220px; }
-.dial-time:hover:not(.editing) { color: var(--berry-ink); }
-.dial-nudge { display: flex; align-items: center; gap: 10px; }
 
 .nudge {
   display: grid; place-items: center;
@@ -414,19 +263,12 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
 .nudge:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 0 var(--linen); }
 .nudge:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--linen); }
 .nudge:disabled { opacity: .4; }
-.nudge:focus-visible, .quick-chip:focus-visible, .step-chip:focus-visible { outline: 3px solid var(--periwinkle); outline-offset: 2px; }
+.nudge:focus-visible, .quick-chip:focus-visible { outline: 3px solid var(--periwinkle); outline-offset: 2px; }
 .nudge.big { width: 48px; height: 48px; background: var(--butter); box-shadow: 0 4px 0 var(--butter-deep); }
 
-/* one round, and the whole plan, drawn to scale */
-.round-bar, .timeline { display: flex; gap: 4px; height: 14px; }
-.round-bar .seg, .timeline .seg { border-radius: 999px; transition: flex-basis .35s var(--spring), flex-grow .35s var(--spring); }
-.timeline .seg { flex-basis: 0; min-width: 6px; }
-.seg.focus { background: var(--peach); }
-.seg.rest { background: var(--mint-deep); }
 
 /* quick picks / subject chips */
 .quick { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; }
-.quick-label { flex: 0 0 100%; text-align: center; color: var(--bark-muted); }
 .quick-chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 14px;
@@ -439,26 +281,28 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
 .quick-chip:hover { border-color: var(--peri-soft); transform: translateY(-1px); }
 .quick-chip.active { border-color: var(--periwinkle); background: var(--peri-soft); }
 
-.topic-input { border: 2px solid var(--linen); border-radius: 16px; }
-.total-box { max-width: 320px; padding: 12px; border-radius: 20px; background: var(--cream); }
-.rounds { min-width: 2ch; font-variant-numeric: tabular-nums; }
-.error-line { min-height: 22px; }
-
-.step-enter-active, .step-leave-active { transition: opacity .18s, transform .22s var(--spring); }
-.step-enter-from { opacity: 0; transform: translateX(14px); }
-.step-leave-to { opacity: 0; transform: translateX(-14px); }
+/* the timer settings card (its look comes from .side-card): rows split by the same dashed line as the to-do card */
+.settings-label { color: var(--berry-ink); }
+.setting { padding: 8px 0; }
+.setting + .setting { border-top: 1px dashed var(--line); }
+.time-box { width: 64px; text-align: center; font-variant-numeric: tabular-nums; }
+/* a soft paper pill, so the times look clickable (.setting adds weight over the input's own styles) */
+.setting .time-box { padding: 2px 0; border-radius: var(--r-sm); background: var(--sheet-2); }
+/* while typing, the box shows "00h 25m 00s", so it gets wider to fit it all without scrolling */
+.time-box.editing { width: 124px; }
+.nudge.sm { width: 28px; height: 28px; box-shadow: 0 2px 0 var(--linen); }
 
 /* running layout: one column on phones (timer first), three columns on wide screens */
 .session {
   display: grid;
   gap: 24px;
   justify-items: center;
-  grid-template-areas: "timer" "tasks" "side";
+  grid-template-areas: "timer" "settings" "tasks" "side"; /* phones: settings right under Start */
 }
 @media (min-width: 992px) {
   .session {
     grid-template-columns: 1fr auto 1fr;
-    grid-template-areas: "tasks timer side";
+    grid-template-areas: "tasks timer side" "tasks timer settings"; /* settings under Garden Radio */
     align-items: start;
     gap: 40px;
   }
@@ -466,6 +310,7 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
 .area-tasks { grid-area: tasks; }
 .area-timer { grid-area: timer; }
 .area-side { grid-area: side; width: 100%; max-width: 320px; }
+.area-settings { grid-area: settings; }
 
 /* the white cards either side of the timer (scoped styles also reach a child component's root) */
 .side-card {
@@ -516,6 +361,5 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
 @keyframes bob { 50% { transform: translateY(-4px) rotate(-3deg); } }
 @media (prefers-reduced-motion: reduce) {
   .blocks img.now, .ring.paused .text-timer { animation: none; }
-  .step-enter-active, .step-leave-active { transition: none; }
 }
 </style>
