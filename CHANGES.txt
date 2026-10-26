@@ -205,5 +205,4 @@ CHG   server/src/models/userModel.js
   - The full journey was clicked through in a browser against a stand-in backend on desktop and
     phone sizes: sign-up, onboarding, garden, journal filters, a focus session with 1-minute focus
     and 0-minute break, password change and the delete dialog.
-  - The new delete-account route has NOT been run against a real Supabase project yet.
-    Please test it there first.
+  - The new delete-account route has NOT been run against a real Supabase project yet. (Tested n it works)

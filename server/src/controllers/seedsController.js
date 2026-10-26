@@ -88,7 +88,7 @@ export const seedsController = {
     const filename = Buffer.from(req.file.originalname, 'latin1').toString('utf8') // multer reads names as latin1
     const ext = extOf(filename)
     if (ext === 'ppt') return res.status(400).json({ error: 'Please save it as PPTX and upload again.' })
-    if (!ACCEPTED_TYPES.includes(ext)) return res.status(400).json({ error: `${filename} isn't a TXT, PDF, PPTX or DOCX file.` })
+    if (!ACCEPTED_TYPES.includes(ext)) return res.status(400).json({ error: `${filename} isn't a PDF, PPTX or DOCX file.` })
 
     const max = Math.min(MAX_AI_CARDS, Math.max(1, Number.parseInt(req.body.maxCards, 10) || MAX_AI_CARDS))
     let existing = []

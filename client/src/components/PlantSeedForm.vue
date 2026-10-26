@@ -117,8 +117,8 @@ const tileAnswer = computed(() => (showDraft.value ? answer.value : editing.valu
 const trapCount = computed(() => (tileTraps.value ? cleanTraps(tileTraps.value, tileAnswer.value).length : 0))
 
 // Upload a file: each file is sent to the server, which returns AI-written pairs
-const ACCEPTED = ['txt', 'pdf', 'pptx', 'docx']
-const MAX_MB = 50
+const ACCEPTED = ['pdf', 'pptx', 'docx']
+const MAX_MB = 25
 const fileInput = ref(null)
 const files = ref([]) // [{ id, file, name, size, status: 'generating' | 'done' | 'failed', error, requested, count, confirming }]
 const controllers = new Map() // file id -> AbortController for its running request
@@ -130,11 +130,12 @@ const failedFiles = computed(() => files.value.filter((f) => f.status === 'faile
 const pairsFrom = (f) => cards.value.filter((c) => c.fileId === f.id).length
 
 function addFiles(list) {
+  addingCards.value = true
   fileError.value = ''
   for (const f of list) {
     const ext = extOf(f.name)
     if (ext === 'ppt') fileError.value = `${f.name}: please save it as PPTX and upload again.`
-    else if (!ACCEPTED.includes(ext)) fileError.value = `${f.name} isn't a TXT, PDF, PPTX or DOCX file.`
+    else if (!ACCEPTED.includes(ext)) fileError.value = `${f.name} isn't a PDF, PPTX or DOCX file.`
     else if (f.size > MAX_MB * 1024 * 1024) fileError.value = `${f.name} is over ${MAX_MB}MB.`
     else if (isFull.value) fileError.value = `This seed is full (${MAX_CARDS} cards). Delete some cards to upload another file.`
     else if (!files.value.some((x) => x.name === f.name && x.size === f.size)) {
@@ -253,10 +254,15 @@ function deleteCurrent() {
   clampIndex()
 }
 
-// Progress: 1 name it, 2 add cards, 3 review and save
+// Progress: 1 name it, 2 add cards (once the builder or upload is used), 3 review and save
 const hasDetails = computed(() => title.value.trim() && subject.value.trim())
 const hasCards = computed(() => totalCards.value > 0 || canAddCard.value)
-const step = computed(() => (!hasDetails.value ? 1 : !hasCards.value ? 2 : 3))
+const addingCards = ref(false)
+const step = computed(() => {
+  if (hasDetails.value && hasCards.value) return 3
+  if (addingCards.value) return 2
+  return 1
+})
 const stepText = ['Name your study set and subject.', 'Add at least one flashcard or upload a study document.', 'Review your cards, then plant it.']
 
 const plantNote = computed(() => {
@@ -265,7 +271,7 @@ const plantNote = computed(() => {
   if (generating.value) return { error: false, text: 'Wait until your file finishes generating, then plant it.' }
   return null
 })
-const canPlant = computed(() => step.value === 3 && !props.busy && !generating.value && overBy.value <= 0 && !examPast.value)
+const canPlant = computed(() => hasDetails.value && hasCards.value && !props.busy && !generating.value && overBy.value <= 0 && !examPast.value)
 
 function save() {
   if (!canPlant.value) return
@@ -351,7 +357,7 @@ function save() {
     <!-- Flashcard Builder and Upload a file, side by side so the Preview stays close -->
     <div class="row g-3">
     <div class="col-sm-6 d-flex">
-    <section class="card-box w-100">
+    <section class="card-box w-100" @pointerdown="addingCards = true" @focusin="addingCards = true">
       <div class="card-head">
         <h4>Flashcard builder</h4>
         <button type="button" class="plus" :disabled="!canAddCard" aria-label="Add card" data-testid="card-add" @click="addCard">+</button>
@@ -377,7 +383,7 @@ function save() {
 
     <!-- Upload a file -->
     <div class="col-sm-6 d-flex">
-    <section class="card-box w-100">
+    <section class="card-box w-100" @pointerdown="addingCards = true" @focusin="addingCards = true">
       <div>
         <h4>Upload a file</h4>
         <p class="help">Select and upload your notes or slides.</p>
@@ -392,12 +398,12 @@ function save() {
         </template>
         <template v-else>
           <p class="drop-title">Choose a file or drag &amp; drop it here</p>
-          <p class="help">TXT, PDF, PPTX and DOCX supported, up to {{ MAX_MB }}MB</p>
+          <p class="help">PDF, PPTX and DOCX supported, up to {{ MAX_MB }}MB</p>
         </template>
         <button type="button" class="ghost-btn text-button" :disabled="isFull" data-testid="file-browse" @click="fileInput.click()">Browse file</button>
         <input
           ref="fileInput" type="file" class="visually-hidden" multiple
-          accept=".txt,.pdf,.pptx,.docx,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          accept=".pdf,.pptx,.docx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           data-testid="file-input" @change="onPick"
         />
       </div>
@@ -670,7 +676,6 @@ button.tag-pill { cursor: pointer; }
 }
 .file-type.type-pdf { background: var(--berry); color: var(--paper); }
 .file-type.type-ppt { background: var(--butter-deep); color: var(--paper); }
-.file-type.type-txt { background: var(--mint); }
 .file-type.type-doc { background: var(--periwinkle); color: var(--paper); }
 .file-meta { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 14px; }

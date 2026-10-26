@@ -195,9 +195,6 @@ function backToGarden() {
 
       <!-- results -->
       <section v-else class="d-flex flex-column align-items-center text-center gap-3" data-testid="deck-results">
-        <!-- placeholder until the plant avatar art is ready -->
-        <div class="avatar-placeholder text-label-field">Plant avatar</div>
-
         <div>
           <h1 class="m-0">🌱 Deck Complete!</h1>
           <p class="bark-muted m-0">You went through {{ totalCards }} cards.</p>
@@ -317,16 +314,6 @@ function backToGarden() {
 }
 
 /* results */
-.avatar-placeholder {
-  display: grid;
-  place-items: center;
-  width: 96px;
-  height: 96px;
-  border: 2px dashed var(--linen);
-  border-radius: 16px;
-  color: var(--bark-muted);
-}
-
 .stat {
   display: flex;
   flex-direction: column;

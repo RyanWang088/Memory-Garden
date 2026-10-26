@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
 import { shuffle } from '@/lib/shuffle'
 import { useStudyTimer } from '@/composables/useStudyTimer'
+import { ding, fanfare, unlockAudio } from '@/lib/beep'
 import ConfettiBurst from '@/components/ConfettiBurst.vue'
 
 // "Short Structured Mode" review session: up to 10 questions from one seed. The user types each answer and the
@@ -83,12 +84,14 @@ async function check() {
   marking.value = true
   markError.value = ''
   studyTimer.mark()
+  unlockAudio() // this click allows sound, so the ding can play once the mark comes back
   markRequest = new AbortController()
   try {
     const result = await garden.gradeAnswer(seed.value.id, current.value.id, response.value, markRequest.signal)
     mark.value = result
     scores.value.push(result.score)
     results.value.push({ card_id: current.value.id, rating: result.rating })
+    if (result.rating === 'short_correct') ding()
   } catch (e) {
     if (!markRequest.signal.aborted) markError.value = e instanceof Error ? e.message : String(e)
   } finally {
@@ -109,6 +112,7 @@ function next() {
 function finish() {
   elapsedMs.value = Date.now() - startedAt.value
   finished.value = true
+  fanfare()
   if (accuracy.value >= 75) confetti.value?.rain()
 }
 
@@ -177,11 +181,8 @@ function backToGarden() {
           </div>
         </header>
 
-        <!-- host: empty avatar for now, and a speech box with the taunt above the question -->
+        <!-- host: a speech box with the taunt above the question -->
         <div class="host d-flex gap-3 align-items-stretch">
-          <div class="host-avatar flex-shrink-0 d-flex align-items-center justify-content-center text-center p-2" aria-hidden="true" data-testid="short-avatar">
-            <span class="text-label-caption">[avatar floating and moving a bit using CSS?]</span>
-          </div>
           <div class="speech d-flex flex-column gap-2 flex-grow-1">
             <p class="taunt text-body-strong m-0" data-testid="short-taunt">Let's see how well you know {{ seed.title }}!</p>
             <h2 class="m-0">{{ current.question }}</h2>
@@ -303,16 +304,6 @@ function backToGarden() {
   background: color-mix(in srgb, var(--berry) 14%, var(--paper));
 }
 
-.host-avatar {
-  width: 120px;
-  min-height: 140px;
-  border: 2px dashed var(--linen);
-  border-radius: 16px;
-  background: var(--paper);
-  color: var(--bark-muted);
-  overflow-wrap: anywhere;
-}
-
 .speech {
   min-width: 0;
   padding: 16px 20px;
@@ -324,13 +315,6 @@ function backToGarden() {
 
 .taunt {
   color: color-mix(in srgb, var(--periwinkle) 55%, var(--bark));
-}
-
-@media (max-width: 480px) {
-  .host-avatar {
-    width: 64px;
-    min-height: 80px;
-  }
 }
 
 .model-answer {

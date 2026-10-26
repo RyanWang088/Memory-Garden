@@ -79,6 +79,32 @@ export function ting(at = 0) {
   for (const p of BELL) strike({ freq: 1568 * p.ratio, at, length: p.length, volume: p.volume })
 }
 
+// DING: right answer. Two quick plucks, E6 then A6, each with a quiet octave on top
+export function ding() {
+  unlockAudio()
+  strike({ freq: 1318.5, at: 0, length: 0.25, volume: 0.18 })
+  strike({ freq: 2637, at: 0, length: 0.25, volume: 0.045 })
+  strike({ freq: 1760, at: 0.08, length: 0.35, volume: 0.2 })
+  strike({ freq: 3520, at: 0.08, length: 0.35, volume: 0.05 })
+}
+
+// FANFARE: quiz finished. C5 E5 G5 climb up, then land on a C6 chord, each note with a quiet octave on top
+const FANFARE = [
+  { freq: 523.25, at: 0, length: 0.3, volume: 0.14 },
+  { freq: 659.25, at: 0.12, length: 0.3, volume: 0.14 },
+  { freq: 783.99, at: 0.24, length: 0.3, volume: 0.14 },
+  { freq: 1046.5, at: 0.38, length: 0.8, volume: 0.18 },
+  { freq: 1318.5, at: 0.38, length: 0.8, volume: 0.1 },
+  { freq: 1568, at: 0.38, length: 0.8, volume: 0.08 },
+]
+export function fanfare() {
+  unlockAudio()
+  for (const n of FANFARE) {
+    strike(n)
+    strike({ ...n, freq: n.freq * 2, volume: n.volume / 4 })
+  }
+}
+
 // stops every booked sound that hasn't played yet (used on pause / end)
 export function cancelSounds() {
   for (const osc of booked) {

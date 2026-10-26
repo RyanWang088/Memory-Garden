@@ -6,12 +6,15 @@ import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
 import { shuffle } from '@/lib/shuffle'
 import { useStudyTimer } from '@/composables/useStudyTimer'
+import { ding, fanfare } from '@/lib/beep'
 import ConfettiBurst from '@/components/ConfettiBurst.vue'
+import SproutIcon from '@/components/SproutIcon.vue'
 
 // "Structured Quiz Mode" review session: up to 10 multiple-choice questions from one seed,
 // then a results screen where the user claims coins for their score.
 const MAX_QUESTIONS = 10
 const LETTERS = ['A', 'B', 'C', 'D']
+const MIN_STREAK = 3// "x in a row!" shows from this many correct answers in a row
 
 const route = useRoute()
 const router = useRouter()
@@ -26,6 +29,7 @@ const questions = ref([])
 const index = ref(0)
 const chosen = ref(null) // option index picked for the current question
 const correctCount = ref(0)
+const streak = ref(0) // correct answers in a row; a wrong answer resets it
 const finished = ref(false)
 const startedAt = ref(0)
 const elapsedMs = ref(0)
@@ -108,7 +112,11 @@ function choose(optionIndex) {
   chosen.value = optionIndex
   studyTimer.mark()
   const correct = current.value.options[optionIndex] === current.value.answer
-  if (correct) correctCount.value++
+  if (correct) {
+    correctCount.value++
+    ding()
+  }
+  streak.value = correct ? streak.value + 1 : 0
   results.push({ card_id: current.value.id, rating: correct ? 'correct' : 'wrong' })
 }
 
@@ -123,6 +131,7 @@ function next() {
 function finish() {
   elapsedMs.value = Date.now() - startedAt.value
   finished.value = true
+  fanfare()
   if (accuracy.value >= 75) confetti.value?.rain()
 }
 
@@ -208,6 +217,10 @@ function backToGarden() {
           </button>
         </div>
 
+        <p v-if="chosen !== null && streak >= MIN_STREAK" :key="streak" class="streak text-stat m-0" data-testid="quiz-streak">
+          <SproutIcon name="flame" :size="32" /> {{ streak }} in a row!
+        </p>
+
         <footer v-if="chosen !== null" class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
           <p class="text-body-strong m-0" role="status">
             {{ current.options[chosen] === current.answer ? '🌸 Correct!' : '🥀 Not quite. The right answer is highlighted.' }}
@@ -220,9 +233,6 @@ function backToGarden() {
 
       <!-- results -->
       <section v-else class="d-flex flex-column align-items-center text-center gap-3" data-testid="quiz-results">
-        <!-- placeholder until the plant avatar art is ready -->
-        <div class="avatar-placeholder text-label-field">Plant avatar</div>
-
         <div class="ring" :class="`tier-${tier}`">
           <svg viewBox="0 0 120 120" aria-hidden="true">
             <circle cx="60" cy="60" :r="RING_RADIUS" class="ring-track" />
@@ -336,17 +346,24 @@ function backToGarden() {
   opacity: 0.55;
 }
 
-/* results */
-.avatar-placeholder {
-  display: grid;
-  place-items: center;
-  width: 96px;
-  height: 96px;
-  border: 2px dashed var(--linen);
-  border-radius: 16px;
-  color: var(--bark-muted);
+.streak {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--butter-deep);
+  animation: streak-pop 0.4s var(--spring);
 }
 
+@keyframes streak-pop {
+  from { opacity: 0; transform: scale(0.6); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streak { animation: none; }
+}
+
+/* results */
 .ring {
   position: relative;
   width: 200px;
