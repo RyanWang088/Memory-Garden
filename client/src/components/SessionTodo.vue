@@ -31,13 +31,13 @@ const reward = computed(() => {
 
 <template>
   <section aria-labelledby="todo-title" data-testid="session-todo">
-    <div class="d-flex justify-content-between align-items-baseline">
-      <span id="todo-title" class="text-label-caption">This session</span>
+    <!-- same header as the Timer settings and Garden Radio cards: label on the left, count on the right -->
+    <div class="d-flex justify-content-between align-items-baseline gap-2 mb-2">
+      <span id="todo-title" class="text-label-caption sp-card-label" data-testid="todo-heading">To-do list</span>
       <span v-if="pomo.tasks.length" class="text-body-small" data-testid="todo-count">{{ doneCount }} / {{ pomo.tasks.length }} done</span>
     </div>
-    <div class="text-body-strong mb-3" data-testid="todo-heading">To-do list</div>
 
-    <ul v-if="pomo.tasks.length" class="list-unstyled d-grid gap-2 mb-2">
+    <ul v-if="pomo.tasks.length" class="list-unstyled sp-rows mb-3">
       <li
         v-for="task in pomo.tasks" :key="task.id"
         class="task d-flex align-items-center gap-2" :class="{ done: task.done, current: task.id === currentId }"
@@ -72,23 +72,18 @@ const reward = computed(() => {
 </template>
 
 <style scoped>
-/* each task is a soft pill; the one you're on is outlined in periwinkle */
-.task {
-  padding: 8px 12px;
-  background: var(--cream);
-  border: 2px solid transparent;
-  border-radius: 10px;
-}
-.task.current { background: var(--peri-soft); border-color: var(--periwinkle); }
-.task label { cursor: pointer; overflow-wrap: anywhere; }
-.task.done label { color: var(--bark-muted); text-decoration: line-through; }
+/* label and dashed rows come from theme.css (.sp-card-label, .sp-rows); the task you're on gets a soft butter highlight */
+.task { padding: 8px; border-radius: var(--r-sm); }
+.task.current { background: var(--butter-soft); }
+.task label { cursor: pointer; overflow-wrap: anywhere; font-family: var(--f-body); color: var(--ink); }
+.task.done label { color: var(--ink-faint); text-decoration: line-through; }
 
-.form-check-input { width: 18px; height: 18px; border: 2px solid var(--bark-muted); border-radius: 5px; }
-.form-check-input:checked { background-color: var(--mint-deep); border-color: var(--mint-deep); }
-.form-check-input:focus { box-shadow: 0 0 0 .2rem var(--peri-soft); }
+.form-check-input { width: 20px; height: 20px; border: 2px solid var(--ink-faint); border-radius: 50%; }
+.form-check-input:checked { background-color: var(--leaf); border-color: var(--leaf); }
+.form-check-input:focus { box-shadow: 0 0 0 .2rem var(--leaf-soft); }
 
 /* the × only shows on hover (always on touch screens, which can't hover) */
-.remove { border: 0; background: none; color: var(--bark-muted); font-size: 20px; line-height: 1; padding: 0 2px; opacity: 0; }
+.remove { border: 0; background: none; color: var(--ink-faint); font-size: 20px; line-height: 1; padding: 0 2px; opacity: 0; }
 .task:hover .remove, .remove:focus-visible { opacity: 1; }
 .remove:hover { color: var(--berry-ink); }
 @media (hover: none) { .remove { opacity: 1; } }
@@ -100,30 +95,14 @@ const reward = computed(() => {
 .add-input {
   width: 100%;
   padding: 8px 12px;
-  border: 2px dashed var(--linen);
-  border-radius: 10px;
+  border: 1.5px dashed var(--line);
+  border-radius: var(--r-sm);
   background: transparent;
   color: inherit;
+  font-family: var(--f-body);
 }
-.add-input::placeholder { color: var(--bark-muted); }
-.add-input:focus { outline: none; border-style: solid; border-color: var(--periwinkle); }
+.add-input::placeholder { color: var(--ink-faint); }
+.add-input:focus { outline: none; border-style: solid; border-color: var(--leaf); }
 
-.reward {
-  padding: 8px 12px;
-  background: #FFF3C4; /* light butter */
-  border-radius: 10px;
-  font-family: var(--f-display);
-  font-weight: 500;
-  font-size: 14px;
-}
-.text-body-strong[data-testid="todo-heading"] { font-family: var(--f-hand); font-size: 1.7rem; line-height: 1.1; font-weight: 600; overflow-wrap: anywhere; }
-.task label { font-family: var(--f-hand); font-size: 1.3rem; line-height: 1.1; }
-.task { background: transparent; }
-.task.current { background: var(--butter-soft); border-color: transparent; }
-.task.done label { text-decoration-color: var(--berry-deep); color: var(--ink-faint); }
-.form-check-input { border-radius: 50%; width: 22px; height: 22px; border-color: var(--ink-faint); }
-.form-check-input:checked { background-color: var(--leaf); border-color: var(--leaf); }
-.add-input { font-family: var(--f-hand); font-size: 1.25rem; border-color: var(--line); }
-.add-input:focus { border-color: var(--leaf); }
-.reward { background: transparent; border-top: 1.5px dashed var(--line); border-radius: 0; padding: 12px 0 0; font-family: var(--f-body); font-weight: 700; color: var(--ink-soft); }
+.reward { padding-top: 12px; border-top: 1px dashed var(--line); font-family: var(--f-body); font-size: var(--fs-sm); font-weight: 700; color: var(--ink-soft); }
 </style>

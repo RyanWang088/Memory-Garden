@@ -208,6 +208,8 @@ body[data-sky="night"] .sp-greet small, body[data-sky="dusk"] .sp-greet small, b
 .sp-card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background-image: var(--grain); opacity: .14; mix-blend-mode: multiply; pointer-events: none; z-index: -1; }
 .sp-card-title { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); font-size: var(--fs-lg); margin: 0 0 var(--s-3); }
 .sp-card-title small { font-family: var(--f-body); font-size: var(--fs-xs); font-weight: 800; color: var(--ink-soft); }
+/* a list whose rows are split by dashed lines, e.g. the Focus page's to-do list and timer settings */
+.sp-rows > * + * { border-top: 1px dashed var(--line); }
 
 /* vertical pill menu (cake reference: red active pill) */
 .sp-menu { display: grid; gap: var(--s-2); align-content: start; }
@@ -297,6 +299,8 @@ h1 em, h2 em, h3 em { font-style: italic; font-weight: 500; color: var(--berry);
 .text-button { font-family: var(--f-body); font-weight: 800; letter-spacing: .01em; }
 .text-label-caption { font-family: var(--f-body); font-weight: 800; letter-spacing: .14em; color: var(--ink-soft); }
 .text-body-small { color: var(--ink-soft); }
+/* small berry caption at the top of a card, e.g. "Garden Radio" (after .text-label-caption so its colour wins) */
+.sp-card-label { color: var(--berry-deep); }
 
 .btn-primary {
   min-height: 46px; height: auto; width: auto; padding: .7em 1.4em; border: 0 !important;

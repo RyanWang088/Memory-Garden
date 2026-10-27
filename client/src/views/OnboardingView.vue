@@ -215,7 +215,7 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
               <span class="sp-eyebrow">Focus</span>
               <h1>Grow with <em>focus</em></h1>
               <p>Short focus blocks with breaks in between, like 25 minutes on and 5 off. Night falls over the meadow while you work.</p>
-              <ul class="points"><li>Earn 10 coins for every focus block you finish.</li><li>Keep a small to-do list for the session.</li><li>Play Garden Radio: calm lo-fi picked to match the weather.</li></ul>
+              <ul class="points"><li>Earn coins for every focus block you finish.</li><li>Keep a small to-do list for the session.</li><li>Play Garden Radio: calm lo-fi picked to match the weather.</li></ul>
             </div>
             <div v-else-if="i === 3" key="s3" class="slide">
               <span class="sp-eyebrow">Memory seeds</span>

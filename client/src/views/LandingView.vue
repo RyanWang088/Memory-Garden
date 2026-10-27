@@ -37,7 +37,7 @@ const FEATURES = [
   { name: 'To-do list', icon: foliageUrl('sprout'), small: true, eyebrow: 'Tasks', title: 'A to-do list that grows', spec: 'Subjects · Due dates · Priorities',
     text: "Write tasks by subject, star the important ones and tick them off with an ink stroke. The day's sprout grows as you go.", chips: ['Double-click to edit', 'Upcoming view', 'Stars for priorities'], viz: 'list' },
   { name: 'Focus timer', icon: focusArt, eyebrow: 'Focus', title: 'Focus in short blocks', spec: 'Your own rhythm · 25/5 classic · 50/10 deep work',
-    text: 'Set your focus and break, a topic and a length. The ring counts down with break ideas ready when you need them.', chips: ['Pause & resume', 'Break ideas', '+10 coins per block'], viz: 'ring' },
+    text: 'Set your focus and break, a topic and a length. The ring counts down with break ideas ready when you need them.', chips: ['Pause & resume', 'Break ideas', 'Earn coins per block'], viz: 'ring' },
   { name: 'Memory seeds', icon: foliageUrl('tulip-pink-3'), eyebrow: 'Remember', title: 'Memory seeds', spec: 'Flashcards · Quizzes · Exam dates',
     text: 'Plant a seed for a topic with cards from your notes. Review it on time and it grows; leave it too long and it wilts. After the exam, it goes on your shelf.', chips: ['Structured quizzes', 'Flexible decks', 'Flower shelf'], viz: 'flash' },
   { name: 'Garden Radio', icon: potArt, eyebrow: 'Listen', title: 'Garden Radio', spec: 'Calm lo-fi, matched to the weather',
@@ -214,7 +214,7 @@ onBeforeUnmount(() => { clearInterval(heroTimer); clearInterval(mtTimer) })
             <p class="sp-lede" style="margin-top: 14px">Set your own focus and break, or pick 25 on and 5 off. While you focus, night falls over the meadow and the fireflies come out. On a break, the sun comes back.</p>
             <ul class="feat-list">
               <li><img :src="focusArt" alt="" />Your own rhythm, classic or deep work</li>
-              <li><img :src="coinArt" alt="" />+10 coins for every block you finish</li>
+              <li><img :src="coinArt" alt="" />+ coins for every block you finish</li>
               <li><img :src="plannerArt" alt="" />"Focus on this" straight from your journal</li>
             </ul>
           </div>

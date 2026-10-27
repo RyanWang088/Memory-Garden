@@ -11,7 +11,10 @@ const pomo = usePomodoroStore()
 const route = useRoute()
 
 // the Focus page already shows the big ring, so the mini player only appears on the other pages
-const visible = computed(() => pomo.phase === 'running' && route.name !== 'pomodoro')
+// The – button hides it until the user next opens the Focus page; leaving Focus brings it back.
+const hidden = ref(false)
+watch(() => route.name, (name) => { if (name === 'pomodoro') hidden.value = false })
+const visible = computed(() => pomo.phase === 'running' && route.name !== 'pomodoro' && !hidden.value)
 
 const caption = computed(() => (pomo.mode === 'focus'
   ? `Focus ${pomo.current.number}/${pomo.focusTotal}`
@@ -109,7 +112,13 @@ onBeforeUnmount(() => {
         type="button" class="toggle" :aria-label="pomo.running ? 'Pause' : 'Resume'" data-testid="focus-player-toggle"
         @click="pomo.running ? pomo.pause() : pomo.resume()"
       ><SproutIcon :glyph="pomo.running ? 'pause' : 'play'" :size="16" /></button>
-      <RouterLink :to="{ name: 'pomodoro' }" class="open" aria-label="Open the Focus page" title="Open the Focus page">↗</RouterLink>
+      <div class="d-flex flex-column align-items-center gap-1 align-self-start">
+        <RouterLink :to="{ name: 'pomodoro' }" class="open" aria-label="Open the Focus page" title="Open the Focus page">↗</RouterLink>
+        <button
+          type="button" class="open hide" aria-label="Hide the timer" title="Hide (it comes back after you visit Focus)"
+          data-testid="focus-player-hide" @click="hidden = true"
+        ><SproutIcon glyph="minus" :size="16" /></button>
+      </div>
     </div>
     <div class="bar" aria-hidden="true"><span :style="{ width: `${(1 - pomo.progress) * 100}%` }"></span></div>
   </aside>
@@ -123,7 +132,6 @@ onBeforeUnmount(() => {
   z-index: 1040; /* above the sticky navbar */
   width: 220px;
   padding: 12px 14px 10px;
-  background: var(--paper);
   border: 0;
   border-radius: 20px;
   background: var(--sheet);
@@ -159,11 +167,12 @@ onBeforeUnmount(() => {
   transition: transform .1s;
 }
 .toggle:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--berry); }
-.open { color: var(--bark-muted); text-decoration: none; font-size: 18px; align-self: flex-start; }
+.open { color: var(--bark-muted); text-decoration: none; font-size: 18px; }
+.hide { display: grid; place-items: center; padding: 0; border: 0; background: none; }
 .open:hover { color: var(--bark); }
 
 /* progress: peach while focusing, grey on a break (same as the big ring) */
-.bar { height: 6px; margin-top: 8px; border-radius: 999px; background: var(--peri-soft); overflow: hidden; }
+.bar { height: 6px; margin-top: 8px; border-radius: var(--r-pill); background: var(--peri-soft); overflow: hidden; }
 .bar span { display: block; height: 100%; background: var(--butter-deep); transition: width .25s linear; }
 .focus-player.break .bar span { background: var(--mint-deep); }
 </style>

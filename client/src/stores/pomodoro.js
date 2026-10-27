@@ -86,8 +86,8 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
 
   // the problem with each setup step ('' = fine)
   const errors = computed(() => ({
+    // any length can be typed, even a few seconds (handy for demos); the steppers keep their own minimums
     rhythm: !preset.value ? 'Pick a rhythm to continue.'
-      : focusSeconds.value < 60 ? 'Focus for at least 1 minute.'
       : breakSeconds.value > focusSeconds.value ? "Your break can't be longer than your focus block." : '',
     length: endBy.value === 'time' && focusSeconds.value > totalSeconds.value
       ? "The session can't be shorter than one focus block." : '',
@@ -207,10 +207,8 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
   function announce() {
     const toast = useToastStore()
     if (phase.value === 'done') {
-      toast.show({
-        type: 'success', title: 'Session complete 🌱', duration: 8000,
-        message: `${focusTotal.value} focus block${focusTotal.value === 1 ? '' : 's'} done.`,
-      })
+      // short: the done card already shows how long you focused, and the coins pop-up comes right after
+      toast.show({ type: 'success', title: 'Session complete 🌱', message: 'Nice work!' })
     } else if (mode.value === 'break') {
       toast.show({
         type: 'success', title: 'Break time ☕', duration: 8000,

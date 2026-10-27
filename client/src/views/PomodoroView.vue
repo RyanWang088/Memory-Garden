@@ -99,7 +99,7 @@ const caption = computed(() => (pomo.mode === 'focus'
 const nextLabel = computed(() => {
   const next = pomo.next
   if (!next) return 'last one, almost done'
-  return next.type === 'break' ? `then a break of ${lengthText(next.seconds)}` : `then focus block ${next.number}`
+  return next.type === 'break' ? `then a break of ${lengthText(next.seconds)}` : `then focus round ${next.number}`
 })
 
 // the ring's text: before Start it describes the session you've set, then it follows the timer
@@ -113,6 +113,8 @@ const focusStarted = computed(() => pomo.current.number)
 
 /* ---------- finished ---------- */
 const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
+// done screen: total focus time, e.g. "50 min" or "1h 40 min" (only shown after every block is finished)
+const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === 'focus').reduce((sum, b) => sum + b.seconds, 0)))
 </script>
 
 <template>
@@ -122,7 +124,7 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
     <div class="container position-relative py-4 d-flex flex-column align-items-center">
       <!-- 1 + 2. before Start and while running: tasks | timer | music (stacked on small screens, timer first) -->
       <div v-if="pomo.phase !== 'done'" class="session w-100">
-        <SessionTodo class="side-card area-tasks" />
+        <SessionTodo class="sp-card side-card area-tasks" />
 
         <div class="area-timer d-flex flex-column align-items-center">
           <!-- the timer ring: before Start it shows the chosen focus time, then it counts down -->
@@ -151,7 +153,7 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
 
           <!-- running: one plant per focus block, and the pause / end buttons -->
           <template v-else>
-            <div class="blocks mt-3" :aria-label="`Focus block ${focusStarted} of ${pomo.focusTotal}`">
+            <div class="blocks mt-3" :aria-label="`Focus round ${focusStarted} of ${pomo.focusTotal}`">
               <img v-for="n in pomo.focusTotal" :key="n" :class="blockArt(n).cls" :src="blockArt(n).src" alt="" />
             </div>
             <div class="d-flex gap-3 mt-4">
@@ -168,12 +170,12 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
 
         <!-- right column: music -->
         <div class="area-side d-grid gap-4">
-          <GardenRadio class="side-card" />
+          <GardenRadio class="sp-card side-card" />
         </div>
 
         <!-- timer settings, only before Start: under Garden Radio on wide screens, right under Start on phones -->
-        <section v-if="idle" class="side-card area-settings" aria-labelledby="settings-title" data-testid="pomodoro-setup">
-          <div id="settings-title" class="text-label-caption settings-label mb-3">Timer settings</div>
+        <section v-if="idle" class="sp-card side-card area-settings" aria-labelledby="settings-title" data-testid="pomodoro-setup">
+          <div id="settings-title" class="text-label-caption sp-card-label mb-3">Timer settings</div>
           <div class="d-flex gap-2 mb-2" role="radiogroup" aria-label="Focus rhythm">
             <button
               v-for="r in PRESETS" :key="r.key" type="button" role="radio" class="quick-chip flex-fill justify-content-center"
@@ -185,12 +187,12 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
           </div>
 
           <!-- one row each: label on the left, then - value + -->
-          <div class="settings">
+          <div class="settings sp-rows">
             <div class="setting d-flex align-items-center justify-content-between gap-2">
               <span class="d-flex align-items-center gap-2"><SproutIcon name="focus" :size="22" /><span class="text-label-caption">Focus</span></span>
               <div class="d-flex align-items-center gap-2">
                 <button type="button" class="nudge sm" aria-label="5 minutes less focus" @click="nudge('focus', -1)"><SproutIcon glyph="minus" :size="14" /></button>
-                <DurationInput v-model="pomo.focusSeconds" class="text-button time-box" aria-label="Focus length, type digits" data-testid="pomodoro-focus" />
+                <DurationInput v-model="pomo.focusSeconds" class="text-button time-box sp-tnum" aria-label="Focus length, type digits" data-testid="pomodoro-focus" />
                 <button type="button" class="nudge sm" aria-label="5 minutes more focus" @click="nudge('focus', 1)"><SproutIcon glyph="plus" :size="14" /></button>
               </div>
             </div>
@@ -198,7 +200,7 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
               <span class="d-flex align-items-center gap-2"><SproutIcon name="coffee" :size="22" /><span class="text-label-caption">Break</span></span>
               <div class="d-flex align-items-center gap-2">
                 <button type="button" class="nudge sm" aria-label="1 minute less break" @click="nudge('break', -1)"><SproutIcon glyph="minus" :size="14" /></button>
-                <DurationInput v-model="pomo.breakSeconds" allow-zero class="text-button time-box" aria-label="Break length, type digits" data-testid="pomodoro-break" />
+                <DurationInput v-model="pomo.breakSeconds" allow-zero class="text-button time-box sp-tnum" aria-label="Break length, type digits" data-testid="pomodoro-break" />
                 <button type="button" class="nudge sm" aria-label="1 minute more break" @click="nudge('break', 1)"><SproutIcon glyph="plus" :size="14" /></button>
               </div>
             </div>
@@ -206,7 +208,7 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
               <span class="d-flex align-items-center gap-2"><SproutIcon name="target" :size="22" /><span class="text-label-caption">Rounds</span></span>
               <div class="d-flex align-items-center gap-2">
                 <button type="button" class="nudge sm" aria-label="One round less" :disabled="pomo.rounds <= 1" @click="pomo.rounds--"><SproutIcon glyph="minus" :size="14" /></button>
-                <span class="text-button time-box" data-testid="pomodoro-rounds">{{ pomo.rounds }}</span>
+                <span class="text-button time-box sp-tnum" data-testid="pomodoro-rounds">{{ pomo.rounds }}</span>
                 <button type="button" class="nudge sm" aria-label="One round more" :disabled="pomo.rounds >= MAX_ROUNDS" @click="pomo.rounds++"><SproutIcon glyph="plus" :size="14" /></button>
               </div>
             </div>
@@ -218,16 +220,17 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
       </div>
 
       <!-- 3. finished -->
-      <section v-else class="panel text-center done-card" data-testid="pomodoro-done">
+      <section v-else class="sp-paper panel text-center done-card" data-testid="pomodoro-done">
         <span class="sp-tape is-leaf" aria-hidden="true"></span>
         <div class="bouquet" aria-hidden="true">
           <img v-for="n in Math.min(pomo.focusTotal, 7)" :key="n" :src="foliageUrl(`tulip-${['pink', 'yellow', 'purple', 'red', 'white'][(n - 1) % 5]}-4`)" alt="" :style="{ animationDelay: `${n * 0.12}s` }" />
         </div>
         <h2 class="mb-2">Session complete</h2>
         <p class="text-body-small mb-4">
-          You focused for {{ pomo.focusTotal }} block{{ pomo.focusTotal === 1 ? '' : 's' }}.
-          <template v-if="pomo.tasks.length">
-            <br />You ticked off {{ tasksDone }} of {{ pomo.tasks.length }} task{{ pomo.tasks.length === 1 ? '' : 's' }}.
+          You focused for {{ focusTime }}.
+          <!-- only celebrate ticked tasks; "0 of 2" would feel like a telling-off -->
+          <template v-if="tasksDone">
+            <br />You ticked off {{ tasksDone }} task{{ tasksDone === 1 ? '' : 's' }}.
           </template>
         </p>
         <button v-burst type="button" class="btn-primary border-0 text-button justify-content-center mx-auto" @click="pomo.endSession()">
@@ -242,12 +245,8 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
 /* page: the meadow scenery sits behind (SceneryBackdrop) */
 .focus-page { position: relative; min-height: calc(100vh - 92px); overflow-x: clip; padding-bottom: calc(var(--dock-h) + 40px); }
 
-.panel {
-  position: relative; isolation: isolate;
-  width: 100%; max-width: 460px; margin-top: 3vh; padding: 28px;
-  background: var(--sheet); border-radius: 26px; box-shadow: var(--shadow-2);
-}
-.panel::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background-image: var(--grain); opacity: .14; mix-blend-mode: multiply; pointer-events: none; z-index: -1; }
+/* the done card: its paper look comes from theme.css .sp-paper */
+.panel { width: 100%; max-width: 460px; margin-top: 3vh; padding: 28px; }
 .panel > .sp-tape { top: -12px; left: calc(50% - 46px); transform: rotate(-3deg); }
 @media (max-width: 575.98px) { .panel { padding: 22px 18px 24px; border-radius: 20px; } }
 
@@ -264,15 +263,13 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
 .nudge:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--linen); }
 .nudge:disabled { opacity: .4; }
 .nudge:focus-visible, .quick-chip:focus-visible { outline: 3px solid var(--periwinkle); outline-offset: 2px; }
-.nudge.big { width: 48px; height: 48px; background: var(--butter); box-shadow: 0 4px 0 var(--butter-deep); }
 
 
-/* quick picks / subject chips */
-.quick { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; }
+/* Classic / Deep work chips */
 .quick-chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 14px;
-  border: 2px solid var(--linen); border-radius: 999px;
+  border: 2px solid var(--linen); border-radius: var(--r-pill);
   background: var(--paper); color: var(--bark);
   font-size: 14px;
   transition: border-color .15s, background .15s, transform .2s var(--spring);
@@ -281,25 +278,23 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
 .quick-chip:hover { border-color: var(--peri-soft); transform: translateY(-1px); }
 .quick-chip.active { border-color: var(--periwinkle); background: var(--peri-soft); }
 
-/* the timer settings card (its look comes from .side-card): rows split by the same dashed line as the to-do card */
-.settings-label { color: var(--berry-ink); }
+/* the timer settings card: label and dashed rows come from theme.css (.sp-card-label, .sp-rows) */
 .setting { padding: 8px 0; }
-.setting + .setting { border-top: 1px dashed var(--line); }
-.time-box { width: 64px; text-align: center; font-variant-numeric: tabular-nums; }
+.time-box { width: 64px; text-align: center; }
 /* a soft paper pill, so the times look clickable (.setting adds weight over the input's own styles) */
 .setting .time-box { padding: 2px 0; border-radius: var(--r-sm); background: var(--sheet-2); }
 /* while typing, the box shows "00h 25m 00s", so it gets wider to fit it all without scrolling */
 .time-box.editing { width: 124px; }
 .nudge.sm { width: 28px; height: 28px; box-shadow: 0 2px 0 var(--linen); }
 
-/* running layout: one column on phones (timer first), three columns on wide screens */
+/* running layout: one column below 1200px (timer first), three columns on wide screens */
 .session {
   display: grid;
   gap: 24px;
   justify-items: center;
-  grid-template-areas: "timer" "settings" "tasks" "side"; /* phones: settings right under Start */
+  grid-template-areas: "timer" "settings" "tasks" "side"; /* settings right under Start */
 }
-@media (min-width: 992px) {
+@media (min-width: 1200px) {
   .session {
     grid-template-columns: 1fr auto 1fr;
     grid-template-areas: "tasks timer side" "tasks timer settings"; /* settings under Garden Radio */
@@ -312,12 +307,9 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
 .area-side { grid-area: side; width: 100%; max-width: 320px; }
 .area-settings { grid-area: settings; }
 
-/* the white cards either side of the timer (scoped styles also reach a child component's root) */
-.side-card {
-  position: relative; isolation: isolate;
-  width: 100%; max-width: 320px; padding: 20px;
-  background: var(--sheet); border-radius: 22px; box-shadow: var(--shadow-2);
-}
+/* the cards either side of the timer: the paper look is theme.css .sp-card, this only sets their width
+   (scoped styles also reach a child component's root) */
+.side-card { width: 100%; max-width: 320px; }
 
 /* countdown ring (journal look): a night disc with a butter ring while focusing, paper and leaf on a break */
 .ring {
@@ -342,7 +334,7 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
 .ring-plant { position: absolute; left: 50%; bottom: 12%; height: 26%; width: auto; transform: translateX(-50%); transform-origin: 50% 100%; animation: sprout-in .6s var(--spring); }
 .ring-plant.s { height: 38%; bottom: 5%; }
 @keyframes sprout-in { from { transform: translateX(-50%) scale(.4); } }
-.blocks { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; padding: 8px 14px; border-radius: 999px; background: color-mix(in srgb, var(--sheet) 85%, transparent); box-shadow: var(--shadow-1); }
+.blocks { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; padding: 8px 14px; border-radius: var(--r-pill); background: color-mix(in srgb, var(--sheet) 85%, transparent); box-shadow: var(--shadow-1); }
 .blocks img { width: 34px; height: 34px; transition: transform .5s var(--spring); }
 .blocks img.s { transform: scale(2); transform-origin: 50% 90%; }
 .blocks img.todo { filter: grayscale(1) opacity(.3); }
@@ -357,8 +349,6 @@ const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
 .btn-primary { width: auto; min-width: 140px; order: 0; } /* global .btn-primary has order: 4 */
 .btn-secondary { min-height: 44px; }
 
-
-@keyframes bob { 50% { transform: translateY(-4px) rotate(-3deg); } }
 @media (prefers-reduced-motion: reduce) {
   .blocks img.now, .ring.paused .text-timer { animation: none; }
 }

@@ -8,6 +8,8 @@ const MOOD_STICKERS = { auto: 'sparkle', sunny: 'sun', cloudy: 'cloud', rainy: '
 import { formatSeconds } from '@/stores/pomodoro'
 
 // Garden Radio card on the Focus page: what's playing, play/pause/skip, and the mood picker.
+// `compact` (the pop-up on the music icon) leaves out the header and the mood picker.
+defineProps({ compact: { type: Boolean, default: false } })
 const music = useMusicStore()
 
 const moodInfo = computed(() => MOODS.find(m => m.key === music.activeWeather))
@@ -19,9 +21,9 @@ const progress = computed(() => (music.duration ? (music.position / music.durati
 </script>
 
 <template>
-  <section aria-labelledby="radio-title" data-testid="garden-radio">
-    <div class="d-flex justify-content-between align-items-baseline gap-2 mb-2">
-      <span id="radio-title" class="text-label-caption radio-label">Garden Radio</span>
+  <section aria-label="Garden Radio" data-testid="garden-radio">
+    <div v-if="!compact" class="d-flex justify-content-between align-items-baseline gap-2 mb-2">
+      <span id="radio-title" class="text-label-caption sp-card-label">Garden Radio</span>
       <span class="text-body-small" data-testid="radio-match">{{ matchLabel }}</span>
     </div>
 
@@ -34,7 +36,7 @@ const progress = computed(() => (music.duration ? (music.position / music.durati
     </div>
     <div class="bar mb-3" aria-hidden="true"><span :style="{ width: `${progress}%` }"></span></div>
 
-    <div class="d-flex align-items-center gap-2 mb-3">
+    <div class="d-flex align-items-center gap-2" :class="{ 'mb-3': !compact }">
       <button type="button" class="ctrl" data-music-control aria-label="Previous track" :disabled="!music.track" @click="music.previous()"><SproutIcon glyph="chevron-left" :size="18" /></button>
       <button
         type="button" class="ctrl main" data-music-control data-testid="radio-play"
@@ -48,7 +50,7 @@ const progress = computed(() => (music.duration ? (music.position / music.durati
     </div>
 
     <!-- mood picker: follow the live weather, or choose one -->
-    <div class="d-flex flex-wrap gap-1" role="radiogroup" aria-label="Music mood">
+    <div v-if="!compact" class="d-flex flex-wrap gap-1" role="radiogroup" aria-label="Music mood">
       <button
         v-for="m in MOODS" :key="m.key" type="button" role="radio" class="mood" data-music-control
         :class="{ active: music.mood === m.key }" :aria-checked="music.mood === m.key" :title="m.label"
@@ -63,10 +65,9 @@ const progress = computed(() => (music.duration ? (music.position / music.durati
 </template>
 
 <style scoped>
-.radio-label { color: var(--berry-ink); }
-
-.bar { height: 6px; border-radius: 999px; background: var(--linen); overflow: hidden; }
-.bar span { display: block; height: 100%; background: var(--berry); transition: width .25s linear; }
+/* the card label comes from theme.css (.sp-card-label); the spin animation is theme.css's too */
+.bar { height: 6px; border-radius: var(--r-pill); background: var(--linen); overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--leaf); transition: width .25s linear; }
 
 .ctrl {
   display: grid;
@@ -75,7 +76,7 @@ const progress = computed(() => (music.duration ? (music.position / music.durati
   height: 36px;
   flex: none;
   padding: 0;
-  border: 2px solid var(--bark);
+  border: 1.5px solid var(--line);
   border-radius: 50%;
   background: var(--paper);
   color: var(--bark);
@@ -83,11 +84,11 @@ const progress = computed(() => (music.duration ? (music.position / music.durati
   font-size: 18px;
   line-height: 1;
 }
-.ctrl.main { background: var(--peri-soft); border-color: var(--periwinkle); font-size: 13px; }
+.ctrl.main { background: var(--leaf); border-color: var(--leaf); color: #fff; font-size: 13px; }
 .ctrl:disabled { opacity: .4; }
 .ctrl:not(:disabled):hover { background: var(--cream); }
 
-.volume { accent-color: var(--berry); min-width: 60px; }
+.volume { accent-color: var(--leaf); min-width: 60px; }
 
 .mood {
   display: inline-flex;
@@ -95,21 +96,16 @@ const progress = computed(() => (music.duration ? (music.position / music.durati
   padding: 3px 8px;
   transition: transform .2s var(--spring), border-color .15s;
   border: 1px solid var(--linen);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--cream);
   font-size: 13px;
   line-height: 18px;
 }
 .mood:hover { transform: translateY(-1px); }
-.mood.active { border-color: var(--periwinkle); background: var(--peri-soft); }
+.mood.active { border-color: var(--leaf); background: var(--leaf-soft); }
 .mood:focus-visible, .ctrl:focus-visible { outline: 3px solid var(--periwinkle); outline-offset: 2px; }
+/* a record: the grooves are drawn with fixed dark colours */
 .vinyl { width: 50px; height: 50px; border-radius: 50%; flex: none; background: radial-gradient(circle, var(--berry) 0 17%, #2a201c 18% 30%, #3a2e29 31% 33%, #2a201c 34% 50%, #3a2e29 51% 53%, #2a201c 54%); box-shadow: var(--shadow-1); }
 .vinyl.spinning { animation: spin 3s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
 h3 { font-size: 1.05rem; line-height: 1.3; }
-.ctrl { border-width: 1.5px; border-color: var(--line); }
-.ctrl.main { background: var(--leaf); border-color: var(--leaf); color: #fff; }
-.volume { accent-color: var(--leaf); }
-.bar span { background: var(--leaf); }
-.mood.active { border-color: var(--leaf); background: var(--leaf-soft); }
 </style>
