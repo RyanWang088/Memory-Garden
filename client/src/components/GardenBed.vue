@@ -9,9 +9,10 @@ import { createGardenCamera, SCROLL_RANGE } from '@/lib/gardenCamera'
 import { drawMeadow } from '@/lib/meadowRenderer'
 import PlantSprite from './PlantSprite.vue'
 import Modal from './Modal.vue'
-import MeadowCritters from './MeadowCritters.vue'
+import SceneCritters from './SceneCritters.vue'
 import { useSeedDrag } from '@/composables/useSeedDrag'
-import { useSkyPhase } from '@/composables/useSky'
+import { storeToRefs } from 'pinia'
+import { useWeatherStore } from '@/stores/weather'
 import { useMeadowPalette } from '@/composables/useMeadowPalette'
 
 const garden = useGardenStore()   // garden.gardenSeeds: { id, col, row, mastery, last_reviewed }, the plants still in the garden
@@ -36,9 +37,9 @@ const ghostBlocked = ref(false)
 let renderQueued = false, resizeObserver
 let scrollIdleTimer
 
-// meadow colours follow the sky phase (Skybox runs the clock; this only reads it) and crossfade like the sky does
-const { phase } = useSkyPhase()
-const { palette, mood: meadowMood, shownMood } = useMeadowPalette(phase, requestRender)
+// the canvas, the plants and the critters all follow the same look as the sky (mood + weather), and crossfade with it
+const { look } = storeToRefs(useWeatherStore())
+const { palette } = useMeadowPalette(look, requestRender)
 
 const occupiedCells = computed(() => new Set(garden.gardenSeeds.map(seed => `${seed.col},${seed.row}`)))
 const registerPlant = (id, el) => (el ? plantElements.set(id, el) : plantElements.delete(id))
@@ -242,11 +243,13 @@ onBeforeUnmount(() => {
         ref="stageEl"
         class="stage"
         :data-tool="ui.activeTool"
+        :data-mood="look.mood"
+        :data-weather="look.weather"
         @dragover="onDragOver"
         @dragleave="onDragLeave"
         @drop.prevent="onDrop"
       >
-        <canvas ref="canvasEl" data-testid="meadow" :data-mood="meadowMood"></canvas>
+        <canvas ref="canvasEl" data-testid="meadow"></canvas>
 
         <PlantSprite
           v-for="seed in garden.gardenSeeds"
@@ -277,7 +280,7 @@ onBeforeUnmount(() => {
         </div>
 
         <PlantSprite ref="ghostRef" ghost :blocked="ghostBlocked" />
-        <MeadowCritters :mood="shownMood" />
+        <SceneCritters class="garden-critters" :mood="look.mood" :weather="look.weather" :fireflies="20" :flies-from="20" />
       </div>
     </div>
   </div>
@@ -298,6 +301,8 @@ onBeforeUnmount(() => {
 .track { width: var(--content-width); height: calc(var(--view-height) + var(--scroll-range)); }
 .stage { position: sticky; top: 0; left: 0; width: var(--view-width); height: var(--view-height); overflow: hidden; user-select: none; }
 canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* above the plants (<= 2000), below the name bubbles (10000) and the drag ghost (9000) */
+.garden-critters { z-index: 2500;}
 .plant-info {
   position: absolute; top: 0; left: 0; pointer-events: none;
 }

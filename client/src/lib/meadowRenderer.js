@@ -1,15 +1,16 @@
 import {
-  GRID_WIDTH, HILL_GAP, HILL_SAMPLE_GAP, PROPS_BY_HILL, hillEdgeDepth, seeded,
+  GRID_WIDTH, HILL_GAP, HILL_SAMPLE_GAP, PROPS_BY_HILL, hillEdgeDepth,
 } from './floorLayout.js'
+import { seeded } from './shuffle.js'
 import { HALF_PI, BOTTOM_MARGIN, FAR_SPREAD, FAR_SIZE } from './gardenCamera.js'
 
 const TAU = Math.PI * 2
-const BLADE_GAP = 30            // world units between grass blades along a crest
+const BLADE_GAP = 25            // world units between grass blades along a crest
 const BACKDROP_PARALLAX = 0.12  // how far the horizon ridges follow sideways panning
 
 // Draws the whole meadow. The caller has already set the DPR transform and cleared the canvas.
 //   cam     = createGardenCamera() result
-//   palette = createMeadowPalette() result: ramp(t), tree, tree2, far, flowers[], flowerEye, flowerAlpha
+//   palette = createMeadowPalette() result: ramp(t), tree, tree2, flowers[], flowerEye, flowerAlpha
 export function drawMeadow(ctx, cam, palette) {
   const { camera, depthToAngle, screenX, screenY } = cam
   const { viewWidth, viewHeight, radius, horizonY, frontY, scale, scrollPos, centerX } = camera
@@ -35,8 +36,10 @@ export function drawMeadow(ctx, cam, palette) {
   for (let hill = Math.ceil((lastDepth + 100) / HILL_GAP); hill >= Math.floor(firstDepth / HILL_GAP); hill--) {
     const mid = hillEdgeDepth(hill, GRID_WIDTH / 2)
     if (mid < firstDepth - 120) continue
-    const y = screenY(floorAngle(mid)), t = (y - horizonY) / span
-
+    // Make t reach the dark end of the palette faster higher up on the screen
+    const y = screenY(floorAngle(mid))
+    const rawT = (y - horizonY) / span
+    const t = Math.min(1, Math.pow(rawT, 0.6)) // Lower exponent = dark colors spread higher up
     ctx.fillStyle = palette.ramp(t)
     ctx.beginPath()
     for (let x = x0; x <= x1; x += HILL_SAMPLE_GAP) {
@@ -74,7 +77,7 @@ function drawFringe(ctx, cam, hill, { floorAngle, x0, x1 }) {
     if (a >= HALF_PI) continue
     const u = camera.scale * shrinkTo(FAR_SIZE, a)
     const px = screenX(x, a), py = screenY(a) + 2 * u
-    const h = (15 + hash(hill, j * 3 + 1) * 28) * u, lean = (hash(hill, j * 3 + 2) - 0.5) * 30 * u, w = Math.max(0.8, 5 * u)
+    const h = (15 + hash(hill, j * 3 + 1) * 25) * u, lean = (hash(hill, j * 3 + 2) - 0.5) * 20 * u, w = Math.max(0.8, 3 * u)
     ctx.moveTo(px - w, py)
     ctx.quadraticCurveTo(px + lean / 2, py - h * 0.6, px + lean, py - h)
     ctx.quadraticCurveTo(px + lean / 3, py - h * 0.4, px + w, py)
@@ -96,12 +99,22 @@ function drawBand(ctx, cam, palette, props, { firstDepth, lastDepth, viewWidth, 
     const py = screenY(a)
     const u = scale * shrinkTo(FAR_SIZE, a) * p.s
 
-    if (p.k === 'flower') {
+if (p.k === 'flower') {
       const r = Math.max(0.9, 4.6 * u)
-      ctx.globalAlpha = palette.flowerAlpha
+      
+      // If palette.flowerAlpha is high (daytime), keep opacity near 1. 
+      // If it's low (night/dark weather), drop it down cleanly so it doesn't compete with fireflies.
+      const isNightOrDark = palette.flowerAlpha < 0.7
+      ctx.globalAlpha = palette.flowerAlpha * (isNightOrDark ? 0.35 : 1.0)
+      
       ctx.fillStyle = palette.flowers[p.c]
       ctx.beginPath(); ctx.arc(px, py - r, r, 0, TAU); ctx.fill()
-      if (r > 2.6) { ctx.fillStyle = palette.flowerEye; ctx.beginPath(); ctx.arc(px, py - r, r * 0.35, 0, TAU); ctx.fill() }
+      
+      if (r > 2.6 && (!isNightOrDark || palette.flowerAlpha > 0.4)) { 
+        ctx.fillStyle = palette.flowerEye
+        ctx.beginPath(); ctx.arc(px, py - r, r * 0.35, 0, TAU)
+        ctx.fill() 
+      }
       ctx.globalAlpha = 1
     } else {
       for (const [dx, dy, rx, ry, alt] of p.blobs) {
@@ -112,13 +125,13 @@ function drawBand(ctx, cam, palette, props, { firstDepth, lastDepth, viewWidth, 
   }
 }
 
-// ---- horizon backdrop: two ridges and a tree line standing above the horizon ----
+// ---- horizon backdrop: a ridge and tree line standing above the horizon ----
 // Infinitely far, so vertical scrolling never moves it; it only drifts a little with sideways panning.
 // Geometry is seeded and rebuilt only when the stage size changes; colours are read fresh every frame so it crossfades.
 let backdrop = null
 
 function buildBackdrop(viewWidth, horizonY) {
-  const rand = seeded(11)
+  const rand = seeded(9)
   const room = Math.max(24, horizonY - 4)           // all the sky height the camera leaves above the horizon
   const pad = viewWidth * 0.12
   const ridge = (base, amp, freq) => {
@@ -131,9 +144,7 @@ function buildBackdrop(viewWidth, horizonY) {
     }
     return pts
   }
-  const far = ridge(horizonY - room * 0.5, room * 0.07, 0.8)
-  const near = ridge(horizonY - room * 0.22, room * 0.06, 1.3)
-
+  const near = ridge(horizonY, room*0.3, 1.1)
   const yAt = (pts, x) => {
     for (let i = 0; i < pts.length - 1; i++) {
       if (x >= pts[i][0] && x <= pts[i + 1][0]) return pts[i][1] + (pts[i + 1][1] - pts[i][1]) * ((x - pts[i][0]) / (pts[i + 1][0] - pts[i][0]))
@@ -145,7 +156,7 @@ function buildBackdrop(viewWidth, horizonY) {
   for (let t = 0; t < Math.round((viewWidth + 2 * pad) / 70); t++) {
     const x = -pad + rand() * (viewWidth + 2 * pad)
     const y = yAt(near, x) + 6
-    const s = (0.6 + rand() * 0.9) * sizeK
+    const s = (1 + rand()) * sizeK
     if (rand() < 0.22) { trees.push([x, y - 34 * s, 9 * s, 38 * s, 1]); continue }
     const n = 3 + Math.floor(rand() * 3)
     for (let k = 0; k < n; k++) {
@@ -153,7 +164,7 @@ function buildBackdrop(viewWidth, horizonY) {
       trees.push([x + (k - n / 2) * 11 * s + rand() * 6, y - (12 + rand() * 22) * s, r, r, k % 2])
     }
   }
-  return { key: `${viewWidth}|${horizonY}`, far, near, trees, bottom: horizonY + 4 }
+  return { key: `${viewWidth}|${horizonY}`, near, trees, bottom: horizonY + 4 }
 }
 
 function tracePath(ctx, pts, bottom) {
@@ -177,7 +188,6 @@ function drawBackdrop(ctx, camera, palette) {
 
   ctx.save()
   ctx.translate(-panX * BACKDROP_PARALLAX, 0)
-  ctx.fillStyle = palette.far; tracePath(ctx, backdrop.far, backdrop.bottom); ctx.fill()
   ctx.fillStyle = palette.ramp(0); tracePath(ctx, backdrop.near, backdrop.bottom); ctx.fill()
   for (const alt of [0, 1]) {
     ctx.fillStyle = alt ? palette.tree2 : palette.tree

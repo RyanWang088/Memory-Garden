@@ -1,29 +1,29 @@
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import { mountScenery } from '@/lib/scenery'
+import SkyLayer from './SkyLayer.vue'
+import DrawnLand from './DrawnLand.vue'
+import SceneCritters from './SceneCritters.vue'
 
-// The illustrated meadow behind a page (or a section when `page` is false).
-// mood: 'day' | 'morning' | 'blush' | 'dusk' | 'night'; changing it crossfades the sky.
-// options: drawing options (seed, horizon, tulips, butterflies, petals, clouds, sunX, sunY, veil, clearCenter)
-const props = defineProps({
+// The illustrated meadow behind a static page (or a section when `page` is false), at a fixed mood.
+// mood: 'day' | 'morning' | 'blush' | 'dusk' | 'night'; changing it crossfades.
+// options, passed to the layer that owns each:
+//   sky       sunX, sunY, clouds, seed
+//   land      seed, horizon, flowers, tulips, clearCenter
+//   critters  butterflies, petals
+//   overlay   veil (any CSS background, laid over everything)
+defineProps({
   mood: { type: String, default: 'day' },
   options: { type: Object, default: () => ({}) },
   page: { type: Boolean, default: true },
 })
-const el = ref(null)
-let scene = null
-
-onMounted(() => {
-  scene = mountScenery(el.value, { ...props.options, mood: props.mood, page: props.page })
-})
-watch(() => props.mood, (m) => scene?.setMood(m))
-onBeforeUnmount(() => scene?.destroy())
 </script>
 
 <template>
-  <div ref="el" class="scenery" :class="{ 'scenery-section': !page }" aria-hidden="true"></div>
+  <SkyLayer
+    :mood="mood" :page="page" :seed="options.seed" :clouds="options.clouds"
+    :sun="{ x: options.sunX ?? 78, y: options.sunY ?? 14 }"
+  >
+    <DrawnLand :options="options" />
+    <SceneCritters :mood="mood" :seed="options.seed" :butterflies="options.butterflies" :petals="options.petals" />
+    <div v-if="options.veil" class="veil" :style="{ background: options.veil }"></div>
+  </SkyLayer>
 </template>
-
-<style>
-.scenery.scenery-section { position: absolute; z-index: 0; }
-</style>

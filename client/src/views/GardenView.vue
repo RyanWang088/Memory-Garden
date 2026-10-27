@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, computed, ref, watch } from 'vue'
+import { onMounted, onBeforeUnmount, computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useGardenStore } from '@/stores/garden'
 import { useUiStore } from '@/stores/ui'
@@ -18,6 +18,10 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
+// Starts the live sky (weather fetch + the one clock). Done in setup, before the sky mounts, so it always
+// opens on the night frame and wakes up from there.
+weather.start()
+
 // top-left notes over the sky (journal look): a greeting and three facts about the garden
 const hud = computed(() => {
   const seeds = garden.gardenSeeds
@@ -34,10 +38,6 @@ const hud = computed(() => {
   }
 })
 function openStudy() { ui.setShedTab('study'); ui.shedOpen = true }
-
-watch(() => route.query.q, (query) => {
-  if (typeof query === 'string' && query) openStudy()
-}, { immediate: true })
 
 // "Exam is over": one subject at a time, oldest exam first, only on the garden itself (not over a seed page)
 const examChoice = ref('')  // the choice being saved
@@ -66,14 +66,13 @@ function clearSeedSelectionOutsideCard(event) {
 
 onMounted(async () => {
   document.addEventListener('click', clearSeedSelectionOutsideCard)
-  weather.load()
   await garden.fetchSeeds()
   ui.pickDefaultTab(garden.hasPlants)
-  if (typeof route.query.q === 'string' && route.query.q) openStudy()
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', clearSeedSelectionOutsideCard)
+  weather.stop()
 })
 </script>
 <template>
@@ -133,7 +132,6 @@ button.hud-chip:hover { transform: translateY(-2px); }
 @media (max-width: 767.98px) { .garden-hud { top: 74px; } .garden-hud .sp-greet { font-size: 1.3rem; } .garden-hud .sp-greet span { display: none; } }
 @keyframes drop-in { from { opacity: 0; transform: translateY(-16px); } }
 .exam-over-wrap > * { pointer-events: auto; }
-.backdrop { background: center / cover no-repeat; z-index: 0; }
 
 .scroller { z-index: 1; scrollbar-width: none; overscroll-behavior: contain; }
 .scroller::-webkit-scrollbar { display: none; }

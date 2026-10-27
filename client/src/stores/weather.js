@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { apiFetch } from '@/lib/http'
 
 const FALLBACK = { lat: 1.3005, lon: 103.8626 } // SMU SCIS 1
+const MOOD_BY_PHASE = Object.freeze({ dawn: 'morning', day: 'day', dusk: 'dusk', night: 'night' })
 
 // Resolves the user's coords, or null if they block it, ignore the popup, or have no geolocation
 function getCoords() {
@@ -31,6 +32,26 @@ export const useWeatherStore = defineStore('weather', () => {
   const sunrise = ref(7 * 60)
   const sunset = ref(19 * 60)
   const nowMin = ref(12 * 60)
+  const awake = ref(false)
+  let timer, users = 0
+
+  const phase = computed(() => {
+    const t = nowMin.value
+    if (t >= sunrise.value - 30 && t <= sunrise.value + 60) return 'dawn'
+    if (t >= sunset.value - 60 && t <= sunset.value + 30) return 'dusk'
+    return t > sunrise.value && t < sunset.value ? 'day' : 'night'
+  })
+
+  const progress = computed(() => {
+    const t = nowMin.value
+    if (t >= sunrise.value && t <= sunset.value) return (t - sunrise.value) / (sunset.value - sunrise.value)
+    const len = sunrise.value + 1440 - sunset.value
+    const tt = t >= sunset.value ? t : t + 1440
+    return Math.min(1, Math.max(0, (tt - sunset.value) / len))
+  })
+
+  const sun = computed(() => ({ x: 10 + 80 * progress.value, y: 60 - 45 * Math.sin(Math.PI * progress.value) }))
+  const look = computed(() => ({ mood: awake.value ? MOOD_BY_PHASE[phase.value] : 'night', weather: condition.value }))
 
   async function fetchWeather({ lat, lon }) {
     const w = await apiFetch(`/api/weather?lat=${lat}&lon=${lon}`)
@@ -65,5 +86,21 @@ export const useWeatherStore = defineStore('weather', () => {
     }
   }
 
-  return { condition, isDay, temperature, daily, sunrise, sunset, nowMin, load }
+  function start() {
+    if (users++) return
+    awake.value = false
+    requestAnimationFrame(() => requestAnimationFrame(() => { awake.value = true }))
+    load()
+    timer = setInterval(() => { nowMin.value = (nowMin.value + 1) % 1440 }, 60000)
+  }
+
+  function stop() {
+    if (!users || --users) return
+    clearInterval(timer)
+  }
+
+  return {
+    condition, isDay, temperature, daily, sunrise, sunset, nowMin, load,
+    look, sun, phase, start, stop,
+  }
 })

@@ -190,94 +190,6 @@ button.sp-chip:hover { transform: translateY(-1px); }
 .sp-tape.is-butter { background: radial-gradient(circle at 6px 6px, rgba(255,255,255,.55) 2px, transparent 2.5px) 0 0/12px 12px, color-mix(in srgb, var(--butter) 70%, var(--sheet)); }
 
 /* ==========================================================================
-   Scenery — responsive layered meadow (scenery.js draws it to the real size)
-   ========================================================================== */
-.scenery {
-  position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
-  background: linear-gradient(180deg, var(--s-top) 0%, var(--s-mid) 55%, var(--s-bot) 100%);
-  transition: --s-top 2.5s ease, --s-mid 2.5s ease, --s-bot 2.5s ease;
-}
-@property --s-top { syntax: '<color>'; inherits: true; initial-value: #9fd3ef; }
-@property --s-mid { syntax: '<color>'; inherits: true; initial-value: #dff1f2; }
-@property --s-bot { syntax: '<color>'; inherits: true; initial-value: #f6f3e2; }
-.scenery[data-mood="day"]     { --s-top: #8fcbea; --s-mid: #d8eff1; --s-bot: #f3f4df; --sun: #fffbe8; --glow: rgba(255, 246, 205, .9); --h1: #b3d5a9; --h2: #8fc373; --h3: #69ad55; --h4: #4b9446; --h5: #377c3a; --tree: #3f7f45; --tree2: #2f6b3a; --cloud: #ffffff; --fl-o: 1; }
-.scenery[data-mood="morning"] { --s-top: #a9d6ec; --s-mid: #f6dccd; --s-bot: #fbefdc; --sun: #fff6dc; --glow: rgba(255, 214, 170, .95); --h1: #bcd6ae; --h2: #9cc67f; --h3: #79b25e; --h4: #589c4c; --h5: #3f833f; --tree: #4b8a4d; --tree2: #36723f; --cloud: #fff7f2; --fl-o: 1; }
-.scenery[data-mood="blush"]   { --s-top: #f2b9c4; --s-mid: #f9dcd2; --s-bot: #fbeee0; --sun: #fff8ea; --glow: rgba(255, 226, 205, .95); --h1: #c8d3b0; --h2: #a9c48c; --h3: #86b26c; --h4: #669c58; --h5: #4d8549; --tree: #5b8f56; --tree2: #467a48; --cloud: #fff3f3; --fl-o: 1; }
-.scenery[data-mood="dusk"]    { --s-top: #6f6aa6; --s-mid: #e9a3a3; --s-bot: #f6c99e; --sun: #ffe3b5; --glow: rgba(255, 190, 140, .85); --h1: #8b8f8e; --h2: #6e8b66; --h3: #557a50; --h4: #3f6741; --h5: #2f5534; --tree: #3b5c3e; --tree2: #2d4a32; --cloud: #f7d3d6; --fl-o: .85; }
-.scenery[data-mood="night"]   { --s-top: #0f1736; --s-mid: #27325f; --s-bot: #3d3f6b; --sun: #fdf6dd; --glow: rgba(150, 175, 255, .35); --h1: #2a3a55; --h2: #223a45; --h3: #1b3537; --h4: #152d2b; --h5: #0f2420; --tree: #14302a; --tree2: #0f261f; --cloud: #3b4673; --fl-o: .55; }
-
-.scenery .sun {
-  position: absolute; width: 120px; height: 120px; border-radius: 50%;
-  background: var(--sun); box-shadow: 0 0 80px 40px var(--glow), 0 0 200px 120px color-mix(in srgb, var(--glow) 50%, transparent);
-  transition: background 2.5s, box-shadow 2.5s, top 2.5s var(--ease), left 2.5s var(--ease);
-}
-.scenery[data-mood="night"] .sun { width: 70px; height: 70px; box-shadow: 0 0 40px 10px var(--glow), inset -14px -6px 0 0 #e9e0c0; }
-.scenery .stars { position: absolute; inset: 0 0 45% 0; opacity: 0; transition: opacity 2.5s; }
-.scenery[data-mood="night"] .stars { opacity: 1; }
-.scenery[data-mood="dusk"] .stars { opacity: .35; }
-.scenery .stars i { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #fff; animation: twinkle 3s ease-in-out infinite alternate; }
-@keyframes twinkle { from { opacity: .25; } to { opacity: 1; } }
-.scenery .cloud {
-  position: absolute; height: 40px; border-radius: 40px; background: var(--cloud); opacity: .85;
-  filter: blur(.3px); transition: background 2.5s, opacity 2.5s;
-  animation: cloud-drift linear infinite;
-}
-.scenery .cloud::before, .scenery .cloud::after { content: ""; position: absolute; border-radius: 50%; background: inherit; }
-.scenery .cloud::before { width: 46%; height: 160%; left: 14%; bottom: 20%; }
-.scenery .cloud::after { width: 36%; height: 130%; right: 16%; bottom: 25%; }
-@keyframes cloud-drift { from { transform: translateX(-30vw); } to { transform: translateX(130vw); } }
-.scenery svg.land { position: absolute; left: 0; bottom: 0; width: 100%; height: 100%; display: block; }
-.scenery svg.land .h1 { fill: var(--h1); } .scenery svg.land .h2 { fill: var(--h2); }
-.scenery svg.land .h3 { fill: var(--h3); } .scenery svg.land .h4 { fill: var(--h4); }
-.scenery svg.land .h5 { fill: var(--h5); }
-.scenery svg.land .tr { fill: var(--tree); } .scenery svg.land .tr2 { fill: var(--tree2); }
-.scenery svg.land path, .scenery svg.land circle, .scenery svg.land ellipse { transition: fill 2.5s ease; }
-.scenery svg.land .fl { opacity: var(--fl-o); transition: opacity 2.5s; }
-.scenery .tulip { position: absolute; transform-origin: 50% 100%; animation: sway 5s ease-in-out infinite alternate; filter: saturate(.95); transition: filter 2.5s, opacity 2.5s; }
-.scenery[data-mood="night"] .tulip { filter: brightness(.45) saturate(.6) hue-rotate(-10deg); }
-.scenery[data-mood="dusk"] .tulip { filter: brightness(.82) saturate(.85); }
-@keyframes sway { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
-.scenery .bfly { position: absolute; width: 26px; height: 22px; animation: flutter-path 18s ease-in-out infinite; transition: opacity 2s; }
-.scenery .bfly svg { width: 100%; height: 100%; overflow: visible; }
-.scenery .bfly .wing { transform-origin: 50% 50%; animation: flap .22s ease-in-out infinite alternate; }
-.scenery .bfly .wing.r { animation-delay: 0s; }
-@keyframes flap { from { transform: scaleX(1); } to { transform: scaleX(.25); } }
-@keyframes flutter-path {
-  0% { transform: translate(0, 0) rotate(-6deg); }
-  25% { transform: translate(18vw, -6vh) rotate(8deg); }
-  50% { transform: translate(34vw, 4vh) rotate(-4deg); }
-  75% { transform: translate(16vw, 10vh) rotate(6deg); }
-  100% { transform: translate(0, 0) rotate(-6deg); }
-}
-.scenery[data-mood="night"] .bfly { opacity: 0; }
-.scenery .flies { position: absolute; inset: 0; opacity: 0; transition: opacity 2.5s; }
-.scenery[data-mood="night"] .flies { opacity: 1; }
-.scenery[data-mood="dusk"] .flies { opacity: .5; }
-.scenery .flies i {
-  position: absolute; width: 6px; height: 6px; border-radius: 50%;
-  background: #fff6b0; box-shadow: 0 0 10px 4px rgba(255, 236, 140, .7);
-  animation: firefly var(--d, 9s) ease-in-out infinite alternate, glow 2.2s ease-in-out infinite alternate;
-}
-@keyframes firefly { 0% { transform: translate(0, 0); } 50% { transform: translate(var(--x1), var(--y1)); } 100% { transform: translate(var(--x2), var(--y2)); } }
-@keyframes glow { from { opacity: .15; } to { opacity: 1; } }
-.scenery .petal {
-  position: absolute; top: -20px; width: 10px; height: 8px; border-radius: 80% 0 80% 0;
-  background: color-mix(in srgb, var(--berry) 55%, #fff); opacity: .8;
-  animation: petal-fall linear infinite;
-}
-@keyframes petal-fall { to { transform: translate(var(--drift, -20vw), 110vh) rotate(540deg); } }
-.scenery .veil { position: absolute; inset: 0; pointer-events: none; }
-.scenery.soft svg.land, .scenery.soft .tulip { filter: blur(2px) saturate(.9); }
-
-/* ---------- note badge used to mark preview-only behaviour ---------- */
-.sp-note-preview {
-  display: flex; gap: .6em; align-items: flex-start;
-  padding: .7em .9em; border-radius: 12px; font-size: .82rem; line-height: 1.45;
-  background: var(--butter-soft); color: #6b4b12; border: 1px dashed var(--butter-deep);
-}
-.sp-note-preview b { font-weight: 800; }
-
-/* ==========================================================================
    Shared components (used across pages — see styleguide.html)
    ========================================================================== */
 .sp-ic { width: 1.15em; height: 1.15em; flex: none; vertical-align: -.2em; }
@@ -349,10 +261,6 @@ body[data-sky="night"] .sp-greet small, body[data-sky="dusk"] .sp-greet small, b
 @keyframes bob { to { transform: translateY(-10px) rotate(2deg); } }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-
-.sp-note-preview .sp-ic { color: var(--butter-deep); margin-top: 2px; }
-.sp-counter-streak .sp-ic { width: 20px; height: 20px; color: #E8743B; fill: #FBC15A; stroke-width: 1.8; }
-
 /* ==========================================================================
    Team tokens (style.css / Consistent.md) re-pointed at the journal palette,
    so every existing component (shed, reviews, seed form, toasts …) follows it.
@@ -382,7 +290,6 @@ body[data-sky="night"] .sp-greet small, body[data-sky="dusk"] .sp-greet small, b
 body { font-family: var(--f-body); background: var(--sheet); color: var(--ink); -webkit-font-smoothing: antialiased; }
 ::selection { background: var(--butter-soft); }
 
-/* headings and numbers: Fraunces instead of Fredoka; buttons and labels: Nunito heavy */
 h1, h2, h3, .text-display, .text-stat, .text-timer { font-family: var(--f-display); letter-spacing: -.01em; }
 h1 em, h2 em, h3 em { font-style: italic; font-weight: 500; color: var(--berry); }
 .text-display, h1, h2 { font-weight: 600; }
@@ -391,7 +298,6 @@ h1 em, h2 em, h3 em { font-style: italic; font-weight: 500; color: var(--berry);
 .text-label-caption { font-family: var(--f-body); font-weight: 800; letter-spacing: .14em; color: var(--ink-soft); }
 .text-body-small { color: var(--ink-soft); }
 
-/* the team's pressable buttons, re-skinned to the journal buttons */
 .btn-primary {
   min-height: 46px; height: auto; width: auto; padding: .7em 1.4em; border: 0 !important;
   background: var(--berry) !important; color: #fff !important;
@@ -500,3 +406,113 @@ h1 em, h2 em, h3 em { font-style: italic; font-weight: 500; color: var(--berry);
 .sp-search:focus-within > svg { color: var(--leaf); transform: rotate(-12deg) scale(1.12); }
 .sp-search .sp-input { padding-left: 2.8em; padding-right: 2.6em; border-radius: var(--r-pill); }
 .sp-search .sp-input::-webkit-search-cancel-button { display: none; }
+/* ==========================================================================
+  Scenery — responsive layered meadow (scenery.js draws it to the real size)
+  ========================================================================== */
+.scenery {
+  position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+  background: linear-gradient(180deg, var(--g-top) 0%, var(--g-mid) 55%, var(--g-bot) 100%);
+  transition: --s-top var(--fade, 2.5s) ease, --s-mid var(--fade, 2.5s) ease, --s-bot var(--fade, 2.5s) ease, --wx-k var(--fade, 2.5s) ease;
+}
+@property --s-top { syntax: '<color>'; inherits: true; initial-value: #9fd3ef; }
+@property --s-mid { syntax: '<color>'; inherits: true; initial-value: #dff1f2; }
+@property --s-bot { syntax: '<color>'; inherits: true; initial-value: #f6f3e2; }
+[data-mood="day"] { --s-top: #8fcbea; --s-mid: #d8eff1; --s-bot: #f3f4df; --sun: #fffbe8; --glow: rgba(255, 246, 205, .9); --h1: #b3d5a9; --h2: #8fc373; --h3: #69ad55; --h4: #4b9446; --h5: #377c3a; --tree: #3f7f45; --tree2: #2f6b3a; --cloud: #ffffff; --fl-o: 1; --mood-filter: brightness(1) hue-rotate(0deg); }
+[data-mood="morning"] { --s-top: #a9d6ec; --s-mid: #f6dccd; --s-bot: #fbefdc; --sun: #fff6dc; --glow: rgba(255, 214, 170, .95); --h1: #bcd6ae; --h2: #9cc67f; --h3: #79b25e; --h4: #589c4c; --h5: #3f833f; --tree: #4b8a4d; --tree2: #36723f; --cloud: #fff7f2; --fl-o: 1; --mood-filter: brightness(1) hue-rotate(0deg); }
+[data-mood="blush"] { --s-top: #f2b9c4; --s-mid: #f9dcd2; --s-bot: #fbeee0; --sun: #fff8ea; --glow: rgba(255, 226, 205, .95); --h1: #c8d3b0; --h2: #a9c48c; --h3: #86b26c; --h4: #669c58; --h5: #4d8549; --tree: #5b8f56; --tree2: #467a48; --cloud: #fff3f3; --fl-o: 1; --mood-filter: brightness(1) hue-rotate(0deg); }
+[data-mood="dusk"] { --wx-color: color-mix(in srgb, var(--s-top) 55%, var(--bark-muted)); --s-top: #6f6aa6; --s-mid: #e9a3a3; --s-bot: #f6c99e; --sun: #ffe3b5; --glow: rgba(255, 190, 140, .85); --h1: #8b8f8e; --h2: #6e8b66; --h3: #557a50; --h4: #3f6741; --h5: #2f5534; --tree: #3b5c3e; --tree2: #2d4a32; --cloud: #f7d3d6; --fl-o: .85; --mood-filter: brightness(.9) hue-rotate(0deg); }
+[data-mood="night"] { --wx-color: var(--s-top); --s-top: #0f1736; --s-mid: #27325f; --s-bot: #3d3f6b; --sun: #fdf6dd; --glow: rgba(150, 175, 255, .35); --h1: #2a3a55; --h2: #223a45; --h3: #1b3537; --h4: #152d2b; --h5: #0f2420; --tree: #14302a; --tree2: #0f261f; --cloud: #3b4673; --fl-o: .55; --mood-filter: brightness(.6) saturate(.8) hue-rotate(-10deg); }
+/* ---- weather grades the mood in colour space; there are no veil or tint layers ----
+   Put data-weather beside data-mood. Static pages leave it off and get the plain mood.
+   --g-* is what gets painted: the mood token mixed toward the mood's own --wx-color (grey-brown by day,
+   its sky's deep tone at night, so a storm darkens a night instead of lightening it) by --wx-k. The ones the canvas reads are registered
+   <color> so getComputedStyle hands JS a parseable colour instead of the raw color-mix() text. */
+@property --wx-k { syntax: '<percentage>'; inherits: true; initial-value: 0%; }
+@property --g-mid { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --g-h1 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --g-h2 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --g-h3 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --g-h4 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --g-h5 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --g-tree { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --g-tree2 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+:root { --wx-color: var(--bark-muted, #8A7268); --wx-filter: brightness(1) saturate(1); --cloud-o: 1; --clear: 1; }
+[data-weather="sunny"]  { --wx-k: 0%;  --wx-filter: brightness(1) saturate(1);     --cloud-o: .35; --clear: 1; }
+[data-weather="cloudy"] { --wx-k: 10%; --wx-filter: brightness(.94) saturate(.9);  --cloud-o: .9; --clear: .6; }
+[data-weather="rainy"]  { --wx-k: 50%; --wx-filter: brightness(.82) saturate(.75); --cloud-o: 1; --clear: .2; }
+[data-weather="stormy"] { --wx-k: 65%; --wx-filter: brightness(.7) saturate(.6);   --cloud-o: 1; --clear: 0; }
+[data-mood] {
+  --g-top: color-mix(in srgb, var(--s-top), var(--wx-color) var(--wx-k)); --g-mid: color-mix(in srgb, var(--s-mid), var(--wx-color) var(--wx-k));
+  --g-bot: color-mix(in srgb, var(--s-bot), var(--wx-color) var(--wx-k)); --g-cloud: color-mix(in srgb, var(--cloud), var(--wx-color) var(--wx-k));
+  --g-h1: color-mix(in srgb, var(--h1), var(--wx-color) var(--wx-k)); --g-h2: color-mix(in srgb, var(--h2), var(--wx-color) var(--wx-k));
+  --g-h3: color-mix(in srgb, var(--h3), var(--wx-color) var(--wx-k)); --g-h4: color-mix(in srgb, var(--h4), var(--wx-color) var(--wx-k));
+  --g-h5: color-mix(in srgb, var(--h5), var(--wx-color) var(--wx-k));
+  --g-tree: color-mix(in srgb, var(--tree), var(--wx-color) var(--wx-k)); --g-tree2: color-mix(in srgb, var(--tree2), var(--wx-color) var(--wx-k));
+}
+ 
+.scenery .sun {
+  position: absolute; translate: -50% -50%; opacity: calc(.4 + var(--clear) * .6); width: 120px; height: 120px; border-radius: 50%;
+  background: var(--sun); box-shadow: 0 0 80px 40px var(--glow), 0 0 200px 120px color-mix(in srgb, var(--glow) 50%, transparent);
+  transition: opacity var(--fade, 2.5s), background var(--fade, 2.5s), box-shadow var(--fade, 2.5s), top var(--fade, 2.5s) var(--ease), left var(--fade, 2.5s) var(--ease);
+}
+.scenery[data-mood="night"] .sun { width: 70px; height: 70px; box-shadow: 0 0 40px 10px var(--glow), inset -14px -6px 0 0 #e9e0c0; }
+.scenery .stars { position: absolute; inset: 0 0 45% 0; opacity: 0; transition: opacity var(--fade, 2.5s); }
+.scenery[data-mood="night"] .stars { opacity: var(--clear); }
+.scenery[data-mood="dusk"] .stars { opacity: calc(.35 * var(--clear)); }
+.scenery .stars i { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #fff; animation: twinkle 3s ease-in-out infinite alternate; }
+@keyframes twinkle { from { opacity: .25; } to { opacity: 1; } }
+.scenery .clouds { opacity: var(--cloud-o); transition: opacity var(--fade, 2.5s); }
+.scenery .cloud {
+  position: absolute; height: 40px; border-radius: 40px; background: var(--g-cloud); opacity: .85;
+  filter: blur(.3px); transition: background var(--fade, 2.5s), opacity var(--fade, 2.5s);
+  animation: cloud-drift linear infinite;
+}
+.scenery .cloud::before, .scenery .cloud::after { content: ""; position: absolute; border-radius: 50%; background: inherit; }
+.scenery .cloud::before { width: 46%; height: 160%; left: 14%; bottom: 20%; }
+.scenery .cloud::after { width: 36%; height: 130%; right: 16%; bottom: 25%; }
+@keyframes cloud-drift { from { transform: translateX(-30vw); } to { transform: translateX(130vw); } }
+.scenery svg.land { position: absolute; left: 0; bottom: 0; width: 100%; height: 100%; display: block; }
+.scenery svg.land .h1 { fill: var(--g-h1); } .scenery svg.land .h2 { fill: var(--g-h2); }
+.scenery svg.land .h3 { fill: var(--g-h3); } .scenery svg.land .h4 { fill: var(--g-h4); }
+.scenery svg.land .h5 { fill: var(--g-h5); }
+.scenery svg.land .tr { fill: var(--g-tree); } .scenery svg.land .tr2 { fill: var(--g-tree2); }
+.scenery svg.land path, .scenery svg.land circle, .scenery svg.land ellipse { transition: fill var(--fade, 2.5s) ease; }
+.scenery svg.land .fl { opacity: var(--fl-o); transition: opacity var(--fade, 2.5s); }
+.scenery .tulip { position: absolute; transform-origin: 50% 100%; animation: sway 5s ease-in-out infinite alternate; filter: var(--mood-filter) var(--wx-filter); transition: filter var(--fade, 2.5s), opacity var(--fade, 2.5s); }
+@keyframes sway { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+.critters { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.critters .bfly { position: absolute; width: 26px; height: 22px; animation: flutter-path 18s ease-in-out infinite; transition: opacity 2s; }
+.critters .bfly svg { width: 100%; height: 100%; overflow: visible; }
+.critters .bfly .wing { transform-origin: 50% 50%; animation: flap .22s ease-in-out infinite alternate; }
+.critters .bfly .wing.r { animation-delay: 0s; }
+@keyframes flap { from { transform: scaleX(1); } to { transform: scaleX(.25); } }
+@keyframes flutter-path {
+  0% { transform: translate(0, 0) rotate(-6deg); }
+  25% { transform: translate(18vw, -6vh) rotate(8deg); }
+  50% { transform: translate(34vw, 4vh) rotate(-4deg); }
+  75% { transform: translate(16vw, 10vh) rotate(6deg); }
+  100% { transform: translate(0, 0) rotate(-6deg); }
+}
+.critters[data-weather="rainy"] .bfly, .critters[data-weather="stormy"] .bfly, .critters[data-mood="night"] .bfly { opacity: 0; }
+.critters .flies { position: absolute; inset: 0; opacity: 0; transition: opacity var(--fade, 2.5s); }
+.critters[data-mood="night"] .flies { opacity: 1; }
+.critters[data-mood="dusk"] .flies { opacity: .5; }
+.critters .flies i {
+  position: absolute; width: 6px; height: 6px; border-radius: 50%;
+  background: #fff6b0; box-shadow: 0 0 10px 4px rgba(255, 236, 140, .7);
+  animation: firefly var(--d, 9s) ease-in-out infinite alternate, glow 2.2s ease-in-out infinite alternate;
+}
+@keyframes firefly { 0% { transform: translate(0, 0); } 50% { transform: translate(var(--x1), var(--y1)); } 100% { transform: translate(var(--x2), var(--y2)); } }
+@keyframes glow { from { opacity: .15; } to { opacity: 1; } }
+.critters .petal {
+  position: absolute; top: -20px; width: 10px; height: 8px; border-radius: 80% 0 80% 0;
+  background: color-mix(in srgb, var(--berry) 55%, #fff); opacity: .8;
+  animation: petal-fall linear infinite;
+}
+@keyframes petal-fall { to { transform: translate(var(--drift, -20vw), 110vh) rotate(540deg); } }
+.scenery .veil { position: absolute; inset: 0; pointer-events: none; }
+.scenery.soft svg.land, .scenery.soft .tulip { filter: blur(2px) saturate(.9); }
+@media (prefers-reduced-motion: reduce) {
+  .scenery, .scenery * { transition-duration: .01s !important; }
+  .scenery .cloud, .scenery .stars i, .scenery .tulip { animation: none; }
+}

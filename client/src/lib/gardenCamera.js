@@ -7,7 +7,7 @@ export const BOTTOM_MARGIN = 24
 export const HALF_PI = Math.PI / 2
 export const FILL = 0.96
 export const MIN_SCALE = 0.6
-export const FAR_SPREAD = 0.8
+export const FAR_SPREAD = 0.7
 export const FAR_SIZE = 0.35
 
 export function createGardenCamera() {

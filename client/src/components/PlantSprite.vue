@@ -34,6 +34,7 @@ const src = computed(() => props.ghost ? plantSpriteUrl(1) : plantSpriteUrl(prop
 <style scoped>
 .plant {
   position: absolute; left: 0; top: 0; width: 0; height: 0; display: none; will-change: transform;
+  filter: var(--mood-filter, none) var(--wx-filter, none); transition: filter 6s ease;   /* night and weather, from the stage's tokens */
   clip-path: inset(-1000px -1000px var(--clipped, 0px) -1000px);
 }
 .plant::before {

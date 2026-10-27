@@ -1,3 +1,5 @@
+import { seeded } from './shuffle.js'
+
 export const CELL_SIZE = 100, GRID_COLS = 15, GRID_ROWS = 20
 export const GRID_WIDTH = CELL_SIZE * GRID_COLS
 
@@ -10,13 +12,12 @@ export const HILL_SAMPLE_GAP = CELL_SIZE * 0.3    // x spacing when tracing a cr
 // Each crest is the same three-wave ridge scenery.js draws (amplitudes 1 : .45 : .2, frequencies ~1 : 2.3 : 5.1),
 // laid out in world units. Neighbouring hills share a phase drift, so crests roll in parallel and never cross:
 // worst-case spacing is HILL_GAP - ~100, still positive.
-const HILL_AMP = 38
+const HILL_AMP = 65
 const RIDGE_WAVES = [
-  { amp: 1,    wavelength: 1900, drift: 1.7, offset: 0 },
+  { amp: 1,     wavelength: 1900,  drift: 1.7, offset: 0 },
   { amp: 0.45, wavelength: 830,  drift: 3.1, offset: 1.3 },
   { amp: 0.2,  wavelength: 370,  drift: 5.3, offset: 2.9 },
 ]
-
 export const hillEdgeDepth = (hill, worldX) => {
   let wobble = 0
   for (const w of RIDGE_WAVES) wobble += w.amp * Math.sin((worldX / w.wavelength) * TAU + hill * w.drift + w.offset)
@@ -26,19 +27,12 @@ export const hillEdgeDepth = (hill, worldX) => {
 // ---- scatter: flower dots and margin trees ----
 export const SCATTER_DEPTH = 3000
 export const SCATTER_MIN_X = -300, SCATTER_MAX_X = GRID_WIDTH + 300  // overscan: far rows show wider than the grid
-const FLOWER_COUNT = 1500
+const FLOWER_COUNT = 800
 const TREE_MARGIN = 70   // trees stay this far outside the grid, so nothing stands where a plant can go
 
 // Theme variables for the dot colours (the white appears twice, like the weighting in scenery.js).
 // The renderer resolves these to real colours; floorLayout only stores the index.
 export const FLOWER_VARS = ['--paper', '--paper', '--berry-soft', '--butter', '--lilac', '--berry', '--butter-soft']
-
-export const seeded = a => () => {
-  a |= 0; a = a + 0x6D2B79F5 | 0
-  let t = Math.imul(a ^ a >>> 15, 1 | a)
-  t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t
-  return ((t ^ t >>> 14) >>> 0) / 4294967296
-}
 
 // The hill whose visible face a point sits on: between the crest of the next hill in front and its own crest.
 // Props are painted right after their hill, so a nearer ridge always hides them properly.
@@ -54,7 +48,7 @@ function buildProps() {
 
   for (let n = 0; n < FLOWER_COUNT; n++) {
     const d = rand() * SCATTER_DEPTH, x = SCATTER_MIN_X + rand() * width
-    out.push({ k: 'flower', x, d, s: .9 + rand() * 0.7, c: Math.floor(rand() * FLOWER_VARS.length) })
+    out.push({ k: 'flower', x, d, s: 1 + rand(), c: Math.floor(rand() * FLOWER_VARS.length) })
   }
 
   // tree clusters (circle blobs, or a poplar) down both margins; blobs are [dx, dy, rx, ry, alt] in world units
