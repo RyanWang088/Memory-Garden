@@ -40,10 +40,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
     <div class="topbar-inner">
       <RouterLink :to="{ name: 'garden' }" class="brand" aria-label="Sproutly, go to your garden">
         <img :src="potArt" alt="" width="38" height="38" />
-        <span><span class="brand-name">Sproutly</span><span class="brand-sub">study garden &amp; journal</span></span>
+        <span><span class="brand-name">Sproutly</span><span class="brand-sub d-none d-md-block">study garden &amp; journal</span></span>
       </RouterLink>
 
-      <ul class="navlinks">
+      <ul class="navlinks d-none d-md-flex">
         <li v-for="(item, i) in NAV_ITEMS" :key="item.to">
           <RouterLink
             :to="{ name: item.to }" :aria-current="i === current ? 'page' : undefined"
@@ -52,7 +52,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         </li>
       </ul>
 
-      <div class="bar-right">
+      <div class="bar-right ms-auto ms-md-0">
         <span class="counter" data-testid="nav-streak" :title="`${auth.profile?.streak ?? 0} day streak`">
           🔥 {{ auth.profile?.streak ?? 0 }}
         </span>
@@ -61,7 +61,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         </span>
         <MusicToggle />
         <RouterLink
-          :to="{ name: 'profile' }" class="avatar" aria-label="Profile"
+          :to="{ name: 'profile' }" class="avatar d-none d-md-grid" aria-label="Profile"
           :aria-current="route.name === 'profile' ? 'page' : undefined" title="Profile &amp; settings"
         >🏡</RouterLink>
       </div>
@@ -88,9 +88,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 .brand img { width: 38px; height: 38px; transition: transform .5s var(--spring); }
 .brand:hover img { transform: rotate(-10deg) scale(1.08); }
 .brand-name { font-family: var(--f-display); font-style: italic; font-weight: 600; font-size: 1.45rem; line-height: 1; display: block; }
-.brand-sub { display: block; font-size: .6rem; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-soft); margin-top: 3px; }
+.brand-sub { font-size: .6rem; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-soft); margin-top: 3px; }
 
-.navlinks { display: flex; gap: 4px; margin: 0 auto; padding: 0; list-style: none; }
+.navlinks { gap: 4px; margin: 0 auto; padding: 0; list-style: none; }
 .navlinks a {
   position: relative; display: block; padding: .45em .95em; border-radius: 999px;
   font-weight: 800; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase;
@@ -103,15 +103,14 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 6'%3E%3Cpath d='M1 4c4-3 6 1 10-1s6-2 10 0' fill='none' stroke='%23E0546A' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center/contain;
 }
 
-.bar-right { display: flex; align-items: center; gap: 8px; flex: none; margin-left: auto; }
-.navlinks + .bar-right { margin-left: 0; }
+.bar-right { display: flex; align-items: center; gap: 8px; flex: none; }
 .counter {
   display: inline-flex; align-items: center; gap: 6px; height: 34px; min-width: 0; padding: 0 12px 0 6px;
   border-radius: 999px; background: var(--sheet-2); border: 1px solid var(--line);
   font-weight: 800; font-size: .85rem; font-variant-numeric: tabular-nums;
 }
 .avatar {
-  width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
+  width: 38px; height: 38px; border-radius: 50%; place-items: center;
   background: var(--leaf-soft); border: 2px solid #fff; box-shadow: var(--shadow-1);
   transition: transform .3s var(--spring), box-shadow .2s;
 }
@@ -120,11 +119,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 .topbar :deep(.music-toggle) { width: 34px; height: 34px; background: var(--sheet-2); border: 1px solid var(--line); box-shadow: none; }
 .topbar :deep(.music-toggle.on) { background: var(--leaf-soft); }
 
-@media (max-width: 860px) {
-  .navlinks { display: none; }
-  .brand-sub { display: none; }
-  .topbar-inner { gap: 10px; }
-}
+@media (max-width: 767.98px) { .topbar-inner { gap: 10px; } }
 @media (max-width: 420px) {
   .counter { padding: 0 8px 0 4px; font-size: .78rem; gap: 3px; }
   .counter :deep(svg) { width: 18px; height: 18px; }

@@ -100,14 +100,26 @@ function render() {
 // are written when they actually change, so scrolling doesn't invalidate style on every plant every frame.
 const placed = new WeakMap()
 
+const placedState = (el) => {
+  if (!placed.has(el)) placed.set(el, { display: '', z: null, clipped: null })
+  return placed.get(el)
+}
+
+// every show/hide goes through here so the cache above never disagrees with the DOM
+function setDisplay(el, display) {
+  const last = placedState(el)
+  if (last.display === display) return
+  el.style.display = display
+  last.display = display
+}
+const hideSprite = (el) => setDisplay(el, 'none')
+
 function placeSprite(el, col, row) {
   const visible = worldToScreen((col + 0.5) * CELL_SIZE, (row + 0.5) * CELL_SIZE)
-  let last = placed.get(el)
-  if (!last) placed.set(el, last = { display: '', z: null, clipped: null })
-
-  const display = visible ? 'block' : 'none'
-  if (last.display !== display) { el.style.display = display; last.display = display }
+  setDisplay(el, visible ? 'block' : 'none')
   if (!visible) return
+
+  const last = placedState(el)
 
   const { x, y, scale, clipped } = screenPoint
   el.style.transform = `translate3d(${x}px,${y}px,0) scale(${scale})`
@@ -173,9 +185,10 @@ const seedDrag = useSeedDrag({
   screenToCell,
   isBlocked,
   placeSprite,
+  hideSprite,
   requestRender,
 })
-const { updateGhost, onDragOver, onDragLeave, onDrop } = seedDrag
+const { updateGhost } = seedDrag
 
 function onPlantClick(seed, event) {
   if (event && !event.target.closest('.sprite')) return
@@ -245,9 +258,6 @@ onBeforeUnmount(() => {
         :data-tool="ui.activeTool"
         :data-mood="look.mood"
         :data-weather="look.weather"
-        @dragover="onDragOver"
-        @dragleave="onDragLeave"
-        @drop.prevent="onDrop"
       >
         <canvas ref="canvasEl" data-testid="meadow"></canvas>
 

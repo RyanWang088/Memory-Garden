@@ -12,8 +12,9 @@ const ui = useUiStore()
 const flower = useFlowerStore()
 const toast = useToastStore()
 
+const DRAG_THRESHOLD = 8 // px a pointer must travel before a press on a packet becomes a drag
+
 const root = ref(null)
-const pickedSeedId = ref(null) // being dragged right now
 const chosenId = ref(null)     // the one packet that shows its colour swatches
 const justBought = ref(null)
 
@@ -29,37 +30,38 @@ const art = (seed) => plantSpriteUrl(BLOOM_STAGE, seed.id, seed.id === activeId.
 const short = (seed) => Math.max(0, seed.price - flower.coins)
 const pct = (seed) => (seed.price > 0 ? Math.min(100, Math.round((flower.coins / seed.price) * 100)) : 100)
 
-// 1x1 transparent pixel: replaces the browser's own drag picture, so only the garden's ghost shows.
-const blankDragImage = new Image()
-blankDragImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+const isPicked = (seed) => ui.seedPicked && ui.selectedSeedFlower === seed.id
 
-function pick(seed) { chosenId.value = seed.id }
+function pick(seed) {
+  chosenId.value = seed.id
+  ui.selectedSeedFlower = seed.id
+}
 
-function onDragStart(e, seed) {
+// A press on a packet only becomes a drag once the pointer has moved a little,
+// so a tap just selects the packet (and a swipe on touch scrolls the shed instead).
+let press = null
+
+function onPressStart(e, seed) {
+  if (e.pointerType === 'mouse' && e.button !== 0) return
+  press = { seed, x: e.clientX, y: e.clientY }
+  e.currentTarget.setPointerCapture(e.pointerId) // keep receiving moves even if the pointer leaves the packet
+}
+
+function onPressMove(e) {
+  if (!press) return
+  if (Math.hypot(e.clientX - press.x, e.clientY - press.y) < DRAG_THRESHOLD) return
+  startDrag(press.seed, e.pointerId)
+  press = null
+}
+
+const onPressEnd = () => { press = null }
+
+// useSeedDrag (in the garden) takes over from here and follows this pointer
+function startDrag(seed, pointerId) {
   pick(seed)
-  pickedSeedId.value = seed.id
-  if (e.dataTransfer) {
-    e.dataTransfer.setData('application/x-sproutly-seed', JSON.stringify({ flower: seed.id }))
-    e.dataTransfer.effectAllowed = 'copy'
-    e.dataTransfer.setDragImage(blankDragImage, 0, 0)
-  } else {
-    ui.seedDragPointerId = e.pointerId
-  }
+  ui.seedDragPointerId = pointerId
   ui.seedPicked = true
   ui.shedOpen = false
-}
-
-function onDragEnd() {
-  ui.seedPicked = false
-  ui.seedDragPointerId = null
-  pickedSeedId.value = null
-}
-
-function onPointerDown(e, seed) {
-  if (e.pointerType === 'touch') {
-    e.preventDefault()
-    onDragStart(e, seed)
-  }
 }
 
 async function buy(seed) {
@@ -109,7 +111,7 @@ onMounted(() => flower.load())
 <template>
   <section ref="root" class="shed-seeds" data-testid="shed-seeds">
     <header class="d-grid gap-2 pb-3 border-bottom">
-      <span class="sp-eyebrow">Seed shed</span>
+      <span class="sp-eyebrow">Potting Bench</span>
       <h3 class="m-0 fs-3">Plant a <em>new seed</em></h3>
       <p class="small text-body-secondary m-0">Drag a packet onto the field to start a new deck of flashcards.</p>
     </header>
@@ -130,15 +132,16 @@ onMounted(() => flower.load())
         <!-- owned: draggable packet; only the active one opens its swatch drawer -->
         <article
           v-if="seed.status === 'owned'" class="sp-packet"
-          :class="{ 'is-active': activeId === seed.id, 'is-picked': ui.seedPicked && pickedSeedId === seed.id, 'is-new': justBought === seed.id }"
+          :class="{ 'is-active': activeId === seed.id, 'is-picked': isPicked(seed), 'is-new': justBought === seed.id }"
         >
           <span class="sp-tape" :class="tapeOf(n)" aria-hidden="true"></span>
           <div
-            class="packet-face" role="button" tabindex="0" draggable="true"
+            class="packet-face" role="button" tabindex="0"
             :aria-pressed="activeId === seed.id" :aria-label="`${seed.name} seed. Drag to the field to plant`"
             :data-testid="`seed-${seed.id}`"
             @click="pick(seed)" @keydown.enter.space.prevent="pick(seed)"
-            @dragstart="onDragStart($event, seed)" @dragend="onDragEnd" @pointerdown="onPointerDown($event, seed)"
+            @pointerdown="onPressStart($event, seed)" @pointermove="onPressMove"
+            @pointerup="onPressEnd" @pointercancel="onPressEnd" @dragstart.prevent
           >
             <span class="sp-packet-art"><img :src="art(seed)" alt="" draggable="false" /><span class="sp-ledge"></span></span>
             <span class="sp-packet-name">{{ seed.name }} seed</span>
@@ -155,8 +158,7 @@ onMounted(() => flower.load())
                   :aria-label="`${color} plant color`" :title="color" @click="ui.selectedSeedColor = color"
                 ></button>
               </div>
-              <p class="drag-hint">drag me to the field
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+              <p class="drag-hint">←drag me to the field
               </p>
             </div>
           </div>
@@ -191,7 +193,9 @@ onMounted(() => flower.load())
 </template>
 
 <style scoped>
-.packet-face { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; border-radius: 10px; cursor: grab; user-select: none; -webkit-user-select: none; outline: none; }
+.packet-face { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; border-radius: 10px; cursor: grab; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; outline: none; touch-action: pan-y; }
+/* only the selected packet claims touch for dragging; the others still let the shed scroll */
+.sp-packet.is-active .packet-face { touch-action: none; }
 .packet-face:active { cursor: grabbing; }
 .packet-face:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--leaf) 35%, transparent); }
 
