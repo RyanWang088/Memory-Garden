@@ -149,6 +149,7 @@ button.hud-chip:hover { transform: translateY(-2px); }
 .scroller::-webkit-scrollbar { display: none; }
 
 .intro { height: 200%; }
-.bed-wrap { height: 60%; overflow-y: auto; scrollbar-width: none; overscroll-behavior: contain; }
+/* the sky above the horizon lives inside this box; with MEADOW_HEIGHT (gardenCamera.js) the horizon stays on the sky's 50% line */
+.bed-wrap { height: 75%; overflow-y: auto; scrollbar-width: none; overscroll-behavior: contain; }
 .bed-wrap::-webkit-scrollbar { display: none; }
 </style>

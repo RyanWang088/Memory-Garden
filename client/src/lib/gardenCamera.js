@@ -9,12 +9,19 @@ export const FILL = 0.96
 export const MIN_SCALE = 0.6
 export const FAR_SPREAD = 0.7
 export const FAR_SIZE = 0.35
+export const MEADOW_HEIGHT = 0.65 // share of the view the meadow fills below the horizon; the rest is open sky
 
 export function createGardenCamera() {
   const camera = { viewWidth: 400, viewHeight: 700, scale: 1, contentWidth: 400, frontY: 0, radius: 0, horizonY: 0, scrollPos: 0, panX: 0, centerX: 0 }
   const screenPoint = {}
 
-  const shrinkTo = (farValue, angle) => farValue + (1 - farValue) * Math.max(0, Math.cos(angle))
+  // Minor adjustment: Use an exponent < 1 (e.g., 0.7) so the bottom/middle 
+  // stays wide and spreads out longer before gently tapering off near the horizon.
+  const shrinkTo = (farValue, angle) => {
+    const t = Math.max(0, Math.cos(angle))
+    const eased = Math.pow(t, 0.7) 
+    return farValue + (1 - farValue) * eased
+  }
 
   const depthToAngle = depth => ((depth - camera.scrollPos) * camera.scale) / camera.radius
   const screenY = angle => camera.frontY - camera.radius * Math.sin(angle)
@@ -27,7 +34,13 @@ export function createGardenCamera() {
     const y = screenY(angle), scale = camera.scale * shrinkTo(FAR_SIZE, angle)
     const hiddenPx = angle > HALF_PI ? (y - camera.horizonY) / scale : -SHADOW_ROOM
     if (hiddenPx > PLANT_CANVAS_SIZE) return false
-    Object.assign(screenPoint, { x: screenX(worldX, angle), y, scale, clipped: hiddenPx, zIndex: 2000 - Math.round(angle * 500) })
+    Object.assign(screenPoint, { 
+      x: screenX(worldX, angle), 
+      y, 
+      scale, 
+      clipped: hiddenPx, 
+      zIndex: 2000 + Math.round(angle * 500) 
+    })
     return true
   }
 
@@ -47,7 +60,7 @@ export function createGardenCamera() {
     camera.scale = Math.max(MIN_SCALE, (viewWidth * FILL) / GRID_WIDTH)
     camera.contentWidth = GRID_WIDTH * camera.scale + viewWidth * (1 - FILL)
     camera.frontY = viewHeight - BOTTOM_MARGIN
-    camera.radius = camera.frontY * 0.82
+    camera.radius = camera.frontY * MEADOW_HEIGHT
     camera.horizonY = camera.frontY - camera.radius
   }
 

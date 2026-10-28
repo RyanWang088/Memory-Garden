@@ -70,7 +70,7 @@ const src = computed(() => props.ghost ? plantSpriteUrl(1) : plantSpriteUrl(prop
   .stage-enter-active, .stage-leave-active, .sprite { transition-duration: .01s; transition-delay: 0s; }
 }
 
-.plant[data-stage="2"][data-wilting],.plant[data-stage="3"][data-wilting] .sprite { 
+.plant[data-stage="2"][data-wilting] .sprite,.plant[data-stage="3"][data-wilting] .sprite { 
   filter: sepia(.7) saturate(.75) brightness(.88); 
 }
 

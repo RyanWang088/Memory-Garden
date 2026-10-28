@@ -169,6 +169,7 @@ async function claim() {
       type: reward.value ? 'reward' : 'success',
       title: reward.value ? `+${reward.value} coins` : 'Session saved',
       message: reward.value ? `You scored ${accuracy.value}% on ${seed.value.title}.` : `${seed.value.title} got a little water.`,
+      duration:6000
     })
     await router.push({ name: 'garden', query: { scrollTo: seed.value.id } })
   } catch (e) {
