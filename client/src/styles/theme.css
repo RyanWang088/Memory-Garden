@@ -416,22 +416,29 @@ h1 em, h2 em, h3 em { font-style: italic; font-weight: 500; color: var(--berry);
 .scenery {
   position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
   background: linear-gradient(180deg, var(--g-top) 0%, var(--g-mid) 55%, var(--g-bot) 100%);
-  transition: --s-top var(--fade, 2.5s) ease, --s-mid var(--fade, 2.5s) ease, --s-bot var(--fade, 2.5s) ease, --wx-k var(--fade, 2.5s) ease;
+  transition: --s-top var(--fade, 2.5s) ease, --s-mid var(--fade, 2.5s) ease, --s-bot var(--fade, 2.5s) ease, --wx-k var(--fade, 2.5s) ease, --wx-color var(--fade, 2.5s) ease;
 }
 @property --s-top { syntax: '<color>'; inherits: true; initial-value: #9fd3ef; }
 @property --s-mid { syntax: '<color>'; inherits: true; initial-value: #dff1f2; }
 @property --s-bot { syntax: '<color>'; inherits: true; initial-value: #f6f3e2; }
-[data-mood="day"] { --s-top: #8fcbea; --s-mid: #d8eff1; --s-bot: #f3f4df; --sun: #fffbe8; --glow: rgba(255, 246, 205, .9); --h1: #b3d5a9; --h2: #8fc373; --h3: #69ad55; --h4: #4b9446; --h5: #377c3a; --tree: #3f7f45; --tree2: #2f6b3a; --cloud: #ffffff; --fl-o: 1; --mood-filter: brightness(1) hue-rotate(0deg); }
-[data-mood="morning"] { --s-top: #a9d6ec; --s-mid: #f6dccd; --s-bot: #fbefdc; --sun: #fff6dc; --glow: rgba(255, 214, 170, .95); --h1: #bcd6ae; --h2: #9cc67f; --h3: #79b25e; --h4: #589c4c; --h5: #3f833f; --tree: #4b8a4d; --tree2: #36723f; --cloud: #fff7f2; --fl-o: 1; --mood-filter: brightness(1) hue-rotate(0deg); }
-[data-mood="blush"] { --s-top: #f2b9c4; --s-mid: #f9dcd2; --s-bot: #fbeee0; --sun: #fff8ea; --glow: rgba(255, 226, 205, .95); --h1: #c8d3b0; --h2: #a9c48c; --h3: #86b26c; --h4: #669c58; --h5: #4d8549; --tree: #5b8f56; --tree2: #467a48; --cloud: #fff3f3; --fl-o: 1; --mood-filter: brightness(1) hue-rotate(0deg); }
-[data-mood="dusk"] { --wx-color: color-mix(in srgb, var(--s-top) 55%, var(--bark-muted)); --s-top: #6f6aa6; --s-mid: #e9a3a3; --s-bot: #f6c99e; --sun: #ffe3b5; --glow: rgba(255, 190, 140, .85); --h1: #8b8f8e; --h2: #6e8b66; --h3: #557a50; --h4: #3f6741; --h5: #2f5534; --tree: #3b5c3e; --tree2: #2d4a32; --cloud: #f7d3d6; --fl-o: .85; --mood-filter: brightness(.9) hue-rotate(0deg); }
-[data-mood="night"] { --wx-color: var(--s-top); --s-top: #0f1736; --s-mid: #27325f; --s-bot: #3d3f6b; --sun: #fdf6dd; --glow: rgba(150, 175, 255, .35); --h1: #2a3a55; --h2: #223a45; --h3: #1b3537; --h4: #152d2b; --h5: #0f2420; --tree: #14302a; --tree2: #0f261f; --cloud: #3b4673; --fl-o: .55; --mood-filter: brightness(.6) saturate(.8) hue-rotate(-10deg); }
+
+/* Moods: sky/land/tree hexes untouched. Only --mood-filter (plant sprites) changed.
+   All five filters share one function list so they interpolate. Each rim-light (drop-shadow)
+   borrows that mood's own --glow, so plants keep an edge and read as clickable at night. */
+[data-mood="day"] { --s-top: #8fcbea; --s-mid: #d8eff1; --s-bot: #f3f4df; --sun: #fffbe8; --glow: rgba(255, 246, 205, .9); --h1: #b3d5a9; --h2: #8fc373; --h3: #69ad55; --h4: #4b9446; --h5: #377c3a; --tree: #3f7f45; --tree2: #2f6b3a; --cloud: #ffffff; --fl-o: 1; --mood-filter: brightness(1) saturate(1) sepia(0) hue-rotate(0deg) }
+[data-mood="morning"] { --s-top: #a9d6ec; --s-mid: #f6dccd; --s-bot: #fbefdc; --sun: #fff6dc; --glow: rgba(255, 214, 170, .95); --h1: #bcd6ae; --h2: #9cc67f; --h3: #79b25e; --h4: #589c4c; --h5: #3f833f; --tree: #4b8a4d; --tree2: #36723f; --cloud: #fff7f2; --fl-o: 1; --mood-filter: brightness(1.02) saturate(1.04) sepia(.06) hue-rotate(-4deg) }
+[data-mood="blush"] { --s-top: #f2b9c4; --s-mid: #f9dcd2; --s-bot: #fbeee0; --sun: #fff8ea; --glow: rgba(255, 226, 205, .95); --h1: #c8d3b0; --h2: #a9c48c; --h3: #86b26c; --h4: #669c58; --h5: #4d8549; --tree: #5b8f56; --tree2: #467a48; --cloud: #fff3f3; --fl-o: 1; --mood-filter: brightness(1.02) saturate(1.05) sepia(.05) hue-rotate(-6deg) }
+[data-mood="dusk"] { --s-top: #6f6aa6; --s-mid: #e9a3a3; --s-bot: #f6c99e; --sun: #ffe3b5; --glow: rgba(255, 190, 140, .85); --h1: #8b8f8e; --h2: #6e8b66; --h3: #557a50; --h4: #3f6741; --h5: #2f5534; --tree: #3b5c3e; --tree2: #2d4a32; --cloud: #f7d3d6; --fl-o: .85; --mood-filter: brightness(.96) saturate(1.05) sepia(.12) hue-rotate(-10deg) }
+[data-mood="night"] { --s-top: #0f1736; --s-mid: #27325f; --s-bot: #3d3f6b; --sun: #fdf6dd; --glow: rgba(150, 175, 255, .35); --h1: #2a3a55; --h2: #223a45; --h3: #1b3537; --h4: #152d2b; --h5: #0f2420; --tree: #14302a; --tree2: #0f261f; --cloud: #3b4673; --fl-o: .55; --mood-filter: brightness(.8) saturate(.8) sepia(0) hue-rotate(8deg)}
+
 /* ---- weather grades the mood in colour space; there are no veil or tint layers ----
    Put data-weather beside data-mood. Static pages leave it off and get the plain mood.
-   --g-* is what gets painted: the mood token mixed toward the mood's own --wx-color (grey-brown by day,
-   its sky's deep tone at night, so a storm darkens a night instead of lightening it) by --wx-k. The ones the canvas reads are registered
-   <color> so getComputedStyle hands JS a parseable colour instead of the raw color-mix() text. */
-@property --wx-k { syntax: '<percentage>'; inherits: true; initial-value: 0%; }
+   --g-* is what gets painted: the mood token mixed toward --wx-color by --wx-k.
+   --wx-color is now a soft cool colour per weather (never brown, never near-black), so rain
+   and storms stay cozy: powder blue -> rain blue -> periwinkle. Mixed in srgb so the registered
+   <color> tokens resolve to plain rgb() that the canvas can parse. */
+@property --wx-k     { syntax: '<percentage>'; inherits: true; initial-value: 0%; }
+@property --wx-color { syntax: '<color>';      inherits: true; initial-value: #c9d8ee; }
 @property --g-mid { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --g-h1 { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --g-h2 { syntax: '<color>'; inherits: true; initial-value: transparent; }
@@ -440,11 +447,30 @@ h1 em, h2 em, h3 em { font-style: italic; font-weight: 500; color: var(--berry);
 @property --g-h5 { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --g-tree { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --g-tree2 { syntax: '<color>'; inherits: true; initial-value: transparent; }
-:root { --wx-color: var(--bark-muted, #8A7268); --wx-filter: brightness(1) saturate(1); --cloud-o: 1; --clear: 1; }
-[data-weather="sunny"]  { --wx-k: 0%;  --wx-filter: brightness(1) saturate(1);     --cloud-o: .35; --clear: 1; }
-[data-weather="cloudy"] { --wx-k: 10%; --wx-filter: brightness(.94) saturate(.9);  --cloud-o: .9; --clear: .6; }
-[data-weather="rainy"]  { --wx-k: 50%; --wx-filter: brightness(.82) saturate(.75); --cloud-o: 1; --clear: .2; }
-[data-weather="stormy"] { --wx-k: 65%; --wx-filter: brightness(.7) saturate(.6);   --cloud-o: 1; --clear: 0; }
+
+:root { --wx-color: #c9d8ee; --wx-filter: brightness(1) saturate(1); --cloud-o: 1; --clear: 1; }
+
+/* tint strength: low enough that the sunny palette always shows through (was 10/50/65) */
+[data-weather="sunny"]  { --wx-k: 0%;  --wx-filter: brightness(1)    saturate(1);    --cloud-o: .35; --clear: 1; }
+[data-weather="cloudy"] { --wx-k: 14%; --wx-filter: brightness(1)    saturate(.97);  --cloud-o: .9;  --clear: .6; }
+[data-weather="rainy"]  { --wx-k: 32%; --wx-filter: brightness(.98)  saturate(.94);  --cloud-o: 1;   --clear: .2; }
+[data-weather="stormy"] { --wx-k: 42%; --wx-filter: brightness(.95)  saturate(.9);   --cloud-o: 1;   --clear: 0; }
+
+/* tint colour, day / morning / blush: powder blue -> rain blue -> periwinkle */
+[data-weather="cloudy"] { --wx-color: #c9d8ee; }
+[data-weather="rainy"]  { --wx-color: #93b8dc; }
+[data-weather="stormy"] { --wx-color: #8e9ad0; }
+
+/* dusk: lilac and mauve instead of bark brown */
+[data-mood="dusk"][data-weather="cloudy"] { --wx-color: #d4bfe0; }
+[data-mood="dusk"][data-weather="rainy"]  { --wx-color: #b09dd2; }
+[data-mood="dusk"][data-weather="stormy"] { --wx-color: #9886c4; }
+
+/* night: mid indigo, lighter than the night sky, so storms get moody instead of black */
+[data-mood="night"][data-weather="cloudy"] { --wx-color: #6573ad; }
+[data-mood="night"][data-weather="rainy"]  { --wx-color: #5568a8; }
+[data-mood="night"][data-weather="stormy"] { --wx-color: #4c58a0; }
+
 [data-mood] {
   --g-top: color-mix(in srgb, var(--s-top), var(--wx-color) var(--wx-k)); --g-mid: color-mix(in srgb, var(--s-mid), var(--wx-color) var(--wx-k));
   --g-bot: color-mix(in srgb, var(--s-bot), var(--wx-color) var(--wx-k)); --g-cloud: color-mix(in srgb, var(--cloud), var(--wx-color) var(--wx-k));
@@ -452,8 +478,7 @@ h1 em, h2 em, h3 em { font-style: italic; font-weight: 500; color: var(--berry);
   --g-h3: color-mix(in srgb, var(--h3), var(--wx-color) var(--wx-k)); --g-h4: color-mix(in srgb, var(--h4), var(--wx-color) var(--wx-k));
   --g-h5: color-mix(in srgb, var(--h5), var(--wx-color) var(--wx-k));
   --g-tree: color-mix(in srgb, var(--tree), var(--wx-color) var(--wx-k)); --g-tree2: color-mix(in srgb, var(--tree2), var(--wx-color) var(--wx-k));
-}
- 
+} 
 .scenery .sun {
   position: absolute; translate: -50% -50%; opacity: calc(.4 + var(--clear) * .6); width: 120px; height: 120px; border-radius: 50%;
   background: var(--sun); box-shadow: 0 0 80px 40px var(--glow), 0 0 200px 120px color-mix(in srgb, var(--glow) 50%, transparent);

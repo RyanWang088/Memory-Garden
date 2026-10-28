@@ -1,10 +1,11 @@
 <script setup>
-import { onMounted, onBeforeUnmount, computed, ref } from 'vue'
+import { onMounted, onBeforeUnmount, computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useGardenStore } from '@/stores/garden'
 import { useUiStore } from '@/stores/ui'
 import { useWeatherStore } from '@/stores/weather'
 import GardenBed from '@/components/GardenBed.vue'
+import SceneCritters from '@/components/SceneCritters.vue'
 import ShedPanel from '@/components/ShedPanel.vue'
 import Skybox from '@/components/Skybox.vue'
 import ExamOverPrompt from '@/components/ExamOverPrompt.vue'
@@ -39,6 +40,14 @@ const hud = computed(() => {
 })
 function openStudy() { ui.setShedTab('study'); ui.shedOpen = true }
 
+function openStudyForQuery() {
+  if (typeof route.query.q !== 'string') return
+  ui.setShedTab('study')
+  ui.shedOpen = true
+}
+
+watch(() => route.query.q, openStudyForQuery)
+
 // "Exam is over": one subject at a time, oldest exam first, only on the garden itself (not over a seed page)
 const examChoice = ref('')  // the choice being saved
 const examError = ref('')
@@ -68,6 +77,7 @@ onMounted(async () => {
   document.addEventListener('click', clearSeedSelectionOutsideCard)
   await garden.fetchSeeds()
   ui.pickDefaultTab(garden.hasPlants)
+  openStudyForQuery()
 })
 
 onBeforeUnmount(() => {
@@ -80,6 +90,7 @@ onBeforeUnmount(() => {
     <!-- sky now spans the whole screen, so nothing is exposed behind the shed -->
     <Skybox/>
     <section class="garden-stage position-relative flex-grow-1" data-testid="garden-stage">
+      <SceneCritters class="garden-critters" :mood="weather.look.mood" :weather="weather.look.weather" :fireflies="20" :flies-from="20" />
       <div class="garden-hud" aria-live="polite">
         <h1 class="sp-greet on-sky">{{ hud.hello }} <span>{{ hud.line }}</span></h1>
         <div class="hud-chips">
@@ -109,6 +120,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .garden-stage { min-width: 0; min-height: 0; z-index: 1; }
+.garden-critters { z-index: 3; }
 #sky-front { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 .exam-over-wrap {
   position: fixed; top: 196px; left: 16px; z-index: 1025; width: min(460px, calc(100% - 32px));
@@ -119,7 +131,7 @@ onBeforeUnmount(() => {
 @media (max-width: 767.98px) { .exam-over-wrap { top: 74px; left: 8px; width: calc(100% - 16px); } }
 
 /* greeting + chips over the sky */
-.garden-hud { position: absolute; z-index: 3; top: 84px; left: 18px; right: 18px; pointer-events: none; display: grid; gap: 10px; justify-items: start; }
+.garden-hud { position: absolute; z-index: 3; top: 84px; left: max(18px, calc((100vw - 1280px) / 2)); right: 18px; pointer-events: none; display: grid; gap: 10px; justify-items: start; }
 .garden-hud .sp-greet { font-size: clamp(1.5rem, 2.6vw, 2rem); margin: 0; }
 .garden-hud .sp-greet span { white-space: nowrap; }
 .hud-chips { display: flex; flex-wrap: wrap; gap: 8px; pointer-events: auto; }

@@ -71,7 +71,7 @@ CREATE TABLE public.seeds (
   color text DEFAULT 'pink'::text NOT NULL,
   in_house boolean DEFAULT false NOT NULL,
   CONSTRAINT seeds_pkey PRIMARY KEY (id),
-  CONSTRAINT seeds_color_check CHECK ((color = ANY (ARRAY['pink'::text, 'red'::text, 'purple'::text, 'white'::text, 'yellow'::text])))
+  CONSTRAINT seeds_color_check CHECK ((color = ANY (ARRAY['pink'::text, 'red'::text, 'purple'::text, 'yellow'::text])))
 );
 
 CREATE TABLE public.shop_items (

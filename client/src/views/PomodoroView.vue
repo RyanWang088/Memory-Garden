@@ -223,7 +223,7 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
       <section v-else class="sp-paper panel text-center done-card" data-testid="pomodoro-done">
         <span class="sp-tape is-leaf" aria-hidden="true"></span>
         <div class="bouquet" aria-hidden="true">
-          <img v-for="n in Math.min(pomo.focusTotal, 7)" :key="n" :src="foliageUrl(`tulip-${['pink', 'yellow', 'purple', 'red', 'white'][(n - 1) % 5]}-4`)" alt="" :style="{ animationDelay: `${n * 0.12}s` }" />
+          <img v-for="n in Math.min(pomo.focusTotal, 7)" :key="n" :src="foliageUrl(`tulip-${['pink', 'yellow', 'purple', 'red'][(n - 1) % 5]}-4`)" alt="" :style="{ animationDelay: `${n * 0.12}s` }" />
         </div>
         <h2 class="mb-2">Session complete</h2>
         <p class="text-body-small mb-4">

@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
 import NavBar from '@/components/NavBar.vue'
 import AppDock from '@/components/AppDock.vue'
-
+import DevScrubber from '@/components/DevScrubber.vue'
 import ToastHost from '@/components/ToastHost.vue'
 import FocusPlayer from '@/components/FocusPlayer.vue'
 import MusicToggle from '@/components/MusicToggle.vue'
@@ -38,4 +38,5 @@ watchEffect(() => {
   <FocusPlayer />
   <MusicToggle v-if="floatingMusic" floating />
   <ToastHost />
+  <DevScrubber/>
 </template>

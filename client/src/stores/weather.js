@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { apiFetch } from '@/lib/http'
 
 const FALLBACK = { lat: 1.3005, lon: 103.8626 } // SMU SCIS 1
-const MOOD_BY_PHASE = Object.freeze({ dawn: 'morning', day: 'day', dusk: 'dusk', night: 'night' })
+const MOOD_BY_PHASE = Object.freeze({ dawn: 'morning', day: 'day', blush:'blush', dusk: 'dusk', night: 'night' })
 
 // Resolves the user's coords, or null if they block it, ignore the popup, or have no geolocation
 function getCoords() {
@@ -36,10 +36,19 @@ export const useWeatherStore = defineStore('weather', () => {
   let timer, users = 0
 
   const phase = computed(() => {
-    const t = nowMin.value
-    if (t >= sunrise.value - 30 && t <= sunrise.value + 60) return 'dawn'
-    if (t >= sunset.value - 60 && t <= sunset.value + 30) return 'dusk'
-    return t > sunrise.value && t < sunset.value ? 'day' : 'night'
+  const t = nowMin.value
+  const sr = sunrise.value
+  const ss = sunset.value
+
+  // 1. Dawn & Morning: Golden sunrise straight into daytime
+  if (t >= sr - 30 && t <= sr + 90) return 'dawn'       // Morning golden light (06:30 - 08:30)
+
+  // 2. Evening & Sunset: Pink Blush BEFORE Purple Dusk
+  if (t >= ss - 60 && t < ss) return 'blush'            // Pink sky right before sunset (18:00 - 19:00)
+  if (t >= ss && t <= ss + 45) return 'dusk'            // Purple sky right as dusk sets in (19:00 - 19:45)
+
+  // 3. High Day vs. Night
+  return t > sr && t < ss ? 'day' : 'night'
   })
 
   const progress = computed(() => {

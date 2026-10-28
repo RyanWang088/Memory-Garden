@@ -9,7 +9,7 @@ import { apiFetch } from '@/lib/http'
 import { tagColors, tagStyle } from '@/lib/tagColors'
 import { VueDatePicker } from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
-import tulipSvg from '@/assets/foliage/tulip-4.svg'
+import tulipSvg from '@/assets/foliage/tulip-pink-4.svg'
 
 const props = defineProps({
   busy: { type: Boolean, default: false }, // true while the parent is saving

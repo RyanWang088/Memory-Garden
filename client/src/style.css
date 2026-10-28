@@ -316,10 +316,6 @@ p {
   color: var(--bark);
   font-weight: 700;
 }
-.plant.is-highlighted .sprite {
-  /* change ltr to something nicer */
-  filter: brightness(1.25) saturate(1.12) drop-shadow(0 0 8px var(--paper));
-}
 
 .navlabel {
   position: absolute;
