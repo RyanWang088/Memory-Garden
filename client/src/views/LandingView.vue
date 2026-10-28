@@ -123,7 +123,7 @@ onBeforeUnmount(() => { clearInterval(heroTimer); clearInterval(mtTimer) })
                 <img :src="foliageUrl('tulip-3')" alt="" />
               </div>
             </div>
-            <div class="pcard c-journal" :style="shift(12)">
+            <div class="pcard c-planner" :style="shift(12)">
               <div class="pc-date">Friday<small>TO-DO · 23 OCTOBER</small></div>
               <ul class="pc-tasks">
                 <li class="d"><i></i><span>Calculus problem set</span></li>
@@ -215,7 +215,7 @@ onBeforeUnmount(() => { clearInterval(heroTimer); clearInterval(mtTimer) })
             <ul class="feat-list">
               <li><img :src="focusArt" alt="" />Your own rhythm, classic or deep work</li>
               <li><img :src="coinArt" alt="" />+ coins for every block you finish</li>
-              <li><img :src="plannerArt" alt="" />"Focus on this" straight from your journal</li>
+              <li><img :src="plannerArt" alt="" />"Focus on this" straight from your planner</li>
             </ul>
           </div>
           <div class="mini-timer">
@@ -270,7 +270,7 @@ onBeforeUnmount(() => { clearInterval(heroTimer); clearInterval(mtTimer) })
         <div class="foot-grid">
           <div>
             <span class="brand"><img :src="potArt" alt="" width="38" height="38" /><span><span class="brand-name">Sproutly</span><span class="brand-sub">study garden &amp; planner</span></span></span>
-            <p>A study planner, journal and focus timer that turns revision into a garden.</p>
+            <p>A study planner and focus timer that turns revision into a garden.</p>
           </div>
           <div><h4>Get started</h4><ul><li><RouterLink :to="signup">Sign up</RouterLink></li><li><RouterLink :to="{ name: 'auth' }">Log in</RouterLink></li></ul></div>
           <div><h4>Explore</h4><ul><li><button type="button" @click="scrollTo('features')">Garden tools</button></li><li><button type="button" @click="scrollTo('focus')">Focus</button></li></ul></div>
@@ -322,11 +322,11 @@ section { position: relative; }
 .stack { position: relative; height: 520px; perspective: 1400px; z-index: 2; }
 .pcard { position: absolute; border-radius: 20px; background: var(--sheet); box-shadow: var(--shadow-2); transition: transform .7s var(--spring), translate .4s ease, box-shadow .3s; overflow: hidden; }
 .pcard::after { content: ""; position: absolute; inset: 0; background-image: var(--grain); opacity: .14; mix-blend-mode: multiply; pointer-events: none; }
-.pcard.c-journal { width: 300px; height: 380px; left: 4%; top: 60px; transform: rotate(-8deg); padding: 22px 20px; background-image: linear-gradient(90deg, transparent 36px, var(--margin) 36px 37.5px, transparent 37.5px), repeating-linear-gradient(180deg, transparent 0 33px, var(--rule) 33px 34px); background-position: 0 70px; }
+.pcard.c-planner { width: 300px; height: 380px; left: 4%; top: 60px; transform: rotate(-8deg); padding: 22px 20px; background-image: linear-gradient(90deg, transparent 36px, var(--margin) 36px 37.5px, transparent 37.5px), repeating-linear-gradient(180deg, transparent 0 33px, var(--rule) 33px 34px); background-position: 0 70px; }
 .pcard.c-focus { width: 250px; height: 270px; right: 4%; top: 10px; transform: rotate(7deg); background: radial-gradient(circle at 50% 110%, #2b3566, #0f1736 70%); color: #fdf3d6; display: grid; place-items: center; }
 .pcard.c-cal { width: 260px; height: 245px; right: 2%; bottom: 40px; transform: rotate(-3deg); padding: 18px; }
 .pcard.c-garden { width: 200px; height: 245px; left: 30%; bottom: -6px; transform: rotate(5deg); padding: 10px 10px 0; background: #fff; }
-.stack:hover .c-journal, .stack.fan .c-journal { transform: rotate(-12deg) translate(-30px, 10px); }
+.stack:hover .c-planner, .stack.fan .c-planner { transform: rotate(-12deg) translate(-30px, 10px); }
 .stack:hover .c-focus, .stack.fan .c-focus { transform: rotate(11deg) translate(30px, -16px); }
 .stack:hover .c-cal, .stack.fan .c-cal { transform: rotate(2deg) translate(24px, 24px); }
 .stack:hover .c-garden, .stack.fan .c-garden { transform: rotate(-3deg) translate(-10px, 26px); }

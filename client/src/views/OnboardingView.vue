@@ -143,8 +143,8 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
               <div class="avatar-slot" aria-hidden="true"></div>
               <span class="sparkle" style="left: 30%; top: 22%"></span><span class="sparkle" style="right: 28%; top: 30%; animation-delay: -.6s"></span>
             </div>
-            <!-- 2 journal -->
-            <div v-else-if="i === 1" key="a1" class="art a-journal">
+            <!-- 2 planner -->
+            <div v-else-if="i === 1" key="a1" class="art a-planner">
               <div class="mini-book">
                 <div class="pg"><div class="mb-title">Today</div>
                   <div class="mb-task"><i></i><span>Statistics flashcards</span></div>

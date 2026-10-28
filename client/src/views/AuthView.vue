@@ -166,7 +166,7 @@ onMounted(() => { if (next.value) status.value = { tone: 'ok', text: 'Log in to 
         <div :key="headKey" class="fade-swap">
           <h2 v-if="isSignup">Plant your <em>first seed</em></h2>
           <h2 v-else>Welcome <em>back</em></h2>
-          <p class="sub">{{ isSignup ? 'Create a free account. It takes about a minute.' : 'Log in to open your journal and garden.' }}</p>
+          <p class="sub">{{ isSignup ? 'Create a free account. It takes about a minute.' : 'Log in to open your planner and garden.' }}</p>
         </div>
 
         <form novalidate @submit.prevent="submit">
