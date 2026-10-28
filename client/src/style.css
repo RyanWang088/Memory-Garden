@@ -467,10 +467,11 @@ button.product-card.is-picked {
   background-color: var(--peri-soft);
 }
 /* Review sessions (Structured Quiz, Short Structured): page shell, score pill, progress, results stats, claim button */
+/* no background: the meadow scenery (SceneryBackdrop) shows behind the sheet, like the Focus page */
 .review-page {
+  position: relative;
   min-height: 100vh;
   padding: 32px 16px 48px;
-  background: var(--cream);
 }
 .review-container {
   max-width: 720px;

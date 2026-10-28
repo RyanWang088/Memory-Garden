@@ -1,10 +1,12 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useGardenStore } from '@/stores/garden'
 import { useToastStore } from '@/stores/toast'
 import { shuffle } from '@/lib/shuffle'
 import { useStudyTimer } from '@/composables/useStudyTimer'
+import { moodNow } from '@/lib/greeting'
+import SceneryBackdrop from '@/components/SceneryBackdrop.vue'
 
 // "Flexible Deck Mode" review session: flip flashcards, up to 20 cards from one seed.
 // Forgot brings the card back soon, Hard brings it back later; Easy finishes it for today.
@@ -12,9 +14,9 @@ import { useStudyTimer } from '@/composables/useStudyTimer'
 const MAX_CARDS = 20
 const REQUEUE_GAP = { forgot: 3, hard: 6 } // shown again after this many other cards
 const RATINGS = [
-  { value: 'forgot', label: 'Forgot', btn: 'btn-outline-danger' },
-  { value: 'hard', label: 'Hard', btn: 'btn-outline-warning' },
-  { value: 'easy', label: 'Easy', btn: 'btn-outline-success' },
+  { value: 'forgot', label: 'Forgot', next: 'again today' },
+  { value: 'hard', label: 'Hard', next: 'again in 1 day' },
+  { value: 'easy', label: 'Easy', next: 'again in 3 days' },
 ]
 
 const route = useRoute()
@@ -30,6 +32,9 @@ const totalCards = ref(0)
 const doneCount = ref(0)
 const flipped = ref(false)
 const finished = ref(false)
+// the meadow behind the sheet, like the Focus page: the time of day while reviewing, blush on the results
+const mood = computed(() => (finished.value ? 'blush' : moodNow()))
+const narrow = typeof window !== 'undefined' && window.innerWidth < 600
 const counts = ref({ forgot: 0, hard: 0, easy: 0 }) // first rating of each card
 const startedAt = ref(0)
 const elapsedMs = ref(0)
@@ -39,6 +44,8 @@ let nextUid = 0
 
 const seed = computed(() => garden.seeds.find(item => item.id === route.params.id))
 const current = computed(() => queue.value[0])
+// "Card x of y": counts finished cards, so a card that comes back keeps its number
+const cardNumber = computed(() => Math.min(doneCount.value + 1, totalCards.value))
 const timeTaken = computed(() => {
   const seconds = Math.round(elapsedMs.value / 1000)
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
@@ -74,14 +81,38 @@ onMounted(async () => {
 
 onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
-function showAnswer() {
-  flipped.value = true
+// The whole card turns over in two halves: edge-on (shrinking a little, so the meadow shows), swap to the
+// answer, then back in from the other side. Reduced motion gets a quick fade instead.
+const TURN_MS = 250
+const cardEl = ref(null)
+const turning = ref(false)
+const reduceMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+function turn(el, from, to, easing) {
+  if (!el) return Promise.resolve()
+  const frames = reduceMotion
+    ? [{ opacity: from === 0 ? 1 : 0 }, { opacity: to === 0 ? 1 : 0 }]
+    : [{ transform: `perspective(2500px) rotateY(${from}deg) scale(${from ? 0.96 : 1})` },
+        { transform: `perspective(2500px) rotateY(${to}deg) scale(${to ? 0.96 : 1})` }]
+  return el.animate(frames, { duration: reduceMotion ? 120 : TURN_MS, easing, fill: 'forwards' }).finished.catch(() => {})
+}
+
+async function showAnswer() {
+  if (flipped.value || turning.value) return
   studyTimer.mark()
+  turning.value = true
+  const el = cardEl.value
+  await turn(el, 0, 90, 'ease-in')
+  flipped.value = true
+  await nextTick()
+  await turn(el, -90, 0, 'ease-out')
+  el?.getAnimations().forEach(a => a.cancel())
+  turning.value = false
 }
 
 function rate(rating) {
   const card = current.value
-  if (!card || !flipped.value) return
+  if (!card || !flipped.value || turning.value) return
   studyTimer.mark()
   if (!firstRatings.has(card.id)) {
     firstRatings.set(card.id, rating)
@@ -106,7 +137,9 @@ function rate(rating) {
 // Space or Enter shows the answer, then 1 / 2 / 3 rates it
 function onKeydown(e) {
   if (finished.value || !current.value || e.ctrlKey || e.metaKey || e.altKey) return
-  if (!flipped.value && (e.key === ' ' || e.key === 'Enter')) {
+  // a focused button (the close button, or the hint, which flips on its own click) keeps its own Space / Enter
+  const onButton = e.target instanceof Element && e.target.closest('button')
+  if (!flipped.value && !onButton && (e.key === ' ' || e.key === 'Enter')) {
     e.preventDefault()
     showAnswer()
   } else if (flipped.value && RATINGS[Number(e.key) - 1]) {
@@ -140,57 +173,58 @@ function backToGarden() {
 
 <template>
   <main class="review-page">
-    <div class="review-container review-sheet">
+    <SceneryBackdrop :mood="mood" :options="{ seed: 31, tulips: narrow ? 3 : 10, butterflies: 2, horizon: 0.64 }" />
+    <!-- flashcards: the card is the whole box -->
+    <div v-if="!loading && totalCards && !finished" class="review-container" data-testid="deck-session">
+      <div :key="current.uid" ref="cardEl" class="deck-card" :class="flipped ? 'is-back' : 'is-front'">
+        <!-- tapping anywhere on the front flips it; the hint is the keyboard / screen reader control,
+             and Space / Enter still work from anywhere (onKeydown) -->
+        <article v-if="!flipped" class="deck-face" data-testid="flashcard-front" @click="showAnswer">
+          <div class="deck-top">
+            <button type="button" class="btn-close deck-close" aria-label="Quit and go back to garden" @click.stop="backToGarden" />
+            <span class="deck-subject">{{ seed.title }}</span>
+            <span class="card-count" data-testid="card-count">Card {{ cardNumber }} of {{ totalCards }}</span>
+          </div>
+          <div class="deck-middle">
+            <h2 class="flashcard-text m-0">{{ current.question }}</h2>
+          </div>
+          <button type="button" class="hand flip-hint" data-testid="show-answer">
+            tap the card to flip <span aria-hidden="true">↻</span>
+          </button>
+        </article>
+
+        <article v-else class="deck-face" data-testid="flashcard-back">
+          <div class="deck-top">
+            <button type="button" class="btn-close deck-close" aria-label="Quit and go back to garden" @click="backToGarden" />
+            <span class="deck-subject">{{ seed.title }}</span>
+            <span class="card-count">Card {{ cardNumber }} of {{ totalCards }}</span>
+          </div>
+          <div class="deck-middle">
+            <p class="hand m-0">Q: {{ current.question }}</p>
+            <h2 class="flashcard-text m-0">{{ current.answer }}</h2>
+          </div>
+          <div class="d-flex flex-column gap-2 w-100">
+            <p class="text-body-strong m-0">How well did you remember it?</p>
+            <div class="d-flex gap-3">
+              <button v-for="(r, i) in RATINGS" :key="r.value" type="button"
+                class="rate-btn flex-fill" :class="`rate-${r.value}`" :data-testid="`rate-${r.value}`"
+                :aria-keyshortcuts="String(i + 1)" @click="rate(r.value)">
+                <span class="rate-label">{{ r.label }}</span>
+                <span class="rate-next">{{ r.next }}</span>
+              </button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <div v-else class="review-container review-sheet">
       <p v-if="loading" role="status">Shuffling your flashcards…</p>
 
       <section v-else-if="!totalCards" class="text-center d-flex flex-column align-items-center gap-3 pt-5">
         <img src="../assets/ui/sprout.svg" width="96" height="96" alt="">
         <p class="text-danger" role="alert">{{ error }}</p>
         <button type="button" class="btn-secondary text-button" @click="backToGarden">Back to garden</button>
-      </section>
-
-      <!-- flashcards -->
-      <section v-else-if="!finished" class="d-flex flex-column gap-4" data-testid="deck-session">
-        <header class="d-flex flex-column gap-2">
-          <div class="d-flex align-items-center gap-3">
-            <button type="button" class="btn-close" aria-label="Quit and go back to garden" @click="backToGarden" />
-            <span class="text-label-field flex-grow-1 bark-muted">{{ seed.title }}</span>
-            <span class="done-pill text-button" data-testid="deck-done">{{ doneCount }} / {{ totalCards }}</span>
-          </div>
-          <div class="progress" role="progressbar" :aria-valuenow="doneCount" aria-valuemin="0" :aria-valuemax="totalCards">
-            <div class="progress-fill deck-progress-fill" :style="{ width: `${(doneCount / totalCards) * 100}%` }" />
-          </div>
-        </header>
-
-        <div :key="current.uid" class="flashcard" :class="{ 'is-flipped': flipped }">
-          <div class="flashcard-inner">
-            <article class="flashcard-face flashcard-front" :inert="flipped" data-testid="flashcard-front">
-              <span class="text-label-caption bark-muted">Question</span>
-              <h2 class="flashcard-text m-0">{{ current.question }}</h2>
-              <button type="button" class="btn-primary border-0 text-button show-answer-btn" data-testid="show-answer"
-                @click="showAnswer">Show answer</button>
-            </article>
-
-            <article class="flashcard-face flashcard-back" :inert="!flipped" data-testid="flashcard-back">
-              <span class="text-label-caption bark-muted">Answer</span>
-              <p class="hand m-0">{{ current.question }}</p>
-              <h2 class="flashcard-text m-0">{{ current.answer }}</h2>
-              <div class="d-flex flex-column gap-2 w-100">
-                <p class="text-body-strong m-0">How well did you remember it?</p>
-                <div class="d-flex gap-2">
-                  <button v-for="(r, i) in RATINGS" :key="r.value" type="button"
-                    class="btn rounded-pill text-button flex-fill" :class="r.btn" :data-testid="`rate-${r.value}`"
-                    :aria-keyshortcuts="String(i + 1)" @click="rate(r.value)">{{ r.label }}</button>
-                </div>
-              </div>
-            </article>
-          </div>
-        </div>
-
-        <p class="text-body-small text-center m-0">
-          {{ flipped ? 'Press 1, 2 or 3 to rate.' : 'Press Space to show the answer.' }}
-          Forgot and Hard cards come back later in the session.
-        </p>
       </section>
 
       <!-- results -->
@@ -236,61 +270,183 @@ function backToGarden() {
   color: var(--bark-muted);
 }
 
-.done-pill {
-  padding: 2px 14px;
-  border-radius: 999px;
-  background: var(--mint);
-  color: var(--bark);
-  font-variant-numeric: tabular-nums;
+/* sits in the card's top-left corner, inside the margin strip left of the coral line */
+.deck-close {
+  position: absolute;
+  top: 18px;
+  left: calc((var(--mx) - 32px) / 2);
+  z-index: 1;
+  box-sizing: border-box;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 2px solid #3e3553;
+  border-radius: 50%;
+  background-color: #ffffff;
+  background-size: 12px;
+  opacity: 1;
 }
 
-.deck-progress-fill {
-  background: var(--mint-deep);
-  transition: width 0.35s var(--spring);
+/* the session card fills the box the notebook sheet used to (the sheet stays for loading and results);
+   ruled like the Figma Flashcard: coral margin at x=56, periwinkle rules every 40px from y=110 */
+.deck-card {
+  --mx: 56px;
+  position: relative;
+  display: flex;
+  min-height: calc(100vh - 80px);
+  border: 2px solid #3e3553;
+  border-radius: 20px;
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(90deg, transparent var(--mx), #ffc4b5 var(--mx) calc(var(--mx) + 1.5px), transparent calc(var(--mx) + 1.5px)),
+    repeating-linear-gradient(180deg, #c9d0fb 0 1.5px, transparent 1.5px 40px);
+  background-position: 0 0, 0 110px;
+  background-size: 100% 100%, 100% calc(100% - 110px);
+  background-repeat: no-repeat;
+  box-shadow: 0 12px 32px rgba(62, 53, 83, 0.16), 3px 4px 0 #3e3553;
 }
 
-/* flip card: both faces share one grid cell, so the card is as tall as the longer face */
-.flashcard {
-  perspective: 1400px;
+.deck-card.is-back,
+.deck-card.is-back .deck-close {
+  background-color: #fdebe2;
 }
 
-.flashcard-inner {
-  display: grid;
-  transform-style: preserve-3d;
-  transition: transform 0.6s var(--spring);
-}
-
-.flashcard.is-flipped .flashcard-inner {
-  transform: rotateY(180deg);
-}
-
-.flashcard-face {
-  grid-area: 1 / 1;
+.deck-face {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
   gap: 20px;
-  min-height: 340px;
-  padding: 28px 24px;
-  border: 2px solid var(--linen);
-  border-radius: 20px;
-  background: var(--paper);
-  box-shadow: 0 8px 24px -6px var(--shadow-card), 0 4px 0 var(--linen);
+  padding: 26px 40px 32px calc(var(--mx) + 24px);
   text-align: center;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
 }
 
-.flashcard-back {
-  transform: rotateY(180deg);
+.deck-card.is-front .deck-face {
+  cursor: pointer;
 }
 
-.flashcard-text {
+.flip-hint {
+  padding: 2px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+}
+
+.flip-hint:focus-visible {
+  outline: 3px solid #c9d0fb;
+}
+
+.deck-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+}
+
+.deck-middle {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  width: 100%;
+}
+
+/* same look the seed title had on the sheet (.review-sheet .text-label-field) */
+.deck-subject {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--f-body);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* Figma Label/Caps, e.g. "CARD 4 OF 12" */
+.card-count {
+  font-family: var(--f-body);
+  font-weight: 800;
+  font-size: 11px;
+  line-height: 14px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6e6584;
+  font-variant-numeric: tabular-nums;
+}
+
+/* type from the Figma Flashcard component */
+.deck-card .flashcard-text {
   overflow-wrap: anywhere;
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: 32px;
+  line-height: 38px;
+  letter-spacing: -0.005em;
+  color: #3e3553;
 }
 
-.show-answer-btn,
+.deck-card .hand {
+  font-family: var(--f-hand);
+  font-weight: 400;
+  font-size: 19px;
+  line-height: 20px;
+  letter-spacing: 0;
+  color: #6e6584;
+}
+
+/* rating buttons from the Figma Rating Button component (without its weather icons) */
+.rate-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-basis: 0;
+  min-width: 0;
+  min-height: 84px;
+  padding: 14px 8px;
+  border: 2px solid #3e3553;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 3px 3px 0 #3e3553;
+  transition: background-color 0.15s, transform 0.15s var(--spring), box-shadow 0.15s;
+}
+
+.rate-forgot:hover { background: #c9d0fb; }
+.rate-hard:hover { background: #f5eee3; }
+.rate-easy:hover { background: #fce2a6; }
+
+.rate-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #3e3553;
+}
+
+.rate-btn:focus-visible {
+  outline: 3px solid #c9d0fb;
+  outline-offset: 3px;
+}
+
+.rate-label {
+  font-family: var(--f-body);
+  font-weight: 800;
+  font-size: 18px;
+  line-height: 24px;
+  color: #3e3553;
+}
+
+.rate-next {
+  font-family: var(--f-hand);
+  font-weight: 400;
+  font-size: 19px;
+  line-height: 20px;
+  color: #6e6584;
+}
+
 .finish-btn {
   justify-content: center;
   width: 100%;
@@ -319,9 +475,8 @@ function backToGarden() {
 
 .stat .text-stat { color: var(--ink); }
 
-@media (prefers-reduced-motion: reduce) {
-  .flashcard-inner {
-    transition: none;
-  }
+@media (max-width: 480px) {
+  .deck-card { --mx: 44px; min-height: calc(100vh - 48px); }
+  .deck-face { padding: 20px 16px 24px calc(var(--mx) + 14px); }
 }
 </style>

@@ -6,6 +6,8 @@ import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
 import { shuffle } from '@/lib/shuffle'
 import { useStudyTimer } from '@/composables/useStudyTimer'
+import { moodNow } from '@/lib/greeting'
+import SceneryBackdrop from '@/components/SceneryBackdrop.vue'
 import { ding, fanfare } from '@/lib/beep'
 import ConfettiBurst from '@/components/ConfettiBurst.vue'
 import SproutIcon from '@/components/SproutIcon.vue'
@@ -31,6 +33,9 @@ const chosen = ref(null) // option index picked for the current question
 const correctCount = ref(0)
 const streak = ref(0) // correct answers in a row; a wrong answer resets it
 const finished = ref(false)
+// the meadow behind the sheet, like the Focus page: the time of day while reviewing, blush on the results
+const mood = computed(() => (finished.value ? 'blush' : moodNow()))
+const narrow = typeof window !== 'undefined' && window.innerWidth < 600
 const startedAt = ref(0)
 const elapsedMs = ref(0)
 const confetti = ref(null) // <ConfettiBurst>, rained on a score of 75%+
@@ -185,6 +190,7 @@ function backToGarden() {
 
 <template>
   <main class="review-page">
+    <SceneryBackdrop :mood="mood" :options="{ seed: 31, tulips: narrow ? 3 : 10, butterflies: 2, horizon: 0.64 }" />
     <div class="review-container review-sheet">
       <p v-if="loading" role="status">Getting your questions ready…</p>
 
