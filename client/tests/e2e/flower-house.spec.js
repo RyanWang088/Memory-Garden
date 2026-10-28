@@ -52,7 +52,7 @@ test('profile shows the stats, 12 open shelf slots and a locked third row', asyn
   await expect(page.getByTestId('stat-streak')).toContainText('3')
   await expect(page.getByTestId('stat-best-streak')).toContainText('7')
   await expect(page.getByTestId('stat-studied')).toContainText('2.5h')
-  await expect(page.getByTestId('stat-blooms-kept')).toContainText('0')
+  await expect(page.getByTestId('stat-blooms-kept')).toContainText('1') // one flower on the shelf
 
   await expect(page.getByTestId('shelf-flower')).toHaveCount(1)
   await expect(page.getByTestId('shelf-empty')).toHaveCount(11)
