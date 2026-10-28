@@ -139,8 +139,8 @@ function backToGarden() {
 </script>
 
 <template>
-  <main class="deck-page">
-    <div class="deck-container">
+  <main class="review-page">
+    <div class="review-container review-sheet">
       <p v-if="loading" role="status">Shuffling your flashcards…</p>
 
       <section v-else-if="!totalCards" class="text-center d-flex flex-column align-items-center gap-3 pt-5">
@@ -173,7 +173,7 @@ function backToGarden() {
 
             <article class="flashcard-face flashcard-back" :inert="!flipped" data-testid="flashcard-back">
               <span class="text-label-caption bark-muted">Answer</span>
-              <p class="text-body-small m-0">{{ current.question }}</p>
+              <p class="hand m-0">{{ current.question }}</p>
               <h2 class="flashcard-text m-0">{{ current.answer }}</h2>
               <div class="d-flex flex-column gap-2 w-100">
                 <p class="text-body-strong m-0">How well did you remember it?</p>
@@ -201,19 +201,19 @@ function backToGarden() {
         </div>
 
         <div class="stats d-flex flex-wrap gap-3 w-100 justify-content-center">
-          <div class="stat stat-forgot">
+          <div class="stat">
             <span class="text-label-field">Forgot</span>
             <span class="text-stat">{{ counts.forgot }}</span>
           </div>
-          <div class="stat stat-hard">
+          <div class="stat">
             <span class="text-label-field">Hard</span>
             <span class="text-stat">{{ counts.hard }}</span>
           </div>
-          <div class="stat stat-easy">
+          <div class="stat">
             <span class="text-label-field">Easy</span>
             <span class="text-stat">{{ counts.easy }}</span>
           </div>
-          <div class="stat stat-time">
+          <div class="stat">
             <span class="text-label-field">Time</span>
             <span class="text-stat">{{ timeTaken }}</span>
           </div>
@@ -232,17 +232,6 @@ function backToGarden() {
 </template>
 
 <style scoped>
-.deck-page {
-  min-height: 100vh;
-  padding: 32px 16px 48px;
-  background: var(--cream);
-}
-
-.deck-container {
-  max-width: 720px;
-  margin: 0 auto;
-}
-
 .bark-muted {
   color: var(--bark-muted);
 }
@@ -322,38 +311,13 @@ function backToGarden() {
   flex: 1 1 120px;
   max-width: 160px;
   padding: 14px 8px;
-  border: 2px solid;
+  border: 2px solid var(--linen);
   border-radius: 16px;
+  background: var(--paper);
   color: var(--bark-muted);
 }
 
-.stat-forgot {
-  border-color: var(--bs-danger);
-  background: color-mix(in srgb, var(--bs-danger) 10%, var(--paper));
-}
-
-.stat-forgot .text-stat { color: var(--bs-danger); }
-
-.stat-hard {
-  border-color: var(--bs-warning);
-  background: color-mix(in srgb, var(--bs-warning) 14%, var(--paper));
-}
-
-.stat-hard .text-stat { color: var(--butter-deep); }
-
-.stat-easy {
-  border-color: var(--bs-success);
-  background: color-mix(in srgb, var(--bs-success) 10%, var(--paper));
-}
-
-.stat-easy .text-stat { color: var(--bs-success); }
-
-.stat-time {
-  border-color: var(--periwinkle);
-  background: var(--peri-soft);
-}
-
-.stat-time .text-stat { color: color-mix(in srgb, var(--periwinkle) 55%, var(--bark)); }
+.stat .text-stat { color: var(--ink); }
 
 @media (prefers-reduced-motion: reduce) {
   .flashcard-inner {

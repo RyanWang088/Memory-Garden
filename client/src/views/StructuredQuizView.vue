@@ -185,7 +185,7 @@ function backToGarden() {
 
 <template>
   <main class="review-page">
-    <div class="review-container">
+    <div class="review-container review-sheet">
       <p v-if="loading" role="status">Getting your questions ready…</p>
 
       <section v-else-if="!questions.length" class="text-center d-flex flex-column align-items-center gap-3 pt-5">
@@ -207,13 +207,13 @@ function backToGarden() {
           </div>
         </header>
 
-        <h2 class="m-0">{{ current.question }}</h2>
+        <h2 class="question m-0">{{ current.question }}</h2>
 
         <div class="d-flex flex-column gap-3" role="group" aria-label="Answer options">
           <button v-for="(option, i) in current.options" :key="`${current.id}-${i}`" type="button" class="option"
             :class="optionState(i)" :disabled="chosen !== null" :data-testid="`quiz-option-${i}`" @click="choose(i)">
             <span class="option-letter text-button" aria-hidden="true">{{ LETTERS[i] }}</span>
-            <span class="text-body-strong text-start">{{ option }}</span>
+            <span class="option-text text-start">{{ option }}</span>
           </button>
         </div>
 
@@ -248,15 +248,15 @@ function backToGarden() {
         </div>
 
         <div class="stats d-flex gap-3 w-100 justify-content-center">
-          <div class="review-stat stat-coins">
+          <div class="review-stat">
             <span class="text-label-field">Coins</span>
             <span class="text-stat" data-testid="quiz-reward">+{{ reward }}</span>
           </div>
-          <div class="review-stat stat-accuracy">
+          <div class="review-stat">
             <span class="text-label-field">Accuracy</span>
             <span class="text-stat">{{ accuracy }}%</span>
           </div>
-          <div class="review-stat stat-time">
+          <div class="review-stat">
             <span class="text-label-field">Time</span>
             <span class="text-stat">{{ timeTaken }}</span>
           </div>
@@ -279,6 +279,21 @@ function backToGarden() {
 <style scoped>
 .bark-muted {
   color: var(--bark-muted);
+}
+
+.question {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: clamp(1.4rem, 3.5vw, 1.75rem);
+  line-height: 1.3;
+  letter-spacing: -.01em;
+}
+
+.option-text {
+  font-family: var(--f-body);
+  font-weight: 600;
+  font-size: 1.05rem;
+  line-height: 1.4;
 }
 
 .option {
@@ -404,27 +419,6 @@ function backToGarden() {
 .tier-mid .ring-label { color: var(--butter-deep); }
 .tier-low .ring-fill { stroke: var(--berry); }
 .tier-low .ring-label { color: var(--berry-ink); }
-
-.stat-coins {
-  border-color: var(--butter);
-  background: color-mix(in srgb, var(--butter) 25%, var(--paper));
-}
-
-.stat-coins .text-stat { color: var(--butter-deep); }
-
-.stat-accuracy {
-  border-color: var(--peach);
-  background: color-mix(in srgb, var(--peach) 22%, var(--paper));
-}
-
-.stat-accuracy .text-stat { color: var(--berry-ink); }
-
-.stat-time {
-  border-color: var(--periwinkle);
-  background: var(--peri-soft);
-}
-
-.stat-time .text-stat { color: color-mix(in srgb, var(--periwinkle) 55%, var(--bark)); }
 
 @media (max-width: 480px) {
   .stats {

@@ -159,7 +159,7 @@ function backToGarden() {
 
 <template>
   <main class="review-page" @keydown="onKeydown">
-    <div class="review-container">
+    <div class="review-container review-sheet">
       <p v-if="loading" role="status">Getting your questions ready…</p>
 
       <section v-else-if="!questions.length" class="text-center d-flex flex-column align-items-center gap-3 pt-5">
@@ -184,14 +184,14 @@ function backToGarden() {
         <!-- host: a speech box with the taunt above the question -->
         <div class="host d-flex gap-3 align-items-stretch">
           <div class="speech d-flex flex-column gap-2 flex-grow-1">
-            <p class="taunt text-body-strong m-0" data-testid="short-taunt">Let's see how well you know {{ seed.title }}!</p>
+            <p class="taunt hand m-0" data-testid="short-taunt">Let's see how well you know {{ seed.title }}!</p>
             <h2 class="m-0">{{ current.question }}</h2>
           </div>
         </div>
 
         <label class="d-flex flex-column gap-2">
           <span class="text-label-field">Your answer</span>
-          <textarea v-model="response" class="answer-box" rows="5" :maxlength="MAX_RESPONSE" :disabled="marking || !!mark"
+          <textarea v-model="response" class="answer-box hand" rows="5" :maxlength="MAX_RESPONSE" :disabled="marking || !!mark"
             placeholder="Type your answer… (Ctrl+Enter to check)" data-testid="short-answer" />
         </label>
 
@@ -206,14 +206,14 @@ function backToGarden() {
         <template v-else>
           <div class="verdict d-flex flex-column gap-2" :class="`is-${verdict.tone}`" role="status" data-testid="short-verdict">
             <span class="text-body-strong">{{ verdict.label }} · {{ mark.score }}%</span>
-            <p class="m-0">{{ mark.feedback }}</p>
+            <p class="hand m-0">{{ mark.feedback }}</p>
             <span v-if="verdict.tone === 'correct'" class="petals" aria-hidden="true">
               <span v-for="i in PETALS" :key="i" class="petal" :style="{ '--angle': `${(360 / PETALS) * i}deg` }" />
             </span>
           </div>
           <div class="model-answer d-flex flex-column gap-1">
             <span class="text-label-caption bark-muted">Model answer</span>
-            <p class="m-0">{{ current.answer }}</p>
+            <p class="hand m-0">{{ current.answer }}</p>
           </div>
           <button type="button" class="btn-primary border-0 text-button w-auto align-self-end" data-testid="short-next" @click="next">
             {{ isLast ? 'See results' : 'Next question' }}

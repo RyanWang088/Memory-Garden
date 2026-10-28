@@ -49,14 +49,14 @@ function backToGarden() {
       <template v-else-if="seed">
         <header class="text-center">
           <img src="../assets/ui/sprout.svg" width="72" height="72" alt="" class="mx-auto d-block goal-hero">
-          <h2 id="goal-title" class="mt-2 mb-1">Choose a goal for this session</h2>
+          <h2 id="goal-title" class="goal-title mt-2 mb-1">Choose a goal for this session</h2>
           <p class="text-body-small m-0">{{ seed.title }} · {{ seed.cards.length }} cards · Mastery {{ seed.mastery }}%</p>
         </header>
 
         <button type="button" class="goal-option" data-testid="goal-structured-quiz" @click="startStructuredQuiz">
           <span class="goal-icon" aria-hidden="true">🎯</span>
           <span class="d-flex flex-column text-start">
-            <span class="text-button">Structured Quiz Mode</span>
+            <span class="goal-name">Structured Quiz Mode</span>
             <span class="text-body-small">Up to 10 quick multiple-choice questions.</span>
           </span>
         </button>
@@ -64,7 +64,7 @@ function backToGarden() {
         <button type="button" class="goal-option" data-testid="goal-flexible-deck" @click="startFlexibleDeck">
           <span class="goal-icon" aria-hidden="true">🌱</span>
           <span class="d-flex flex-column text-start">
-            <span class="text-button">Flexible Deck Mode</span>
+            <span class="goal-name">Flexible Deck Mode</span>
             <span class="text-body-small">Flip through up to 20 flashcards.</span>
           </span>
         </button>
@@ -72,7 +72,7 @@ function backToGarden() {
         <button type="button" class="goal-option" data-testid="goal-short-structured" @click="startShortStructured">
           <span class="goal-icon" aria-hidden="true">✍️</span>
           <span class="d-flex flex-column text-start">
-            <span class="text-button">Short Structured Mode</span>
+            <span class="goal-name">Short Structured Mode</span>
             <span class="text-body-small">Think you've mastered 'em all? Try this out</span>
           </span>
         </button>
@@ -86,7 +86,21 @@ function backToGarden() {
 </template>
 
 <style scoped>
-.goal-dialog { background: var(--cream); animation: pop-in .35s var(--spring) both; }
+.goal-dialog { background: var(--paper); animation: pop-in .35s var(--spring) both; }
+/* same type as the quiz: question in Fraunces, options in Nunito (StructuredQuizView .question / .option-text) */
+.goal-title {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: clamp(1.4rem, 3.5vw, 1.75rem);
+  line-height: 1.3;
+  letter-spacing: -.01em;
+}
+.goal-name {
+  font-family: var(--f-body);
+  font-weight: 600;
+  font-size: 1.05rem;
+  line-height: 1.4;
+}
 .goal-hero { animation: bob 2.4s ease-in-out infinite; }
 @keyframes pop-in { from { opacity: 0; transform: translateY(12px) scale(.96); } }
 @keyframes bob { 50% { transform: translateY(-4px) rotate(-3deg); } }
