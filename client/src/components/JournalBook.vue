@@ -445,7 +445,7 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 
 .book {
   --cloth: #3d6b4c; --cloth-2: #31593f;
-  --page-h: clamp(520px, calc(100vh - 290px), 760px);
+  --page-h: clamp(560px, calc(100vh - 180px), 820px);
   position: relative; margin: 0 auto; max-width: 1220px;
   perspective: 2600px;
   transition: transform 1.1s var(--ease);
@@ -475,6 +475,7 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 }
 .page::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0; background-image: var(--grain); opacity: .16; mix-blend-mode: multiply; border-radius: inherit; }
 .page > * { position: relative; z-index: 1; }
+.page > .sp-tape { position: absolute; z-index: 3; }
 .page-left {
   border-radius: 10px 3px 3px 10px;
   background-image: linear-gradient(90deg, rgba(255,255,255,.5) 0, transparent 4%, transparent 86%, rgba(110, 80, 50, .07) 95%, rgba(110, 80, 50, .2) 100%);
@@ -497,12 +498,12 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 }
 .book.is-closed .book-board::after { opacity: 0; }
 
-.page-inner { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: clamp(18px, 3cqi, 34px) clamp(18px, 3.4cqi, 42px) 22px; }
+.page-inner { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: clamp(14px, 2cqi, 22px) clamp(18px, 3.4cqi, 42px) 22px; }
 .page-left .page-inner { padding-right: clamp(26px, 4cqi, 52px); }
 .page-right .page-inner { padding-left: clamp(26px, 4cqi, 52px); }
 
 .sp-tape.t1 { top: -8px; left: 22%; transform: rotate(-4deg); }
-.sp-tape.t2 { top: -9px; right: 14%; transform: rotate(5deg); }
+.sp-tape.t2 { top: -9px; left: -14%; transform: rotate(5deg); }
 .ribbon { position: absolute; z-index: 7; left: calc(50% + 34px); bottom: -30px; width: 14px; height: 74px; pointer-events: none; transform-origin: top center; animation: ribbon-sway 6s ease-in-out infinite alternate; }
 .ribbon::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #b13a51, #e0546a 45%, #c7445c); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 10px), 0 100%); }
 @keyframes ribbon-sway { from { transform: rotate(-.6deg); } to { transform: rotate(.8deg); } }

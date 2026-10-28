@@ -64,7 +64,7 @@ const meter = [
 ]
 
 const heading = computed(() => (isSignup.value
-  ? { title: 'Every garden starts with', em: 'one seed', lede: 'Plan your week in a journal, focus in short blocks, and grow a flower for every subject you study.' }
+  ? { title: 'Every garden starts with', em: 'one seed', lede: 'Plan your week in a planner, focus in short blocks, and grow a flower for every subject you study.' }
   : { title: 'Your garden', em: 'missed you', lede: "Pick up where you left off: today's tasks, a focus session and the seeds that need watering." }))
 
 const headKey = ref(0)
@@ -111,7 +111,7 @@ onMounted(() => { if (next.value) status.value = { tone: 'ok', text: 'Log in to 
     <div class="sp-page-top" style="max-width: 1000px">
       <RouterLink class="brand" :to="{ name: 'landing' }" aria-label="Sproutly home">
         <img :src="potArt" alt="" width="38" height="38" />
-        <span><span class="brand-name">Sproutly</span><span class="brand-sub">study garden &amp; journal</span></span>
+        <span><span class="brand-name">Sproutly</span><span class="brand-sub">study garden &amp; planner</span></span>
       </RouterLink>
       <RouterLink class="sp-pill-link" :to="{ name: 'landing' }">‹ Back to home</RouterLink>
     </div>

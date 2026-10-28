@@ -1,105 +1,34 @@
 <script setup>
-import { computed, onMounted, watchEffect, ref } from 'vue'
+import { onMounted } from 'vue'
 import { useGardenStore } from '@/stores/garden'
+import SceneryBackdrop from '@/components/SceneryBackdrop.vue'
+import JournalBook from '@/components/JournalBook.vue'
 
-// full calendar from fullcalendar.io v7
-import FullCalendar from "@fullcalendar/vue3";
-import themePlugin from "@fullcalendar/vue3/themes/monarch"; // YOUR THEME
-import dayGridPlugin from "@fullcalendar/vue3/daygrid";
-import interactionPlugin from "@fullcalendar/vue3/interaction";
-
-  // stylesheets
-import '@fullcalendar/vue3/skeleton.css'; // ALWAYS NEED SKELETON
-import '@fullcalendar/vue3/themes/monarch/theme.css'; // YOUR THEME
-import '@fullcalendar/vue3/themes/monarch/palettes/purple.css'; // YOUR THEME'S PALETTE
-
-  
-// Book-flip styling goes here later. Data side: group seeds by subject with an aggregate readiness score.
+// Planner page: the open book (to-do + calendar). Exams, subjects and reviews due come from the garden.
 const garden = useGardenStore()
-onMounted(() => { if (!garden.loaded) garden.fetchSeeds() })
 
-const subjects = computed(() => [...new Set(garden.seeds.filter(s1=>!s1.in_house).map(s => { 
+// the cover swings open slowly the first time in a visit, quickly after that
+let seen = false
+try { seen = sessionStorage.getItem('sproutly.coverSeen') === '1'; sessionStorage.setItem('sproutly.coverSeen', '1') } catch { /* ignore */ }
 
-  return s.subject
-  
-
-}))])
-// TODO: milestones/deadlines -> add a `milestones` table 
-const milestones = computed(()=>
-  [...new Set(garden.seeds.filter(s=>!s.in_house).map(s=>{
-    return {title:s.subject,start:s.exam_date,end:s.exam_date}
-  }))]
-) 
-// const nextReviewDates = computed(()=>
-// [...new Set(garden.seeds.map(s=>({title:s.title,
-//   start:s.cards.map(c=>c.next_review).sort((a,b)=>Date(a?.next_review)-Date(b?.next_review))[0] || new Date().toISOString(),
-//   end:s.cards.map(c=>c.next_review).sort((a,b)=>Date(a?.next_review)-Date(b?.next_review))[0] || new Date().toISOString(),
-// })
-// ))] // anything with no next review date is placed at now
-// )
-const nextReviewDates = computed(()=>
-  (garden.seeds.map(s=>{
-    const earliest = s.cards.map(c=>c.next_review).filter(Boolean).sort((a,b)=>new Date(a)-new Date(b))[0] || new Date().toISOString()
-    return {title:s.title,start:earliest,end:earliest}
-  }))
-)
-//START
-// SUGGESTED FIX for nextReviewDates (commented out so you can compare):
-// 1. After .map(c=>c.next_review), a and b are already date strings, so a?.next_review is undefined.
-// 2. Date(x) without `new` ignores x and returns the CURRENT time as a string; string - string = NaN.
-//    sort() treats NaN as "equal", so the order never changes and [0] is just the first card, not the earliest.
-// Fix: drop empty dates with .filter(Boolean), compare with new Date(a) - new Date(b) (gives milliseconds),
-// and compute the earliest date once since start and end are the same.
-// const nextReviewDates = computed(()=>
-//   garden.seeds.map(s=>{
-//     const earliest = s.cards.map(c=>c.next_review).filter(Boolean).sort((a,b)=>new Date(a)-new Date(b))[0] || new Date().toISOString()
-//     return {title:s.title, start:earliest, end:earliest}
-//   })
-// ) // anything with no next review date is placed at now
-// END
-const events=computed(()=> milestones.value.concat(nextReviewDates.value))
-const calendarOptions = computed(()=> ({
-  plugins: [themePlugin, dayGridPlugin, interactionPlugin],
-  initialView: "dayGridMonth",
-  headerToolbar:{start:'title', right:'prev,next'},
-  events:events.value
- })) // calendarOptions from full calendar, passed in exam dates
-watchEffect(()=>{
-  console.log(milestones.value)
-  // console.log(nextReviewDates.value)
-  console.log(events.value)
-}) //testing, milestone updates later once fetchSeeds() runs
-  
-
+const narrow = typeof window !== 'undefined' && window.innerWidth < 600
+onMounted(() => { if (!garden.loaded) garden.fetchSeeds().catch(() => {}) })
 </script>
 
 <template>
-  <main class="container py-4" data-testid="planner">
-    <h2>Planner</h2>
-    <p v-if="!subjects.length" class="text-muted">No subjects yet. Plant a seed in the garden to start tracking progress.</p>
-    <table v-else class=" table table-bordered">
-      <thead class="table-primary">
-        <tr>
-      <th><span class="text-muted">Subject</span></th>
-      <th><span class="text-muted">Readiness</span></th>
-      <!-- <th><span class="text-muted">Exam Date</span></th> -->
-      </tr>
-    </thead>
-      <tbody>
-        <tr v-for="s in subjects" :key="s">
-          <td><strong>{{ s }}</strong></td>
-          <td>{{ garden.readiness(s) }}%</td>
-          
-        </tr>
-      </tbody>
-    </table>
-    <!-- <div v-for="s in subjects" :key="s" class="mb-3">
-      <strong>{{ s }}</strong> <span class="text-muted">readiness {{ garden.readiness(s) }}%</span>
-
-    </div> -->
-    <h4 class="mt-4">Upcoming milestones</h4>
-    <p class="text-muted">TODO</p>
-    
-    <FullCalendar :options="calendarOptions" />
+  <main class="journal-main" data-testid="journal">
+    <SceneryBackdrop
+      mood="blush"
+      :options="{ seed: 11, horizon: 0.56, tulips: narrow ? 2 : 8, butterflies: 2, veil: 'linear-gradient(180deg, rgba(252,246,236,0) 30%, rgba(252,246,236,.25) 100%)' }"
+    />
+    <JournalBook cover :auto-open="seen ? 60 : 900" />
   </main>
 </template>
+
+<style scoped>
+.journal-main {
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(var(--dock-h) + 28px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  max-width: 1260px; margin: 0 auto;
+}
+@media (min-width: 768px) { .journal-main { padding-bottom: 40px; } }
+</style>

@@ -12,7 +12,7 @@ const route = useRoute()
 const router = useRouter()
 
 const NAV_ITEMS = [
-  { to: 'journal', label: 'Journal', art: 'journal' },
+  { to: 'planner', label: 'Planner', art: 'journal' },
   { to: 'garden', label: 'Garden', art: 'garden' },
   { to: 'pomodoro', label: 'Focus', art: 'focus' },
 ]
@@ -40,7 +40,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
     <div class="topbar-inner">
       <RouterLink :to="{ name: 'garden' }" class="brand" aria-label="Sproutly, go to your garden">
         <img :src="potArt" alt="" width="38" height="38" />
-        <span><span class="brand-name">Sproutly</span><span class="brand-sub d-none d-md-block">study garden &amp; journal</span></span>
+        <span><span class="brand-name">Sproutly</span><span class="brand-sub d-none d-md-block">study garden &amp; planner</span></span>
       </RouterLink>
 
       <ul class="navlinks d-none d-md-flex">
