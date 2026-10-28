@@ -18,9 +18,9 @@ const routes = [
   { path: '/review/:id/structured-quiz', name: 'structured-quiz', component: () => import('@/views/StructuredQuizView.vue'), meta: { requiresAuth: true } },
   { path: '/review/:id/short-structured', name: 'short-structured', component: () => import('@/views/ShortStructuredView.vue'), meta: { requiresAuth: true } },
   { path: '/review/:id/flexible-deck', name: 'flexible-deck', component: () => import('@/views/FlexibleDeckView.vue'), meta: { requiresAuth: true } },
-  // Journal: to-do list (left page) + month calendar with exams and reviews due (right page). Replaces the planner.
-  { path: '/journal', name: 'journal', component: () => import('@/views/JournalView.vue'), meta: { requiresAuth: true, showNav: true } },
-  { path: '/planner', redirect: '/journal' },
+  // Planner: to-do list (left page) + month calendar with exams and reviews due (right page).
+  { path: '/planner', name: 'planner', component: () => import('@/views/PlannerView.vue'), meta: { requiresAuth: true, showNav: true } },
+  { path: '/journal', redirect: '/planner' },
   { path: '/profile', name: 'profile', component: () => import('@/views/ProfileView.vue'), meta: { requiresAuth: true, showNav: true } },
   { path: '/pomodoro', name: 'pomodoro', component: () => import('@/views/PomodoroView.vue'), meta: { requiresAuth: true, showNav: true } },
   { path: '/:pathMatch(.*)*', redirect: '/' },

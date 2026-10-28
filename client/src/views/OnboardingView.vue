@@ -14,7 +14,7 @@ const router = useRouter()
 
 const STEPS = [
   { name: 'Welcome', art: 'seed' },
-  { name: 'Journal', art: 'sprout' },
+  { name: 'Planner', art: 'sprout' },
   { name: 'Focus', art: 'tulip-3' },
   { name: 'Seeds', art: 'tulip-pink-3' },
   { name: 'About you', art: 'tulip-yellow-3' },
@@ -106,7 +106,7 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
     <div class="sp-page-top">
       <span class="brand">
         <img :src="potArt" alt="" width="38" height="38" />
-        <span><span class="brand-name">Sproutly</span><span class="brand-sub">study garden &amp; journal</span></span>
+        <span><span class="brand-name">Sproutly</span><span class="brand-sub">study garden &amp; planner</span></span>
       </span>
       <button class="sp-pill-link" type="button" data-testid="onboarding-skip" @click="skip">Skip tour</button>
     </div>
@@ -203,11 +203,11 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
               <span class="sp-eyebrow">Welcome</span>
               <h1>Welcome to <em>Sproutly</em></h1>
               <p>A calm study space where your plans, focus time and revision grow into a garden. Here's a quick look around before you plant your first seed.</p>
-              <div class="chips"><span class="sp-chip">Journal</span><span class="sp-chip">To-do list</span><span class="sp-chip">Calendar</span><span class="sp-chip">Focus timer</span><span class="sp-chip">Memory seeds</span></div>
+              <div class="chips"><span class="sp-chip">Planner</span><span class="sp-chip">To-do list</span><span class="sp-chip">Calendar</span><span class="sp-chip">Focus timer</span><span class="sp-chip">Memory seeds</span></div>
             </div>
             <div v-else-if="i === 1" key="s1" class="slide">
-              <span class="sp-eyebrow">Your journal</span>
-              <h1>Plan it in your <em>journal</em></h1>
+              <span class="sp-eyebrow">Your planner</span>
+              <h1>Know your <em>study plan</em></h1>
               <p>An open book with your to-do list on the left and a month calendar on the right. Pick a date and the list follows.</p>
               <ul class="points"><li>Tick tasks off and watch the day's sprout grow.</li><li>Exams from your garden are stamped on the calendar.</li><li>Turn the page corner to flip to next month.</li></ul>
             </div>

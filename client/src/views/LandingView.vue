@@ -32,8 +32,8 @@ const shift = (d) => ({ translate: `${tilt.value.x * d}px ${tilt.value.y * d}px`
 
 /* feature showcase (pill menu + stage, like the cake-shop reference) */
 const FEATURES = [
-  { name: 'Journal', icon: plannerArt, eyebrow: 'Plan', title: 'Open-book journal', spec: 'Left page: to-do · Right page: calendar',
-    text: 'A real two-page journal. Your tasks sit on the left, the month sits on the right, and both pages follow the day you pick.', chips: ['Page-turn months', 'Washi tape', 'Ribbon bookmark'], viz: 'book' },
+  { name: 'Planner', icon: plannerArt, eyebrow: 'Plan', title: 'Open-book planner', spec: 'Left page: to-do · Right page: calendar',
+    text: 'A real two-page planner. Your tasks sit on the left, the month sits on the right, and both pages follow the day you pick.', chips: ['Page-turn months', 'Washi tape', 'Ribbon bookmark'], viz: 'book' },
   { name: 'To-do list', icon: foliageUrl('sprout'), small: true, eyebrow: 'Tasks', title: 'A to-do list that grows', spec: 'Subjects · Due dates · Priorities',
     text: "Write tasks by subject, star the important ones and tick them off with an ink stroke. The day's sprout grows as you go.", chips: ['Double-click to edit', 'Upcoming view', 'Stars for priorities'], viz: 'list' },
   { name: 'Focus timer', icon: focusArt, eyebrow: 'Focus', title: 'Focus in short blocks', spec: 'Your own rhythm · 25/5 classic · 50/10 deep work',
@@ -81,7 +81,7 @@ onBeforeUnmount(() => { clearInterval(heroTimer); clearInterval(mtTimer) })
       <div class="head-inner">
         <RouterLink class="brand" :to="{ name: 'landing' }" aria-label="Sproutly home">
           <img :src="potArt" alt="" width="38" height="38" />
-          <span><span class="brand-name">Sproutly</span><span class="brand-sub">study garden &amp; journal</span></span>
+          <span><span class="brand-name">Sproutly</span><span class="brand-sub">study garden &amp; planner</span></span>
         </RouterLink>
         <ul class="navlinks">
           <li><button type="button" @click="scrollTo('about')">About</button></li>
@@ -102,9 +102,9 @@ onBeforeUnmount(() => { clearInterval(heroTimer); clearInterval(mtTimer) })
         <SceneryBackdrop :page="false" mood="day" :options="{ seed: 3, horizon: narrow ? 0.78 : 0.66, petals: 10, butterflies: 3, clearCenter: true }" />
         <div class="wrap hero-grid">
           <div class="hero-copy">
-            <span class="sp-eyebrow">Study planner · Journal · Focus garden</span>
+            <span class="sp-eyebrow">Study planner · Focus garden</span>
             <h1 id="hero-title"><span class="sp-hand">good habits grow here</span>Study a little. <em>Grow</em> a lot.</h1>
-            <p class="sp-lede">Sproutly is a cozy study space. Plan your days in an open-book journal, focus in short blocks, and turn revision into a garden that blooms before your exams.</p>
+            <p class="sp-lede">Sproutly is a cozy study space. Plan your days in an open-book planner, focus in short blocks, and turn revision into a garden that blooms before your exams.</p>
             <div class="cta-row">
               <RouterLink v-burst class="sp-btn" :to="signup">Start growing <span class="arrow">→</span></RouterLink>
               <button class="sp-btn sp-btn-ghost" type="button" @click="scrollTo('features')">See the garden tools</button>
@@ -155,7 +155,7 @@ onBeforeUnmount(() => { clearInterval(heroTimer); clearInterval(mtTimer) })
             <p class="sp-lede">Students juggle tasks in one app, dates in another and flashcards somewhere else, then lose track of what they've done. Sproutly puts it all in one calm place and makes progress visible, one sprout at a time.</p>
           </div>
           <div class="notes">
-            <article class="note"><span class="sp-tape" aria-hidden="true"></span><span class="was">Tasks scattered across apps and sticky notes</span><span class="now">One journal for tasks and dates</span><p>A to-do list and a month calendar on facing pages. Pick a day and see what's due.</p></article>
+            <article class="note"><span class="sp-tape" aria-hidden="true"></span><span class="was">Tasks scattered across apps and sticky notes</span><span class="now">One planner for tasks and dates</span><p>A to-do list and a month calendar on facing pages. Pick a day and see what's due.</p></article>
             <article class="note"><span class="sp-tape is-leaf" aria-hidden="true"></span><span class="was">Hours of study with nothing to show</span><span class="now">Every focus block earns coins</span><p>A focus timer with breaks built in. Finish a block, earn coins, grow your garden.</p></article>
             <article class="note"><span class="sp-tape is-butter" aria-hidden="true"></span><span class="was">Cramming the night before</span><span class="now">Memory seeds remind you to review</span><p>Flashcards from your notes, timed to your exam. Skip a review and the seed wilts.</p></article>
           </div>
@@ -269,7 +269,7 @@ onBeforeUnmount(() => { clearInterval(heroTimer); clearInterval(mtTimer) })
       <div class="wrap">
         <div class="foot-grid">
           <div>
-            <span class="brand"><img :src="potArt" alt="" width="38" height="38" /><span><span class="brand-name">Sproutly</span><span class="brand-sub">study garden &amp; journal</span></span></span>
+            <span class="brand"><img :src="potArt" alt="" width="38" height="38" /><span><span class="brand-name">Sproutly</span><span class="brand-sub">study garden &amp; planner</span></span></span>
             <p>A study planner, journal and focus timer that turns revision into a garden.</p>
           </div>
           <div><h4>Get started</h4><ul><li><RouterLink :to="signup">Sign up</RouterLink></li><li><RouterLink :to="{ name: 'auth' }">Log in</RouterLink></li></ul></div>

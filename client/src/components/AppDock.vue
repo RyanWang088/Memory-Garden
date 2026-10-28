@@ -6,7 +6,7 @@ const icon = (name) => new URL(`../assets/ui/${name}.svg`, import.meta.url).href
 // Bottom dock (journal look): the main navigation on phones only (hidden from md up).
 const route = useRoute()
 const items = [
-  { to: 'journal', label: 'Journal', art: 'planner' },
+  { to: 'planner', label: 'Planner', art: 'planner' },
   { to: 'garden', label: 'Garden', art: 'sprout' },
   { to: 'pomodoro', label: 'Focus', art: 'focus' },
   { to: 'profile', label: 'Profile & settings', emoji: '🏡' },
