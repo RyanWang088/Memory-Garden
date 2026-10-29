@@ -175,8 +175,8 @@ function backToGarden() {
       </section>
 
       <!-- questions -->
-      <section v-else-if="!finished" class="d-flex flex-column gap-4" data-testid="short-quiz">
-        <header class="d-flex flex-column gap-2">
+      <section v-else-if="!finished" class="quiz d-flex flex-column" data-testid="short-quiz">
+        <header class="quiz-head d-flex flex-column gap-2">
           <div class="d-flex align-items-center gap-3">
             <button type="button" class="btn-close" aria-label="Quit and go back to garden" @click="backToGarden" />
             <span class="text-label-field flex-grow-1 bark-muted">Question {{ index + 1 }} of {{ total }}</span>
@@ -187,13 +187,7 @@ function backToGarden() {
           </div>
         </header>
 
-        <!-- host: a speech box with the taunt above the question -->
-        <div class="host d-flex gap-3 align-items-stretch">
-          <div class="speech d-flex flex-column gap-2 flex-grow-1">
-            <p class="taunt hand m-0" data-testid="short-taunt">Let's see how well you know {{ seed.title }}!</p>
-            <h2 class="question m-0">{{ current.question }}</h2>
-          </div>
-        </div>
+        <h2 class="question m-0">{{ current.question }}</h2>
 
         <label class="d-flex flex-column gap-2">
           <span class="text-label-field">Your answer</span>
@@ -201,7 +195,7 @@ function backToGarden() {
             placeholder="Type your answer… (Ctrl+Enter to check)" data-testid="short-answer" />
         </label>
 
-        <p v-if="markError" class="text-danger m-0" role="alert">{{ markError }}</p>
+        <p v-if="markError" class="text-danger mb-0" role="alert">{{ markError }}</p>
 
         <button v-if="!mark" type="button" class="btn-primary border-0 text-button w-auto align-self-end"
           :disabled="marking" data-testid="short-check" @click="check">
@@ -317,27 +311,27 @@ function backToGarden() {
   background: color-mix(in srgb, var(--berry) 14%, var(--paper));
 }
 
-.speech {
-  min-width: 0;
-  padding: 16px 20px;
-  border: 2px solid var(--linen);
-  border-radius: 16px;
-  background: var(--paper);
-  box-shadow: 0 4px 0 var(--linen);
+/* header and question snap to the sheet's 44px rules, same as StructuredQuizView: the header fills
+   down to the second rule (sheet padding-top is 28px, 20px on phones) and every question line is one
+   rule tall; everything after the question is spaced 24px apart */
+.quiz-head {
+  height: calc(2 * var(--lh) - 28px);
 }
 
-/* same type as the structured quiz's question (StructuredQuizView .question); normal line height
-   since it sits in the speech box, not on the sheet's rules */
 .question {
   font-family: var(--f-display);
   font-weight: 600;
   font-size: clamp(1.4rem, 3.5vw, 1.75rem);
-  line-height: 1.3;
+  line-height: var(--lh);
   letter-spacing: -.01em;
 }
 
-.taunt {
-  color: color-mix(in srgb, var(--periwinkle) 55%, var(--bark));
+.quiz > .question ~ * {
+  margin-top: 24px;
+}
+
+@media (max-width: 480px) {
+  .quiz-head { height: calc(2 * var(--lh) - 20px); }
 }
 
 .model-answer {
