@@ -463,14 +463,51 @@ button.product-card.is-picked {
   background-color: var(--peri-soft);
 }
 /* Review sessions (Structured Quiz, Short Structured): page shell, score pill, progress, results stats, claim button */
+/* no background: the meadow scenery (SceneryBackdrop) shows behind the sheet, like the Focus page */
 .review-page {
+  position: relative;
   min-height: 100vh;
   padding: 32px 16px 48px;
-  background: var(--cream);
 }
 .review-container {
   max-width: 720px;
   margin: 0 auto;
+}
+/* the session is written on a ruled notebook page, like the planner's to-do list (PlannerBook .lined) */
+.review-sheet {
+  --lh: 44px;
+  --margin-x: 44px;
+  min-height: calc(100vh - 80px);
+  padding: 28px 24px 36px calc(var(--margin-x) + 22px);
+  border-radius: 10px 18px 18px 10px;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(90deg, transparent var(--margin-x), var(--margin) var(--margin-x), var(--margin) calc(var(--margin-x) + 1.5px), transparent calc(var(--margin-x) + 1.5px)),
+    repeating-linear-gradient(180deg, transparent 0 calc(var(--lh) - 1px), var(--rule) calc(var(--lh) - 1px) var(--lh));
+  box-shadow: var(--shadow-1);
+}
+.review-sheet h1,
+.review-sheet h2,
+.review-sheet .hand {
+  font-family: var(--f-hand);
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+.review-sheet h1 { font-size: clamp(2.4rem, 6vw, 3rem); line-height: 1.05; }
+.review-sheet h2 { font-size: clamp(1.9rem, 4.5vw, 2.4rem); line-height: 1.15; }
+.review-sheet .hand { font-size: 1.4rem; line-height: 1.25; }
+/* small caps labels, like the planner's "TO-DO" / "THIS WEEK" */
+.review-sheet .text-label-field {
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+@media (max-width: 480px) {
+  .review-page { padding: 16px 8px 32px; }
+  .review-sheet { --margin-x: 26px; padding: 20px 14px 28px calc(var(--margin-x) + 14px); }
 }
 .score-pill {
   padding: 2px 14px;
@@ -483,7 +520,7 @@ button.product-card.is-picked {
   background: var(--mint-deep);
   transition: width 0.35s var(--spring);
 }
-/* a results box; colour it per stat in the component with border-color + background */
+/* a results box: plain paper, no per-stat colour */
 .review-stat {
   display: flex;
   flex-direction: column;
@@ -497,6 +534,7 @@ button.product-card.is-picked {
   background: var(--paper);
   color: var(--bark-muted);
 }
+.review-stat .text-stat { color: var(--ink); }
 .claim-btn {
   justify-content: center;
   width: 100%;

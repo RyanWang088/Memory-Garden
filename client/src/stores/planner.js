@@ -3,10 +3,10 @@ import { ref, computed, watch } from 'vue'
 import { useAuthStore } from './auth'
 import { useGardenStore } from './garden'
 
-// Journal: the to-do list (left page) and the month calendar (right page).
+// Planner: the to-do list (left page) and the month calendar (right page).
 // Tasks are kept per user in this browser (localStorage) for now: there is no `tasks` table yet.
-// Exams and reviews due come from the garden (seeds/subjects in Supabase), the same data the planner used.
-const KEY = (userId) => `sproutly.journal.${userId}`
+// Exams and reviews due come from the garden (seeds/subjects in Supabase).
+const KEY = (userId) => `sproutly.journal.${userId}` // old name kept so tasks already saved in this browser aren't lost
 const LIFE = 'Life'
 // subject colours: a fixed palette, picked by the order subjects appear (Life is always the soft brown)
 const PALETTE = ['#3E8B57', '#4F86C6', '#E0546A', '#8D72D6', '#D99E2B', '#2E9C9C', '#C2618F', '#6B8E23']
@@ -17,7 +17,7 @@ export const isoDay = (d) => {
 }
 const uid = () => Math.random().toString(36).slice(2, 9)
 
-export const useJournalStore = defineStore('journal', () => {
+export const usePlannerStore = defineStore('planner', () => {
   const auth = useAuthStore()
   const garden = useGardenStore()
   const tasks = ref([]) // [{ id, text, subject, date: 'YYYY-MM-DD', done, star }]

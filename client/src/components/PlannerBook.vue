@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { useJournalStore, isoDay } from '@/stores/journal'
+import { usePlannerStore, isoDay } from '@/stores/planner'
 import { useAuthStore } from '@/stores/auth'
 import { usePomodoroStore } from '@/stores/pomodoro'
 import { foliageUrl } from '@/lib/plantSprites'
@@ -9,7 +9,7 @@ import { burst, vBurst } from '@/lib/burst'
 import SproutIcon from '@/components/SproutIcon.vue'
 import potArt from '@/assets/ui/pot.svg'
 
-// The open-book journal: to-do list on the left page, month calendar on the right.
+// The open-book planner: to-do list on the left page, month calendar on the right.
 // Ported from the reviewed Sproutly Interactive HTML (assets/journal.js + book.css).
 //   cover:    starts closed and swings open (autoOpen ms, or click)
 //   compact:  shorter pages, no "Focus on this" (landing page demo)
@@ -25,7 +25,7 @@ const router = useRouter()
 const auth = useAuthStore()
 const pomo = usePomodoroStore()
 
-/* ---------- data source: the journal store, or a local sample for the landing page ---------- */
+/* ---------- data source: the planner store, or a local sample for the landing page ---------- */
 const DAY = 864e5
 const TODAY = new Date(); TODAY.setHours(0, 0, 0, 0)
 const todayIso = isoDay(TODAY)
@@ -57,7 +57,7 @@ function demoSource() {
     remove: (id) => { tasks.value = tasks.value.filter((x) => x.id !== id) },
   })
 }
-const src = props.demo ? demoSource() : useJournalStore()
+const src = props.demo ? demoSource() : usePlannerStore()
 if (!props.demo) src.load()
 
 const flower = computed(() => auth.profile?.onboarding_answers?.flower || 'pink')
@@ -125,7 +125,7 @@ function dayWord(date, long = false) {
   return fmt(parse(date), long ? { weekday: 'long', day: 'numeric', month: 'short' } : { weekday: 'short', day: 'numeric', month: 'short' })
 }
 const title = computed(() => {
-  if (state.filter === 'all') return { main: 'All tasks', small: `${src.tasks.length} written in this journal` }
+  if (state.filter === 'all') return { main: 'All tasks', small: `${src.tasks.length} written in this planner` }
   const { start, end, from, to } = range.value
   if (state.filter === 'month') {
     const thisMonth = todayIso >= from && todayIso <= to
@@ -271,7 +271,7 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 <template>
   <div class="book-wrap">
     <div class="book" :class="{ compact, 'is-closed': closed, 'is-open': !closed, 'is-settled': settled }" :data-side="state.side">
-      <div class="book-tabs" role="tablist" aria-label="Journal pages">
+      <div class="book-tabs" role="tablist" aria-label="Planner pages">
         <button type="button" role="tab" :aria-selected="state.side === 'left'" @click="setSide('left')">To-do</button>
         <button type="button" role="tab" :aria-selected="state.side === 'right'" @click="setSide('right')">Calendar</button>
       </div>
@@ -311,13 +311,13 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
                   <li v-if="row.divider" class="day-divider" :class="{ picked: row.picked }">{{ row.label }}</li>
                   <li
                     v-else class="task" :class="{ done: row.task.done, removing: removing.has(row.task.id) }"
-                    :style="{ animationDelay: `${Math.min(i * 45, 400)}ms` }" data-testid="journal-task"
+                    :style="{ animationDelay: `${Math.min(i * 45, 400)}ms` }" data-testid="planner-task"
                   >
                     <button
-                      type="button" class="check" role="checkbox" :aria-checked="row.task.done"
+                      type="button" class="sp-check" :class="{ 'is-ticked': row.task.done }" role="checkbox" :aria-checked="row.task.done"
                       :aria-label="`Mark “${row.task.text}” ${row.task.done ? 'not done' : 'done'}`" @click="toggle(row.task, $event)"
                     >
-                      <svg viewBox="0 0 30 30" aria-hidden="true"><circle class="ring" cx="15" cy="15" r="12" /><path class="ring-ink" d="M15 3.2C22 3 27.2 8.4 26.8 15.3 26.4 22 21 27 14.6 26.8 8 26.6 3 21.4 3.3 14.8 3.6 8.2 9 3.4 16 3.6" /><path class="tick" d="M9.5 15.5l3.8 3.8 7.4-8.3" /></svg>
+                      <svg viewBox="0 0 30 30" aria-hidden="true"><circle class="sp-check-ring" cx="15" cy="15" r="12" /><path class="sp-check-ink" d="M15 3.2C22 3 27.2 8.4 26.8 15.3 26.4 22 21 27 14.6 26.8 8 26.6 3 21.4 3.3 14.8 3.6 8.2 9 3.4 16 3.6" /><path class="sp-check-tick" d="M9.5 15.5l3.8 3.8 7.4-8.3" /></svg>
                     </button>
                     <div class="t-main">
                       <span
@@ -347,7 +347,7 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
               <label class="sr-only" :for="`${demo ? 'demo' : 'j'}-new`">New task</label>
               <input
                 :id="`${demo ? 'demo' : 'j'}-new`" ref="addInput" v-model="draft.text" class="sp-input" :class="{ 'is-invalid': draftInvalid }"
-                maxlength="90" placeholder="Write a new task…" enterkeyhint="done" data-testid="journal-new-task"
+                maxlength="90" placeholder="Write a new task…" enterkeyhint="done" data-testid="planner-new-task"
               />
               <label class="sr-only" :for="`${demo ? 'demo' : 'j'}-subj`">Subject</label>
               <select :id="`${demo ? 'demo' : 'j'}-subj`" v-model="draft.subject" class="sp-input">
@@ -355,7 +355,7 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
               </select>
               <label class="sr-only" :for="`${demo ? 'demo' : 'j'}-date`">Due date</label>
               <input :id="`${demo ? 'demo' : 'j'}-date`" v-model="draft.date" class="sp-input" type="date" />
-              <button class="add-btn" type="submit" aria-label="Add task" data-testid="journal-add">
+              <button class="add-btn" type="submit" aria-label="Add task" data-testid="planner-add">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
               </button>
             </form>
@@ -373,7 +373,7 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
                   <div class="cal-nav">
                     <button class="sp-chip" type="button" @click="select(todayIso)">Today</button>
                     <button class="sp-icon-btn" type="button" aria-label="Previous month" @click="turn(-1)"><SproutIcon glyph="chevron-left" :size="18" /></button>
-                    <button class="sp-icon-btn" type="button" aria-label="Next month" data-testid="journal-next-month" @click="turn(1)"><SproutIcon glyph="chevron-right" :size="18" /></button>
+                    <button class="sp-icon-btn" type="button" aria-label="Next month" data-testid="planner-next-month" @click="turn(1)"><SproutIcon glyph="chevron-right" :size="18" /></button>
                   </div>
                 </div>
                 <div class="cal-grid" role="grid" :aria-label="fmt(state.view, { month: 'long', year: 'numeric' })">
@@ -423,13 +423,13 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
       </div>
       <span class="ribbon" aria-hidden="true"></span>
 
-      <div v-if="cover" class="cover" role="button" tabindex="0" aria-label="Open your journal" @click="openBook" @keydown.enter.space.prevent="openBook">
+      <div v-if="cover" class="cover" role="button" tabindex="0" aria-label="Open your planner" @click="openBook" @keydown.enter.space.prevent="openBook">
         <div class="cover-face">
           <span class="frame"></span>
           <div>
             <img class="cover-emblem" :src="potArt" alt="" />
             <div class="cover-title">Sproutly</div>
-            <div class="cover-sub">Journal · {{ TODAY.getFullYear() }}</div>
+            <div class="cover-sub">Planner · {{ TODAY.getFullYear() }}</div>
             <div class="cover-hint">tap to open</div>
           </div>
           <span class="cover-strap"></span>
@@ -561,18 +561,9 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 }
 .tasks { list-style: none; margin: 0; padding: 0; }
 .task { position: relative; display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 0 12px; min-height: var(--lh); padding: 4px 4px 4px 0; animation: write-in .55s var(--ease) both; }
-@keyframes write-in { from { clip-path: inset(0 100% 0 0); opacity: .3; } to { clip-path: inset(0 0 0 0); opacity: 1; } }
 .task.removing { animation: tear .35s ease forwards; }
 @keyframes tear { to { transform: translateX(30px) rotate(2deg); opacity: 0; } }
-.check { width: 30px; height: 30px; padding: 0; border: 0; background: none; display: grid; place-items: center; border-radius: 50%; }
-.check svg { width: 28px; height: 28px; overflow: visible; }
-.check .ring { fill: #fff; stroke: var(--ink-faint); stroke-width: 1.6; transition: stroke .2s, fill .3s; }
-.check .ring-ink { fill: none; stroke: var(--leaf); stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 90; stroke-dashoffset: 90; transition: stroke-dashoffset .45s var(--ease); }
-.check .tick { fill: none; stroke: var(--leaf-deep); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 30; stroke-dashoffset: 30; transition: stroke-dashoffset .3s var(--ease) .25s; }
-.check:hover .ring { stroke: var(--leaf); }
-.check:active svg { transform: scale(.88); }
-.task.done .ring { fill: var(--leaf-soft); }
-.task.done .ring-ink, .task.done .tick { stroke-dashoffset: 0; }
+/* check circle + write-in animations live in theme.css (.sp-check), shared with the quiz answers */
 .t-main { min-width: 0; line-height: 1.25; }
 .t-text {
   position: relative; display: inline; font-family: var(--f-hand); font-weight: 600; font-size: 1.42rem; color: var(--ink);

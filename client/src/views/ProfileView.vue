@@ -20,7 +20,7 @@ const stats = computed(() => [
   { value: auth.profile?.streak ?? 0, label: 'sunny streak', id: 'streak' },
   { value: auth.profile?.best_streak ?? 0, label: 'best streak', id: 'best-streak' },
   { value: hoursStudied.value, label: 'studied', id: 'studied' },
-  { value: 0, label: 'blooms kept', id: 'blooms-kept' }, // placeholder for now
+  { value: garden.housedSubjects.length, label: 'blooms kept', id: 'blooms-kept' }, // flowers on the shelf
 ])
 const newId = computed(() => (typeof route.query.new === 'string' ? route.query.new : ''))
 

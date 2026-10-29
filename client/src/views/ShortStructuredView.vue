@@ -6,6 +6,8 @@ import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
 import { shuffle } from '@/lib/shuffle'
 import { useStudyTimer } from '@/composables/useStudyTimer'
+import { moodNow } from '@/lib/greeting'
+import SceneryBackdrop from '@/components/SceneryBackdrop.vue'
 import { ding, fanfare, unlockAudio } from '@/lib/beep'
 import ConfettiBurst from '@/components/ConfettiBurst.vue'
 
@@ -37,6 +39,9 @@ const mark = ref(null) // { score, rating, feedback } for the current question o
 const markError = ref('')
 const scores = ref([]) // AI score (0-100) per marked question
 const finished = ref(false)
+// the meadow behind the sheet, like the Focus page: the time of day while reviewing, blush on the results
+const mood = computed(() => (finished.value ? 'blush' : moodNow()))
+const narrow = typeof window !== 'undefined' && window.innerWidth < 600
 const startedAt = ref(0)
 const elapsedMs = ref(0)
 const confetti = ref(null) // <ConfettiBurst>, rained on an average of 75%+
@@ -159,7 +164,8 @@ function backToGarden() {
 
 <template>
   <main class="review-page" @keydown="onKeydown">
-    <div class="review-container">
+    <SceneryBackdrop :mood="mood" :options="{ seed: 31, tulips: narrow ? 3 : 10, butterflies: 2, horizon: 0.64 }" />
+    <div class="review-container review-sheet">
       <p v-if="loading" role="status">Getting your questions ready…</p>
 
       <section v-else-if="!questions.length" class="text-center d-flex flex-column align-items-center gap-3 pt-5">
@@ -169,8 +175,8 @@ function backToGarden() {
       </section>
 
       <!-- questions -->
-      <section v-else-if="!finished" class="d-flex flex-column gap-4" data-testid="short-quiz">
-        <header class="d-flex flex-column gap-2">
+      <section v-else-if="!finished" class="quiz d-flex flex-column" data-testid="short-quiz">
+        <header class="quiz-head d-flex flex-column gap-2">
           <div class="d-flex align-items-center gap-3">
             <button type="button" class="btn-close" aria-label="Quit and go back to garden" @click="backToGarden" />
             <span class="text-label-field flex-grow-1 bark-muted">Question {{ index + 1 }} of {{ total }}</span>
@@ -181,21 +187,15 @@ function backToGarden() {
           </div>
         </header>
 
-        <!-- host: a speech box with the taunt above the question -->
-        <div class="host d-flex gap-3 align-items-stretch">
-          <div class="speech d-flex flex-column gap-2 flex-grow-1">
-            <p class="taunt text-body-strong m-0" data-testid="short-taunt">Let's see how well you know {{ seed.title }}!</p>
-            <h2 class="m-0">{{ current.question }}</h2>
-          </div>
-        </div>
+        <h2 class="question m-0">{{ current.question }}</h2>
 
         <label class="d-flex flex-column gap-2">
           <span class="text-label-field">Your answer</span>
-          <textarea v-model="response" class="answer-box" rows="5" :maxlength="MAX_RESPONSE" :disabled="marking || !!mark"
+          <textarea v-model="response" class="answer-box hand" rows="5" :maxlength="MAX_RESPONSE" :disabled="marking || !!mark"
             placeholder="Type your answer… (Ctrl+Enter to check)" data-testid="short-answer" />
         </label>
 
-        <p v-if="markError" class="text-danger m-0" role="alert">{{ markError }}</p>
+        <p v-if="markError" class="text-danger mb-0" role="alert">{{ markError }}</p>
 
         <button v-if="!mark" type="button" class="btn-primary border-0 text-button w-auto align-self-end"
           :disabled="marking" data-testid="short-check" @click="check">
@@ -206,14 +206,14 @@ function backToGarden() {
         <template v-else>
           <div class="verdict d-flex flex-column gap-2" :class="`is-${verdict.tone}`" role="status" data-testid="short-verdict">
             <span class="text-body-strong">{{ verdict.label }} · {{ mark.score }}%</span>
-            <p class="m-0">{{ mark.feedback }}</p>
+            <p class="hand m-0">{{ mark.feedback }}</p>
             <span v-if="verdict.tone === 'correct'" class="petals" aria-hidden="true">
               <span v-for="i in PETALS" :key="i" class="petal" :style="{ '--angle': `${(360 / PETALS) * i}deg` }" />
             </span>
           </div>
           <div class="model-answer d-flex flex-column gap-1">
             <span class="text-label-caption bark-muted">Model answer</span>
-            <p class="m-0">{{ current.answer }}</p>
+            <p class="hand m-0">{{ current.answer }}</p>
           </div>
           <button type="button" class="btn-primary border-0 text-button w-auto align-self-end" data-testid="short-next" @click="next">
             {{ isLast ? 'See results' : 'Next question' }}
@@ -273,6 +273,13 @@ function backToGarden() {
   resize: vertical;
 }
 
+/* same hand as the structured quiz's answer options (StructuredQuizView .option-text) */
+.answer-box::placeholder {
+  font-family: var(--f-hand);
+  font-weight: 600;
+  font-size: 1.42rem;
+}
+
 .answer-box:focus {
   outline: none;
   border-color: var(--periwinkle);
@@ -304,17 +311,27 @@ function backToGarden() {
   background: color-mix(in srgb, var(--berry) 14%, var(--paper));
 }
 
-.speech {
-  min-width: 0;
-  padding: 16px 20px;
-  border: 2px solid var(--linen);
-  border-radius: 16px;
-  background: var(--paper);
-  box-shadow: 0 4px 0 var(--linen);
+/* header and question snap to the sheet's 44px rules, same as StructuredQuizView: the header fills
+   down to the second rule (sheet padding-top is 28px, 20px on phones) and every question line is one
+   rule tall; everything after the question is spaced 24px apart */
+.quiz-head {
+  height: calc(2 * var(--lh) - 28px);
 }
 
-.taunt {
-  color: color-mix(in srgb, var(--periwinkle) 55%, var(--bark));
+.question {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: clamp(1.4rem, 3.5vw, 1.75rem);
+  line-height: var(--lh);
+  letter-spacing: -.01em;
+}
+
+.quiz > .question ~ * {
+  margin-top: 24px;
+}
+
+@media (max-width: 480px) {
+  .quiz-head { height: calc(2 * var(--lh) - 20px); }
 }
 
 .model-answer {
