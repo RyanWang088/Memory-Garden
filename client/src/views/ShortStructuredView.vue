@@ -191,7 +191,7 @@ function backToGarden() {
         <div class="host d-flex gap-3 align-items-stretch">
           <div class="speech d-flex flex-column gap-2 flex-grow-1">
             <p class="taunt hand m-0" data-testid="short-taunt">Let's see how well you know {{ seed.title }}!</p>
-            <h2 class="m-0">{{ current.question }}</h2>
+            <h2 class="question m-0">{{ current.question }}</h2>
           </div>
         </div>
 
@@ -279,6 +279,13 @@ function backToGarden() {
   resize: vertical;
 }
 
+/* same hand as the structured quiz's answer options (StructuredQuizView .option-text) */
+.answer-box::placeholder {
+  font-family: var(--f-hand);
+  font-weight: 600;
+  font-size: 1.42rem;
+}
+
 .answer-box:focus {
   outline: none;
   border-color: var(--periwinkle);
@@ -317,6 +324,16 @@ function backToGarden() {
   border-radius: 16px;
   background: var(--paper);
   box-shadow: 0 4px 0 var(--linen);
+}
+
+/* same type as the structured quiz's question (StructuredQuizView .question); normal line height
+   since it sits in the speech box, not on the sheet's rules */
+.question {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: clamp(1.4rem, 3.5vw, 1.75rem);
+  line-height: 1.3;
+  letter-spacing: -.01em;
 }
 
 .taunt {

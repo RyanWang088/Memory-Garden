@@ -11,6 +11,7 @@ import SceneryBackdrop from '@/components/SceneryBackdrop.vue'
 import { ding, fanfare } from '@/lib/beep'
 import ConfettiBurst from '@/components/ConfettiBurst.vue'
 import SproutIcon from '@/components/SproutIcon.vue'
+import { burst } from '@/lib/burst'
 
 // "Structured Quiz Mode" review session: up to 10 multiple-choice questions from one seed,
 // then a results screen where the user claims coins for their score.
@@ -42,6 +43,7 @@ const confetti = ref(null) // <ConfettiBurst>, rained on a score of 75%+
 const claiming = ref(false)
 const coinsClaimed = ref(false) // so a retry after a failed claim never pays twice
 const results = [] // one { card_id, rating: 'correct' | 'wrong' } per question, saved on claim
+const checkEls = [] // each option's check circle, for the leaf burst
 
 const seed = computed(() => garden.seeds.find(item => item.id === route.params.id))
 const current = computed(() => questions.value[index.value])
@@ -120,6 +122,7 @@ function choose(optionIndex) {
   if (correct) {
     correctCount.value++
     ding()
+    burst(checkEls[optionIndex]) // leaves pop off the tick, like ticking a to-do
   }
   streak.value = correct ? streak.value + 1 : 0
   results.push({ card_id: current.value.id, rating: correct ? 'correct' : 'wrong' })
@@ -201,8 +204,8 @@ function backToGarden() {
       </section>
 
       <!-- quiz -->
-      <section v-else-if="!finished" class="d-flex flex-column gap-4" data-testid="quiz-quiz">
-        <header class="d-flex flex-column gap-2">
+      <section v-else-if="!finished" class="quiz d-flex flex-column" data-testid="quiz-quiz">
+        <header class="quiz-head d-flex flex-column gap-2">
           <div class="d-flex align-items-center gap-3">
             <button type="button" class="btn-close" aria-label="Quit and go back to garden" @click="backToGarden" />
             <span class="text-label-field flex-grow-1 bark-muted">Question {{ index + 1 }} of {{ total }}</span>
@@ -215,11 +218,16 @@ function backToGarden() {
 
         <h2 class="question m-0">{{ current.question }}</h2>
 
-        <div class="d-flex flex-column gap-3" role="group" aria-label="Answer options">
+        <!-- answers written like the planner's to-do lines: a check circle, then the answer in hand -->
+        <div class="d-flex flex-column" role="group" aria-label="Answer options">
           <button v-for="(option, i) in current.options" :key="`${current.id}-${i}`" type="button" class="option"
-            :class="optionState(i)" :disabled="chosen !== null" :data-testid="`quiz-option-${i}`" @click="choose(i)">
-            <span class="option-letter text-button" aria-hidden="true">{{ LETTERS[i] }}</span>
-            <span class="option-text text-start">{{ option }}</span>
+            :class="optionState(i)" :style="{ animationDelay: `${i * 45}ms` }" :disabled="chosen !== null"
+            :data-testid="`quiz-option-${i}`" @click="choose(i)">
+            <span :ref="el => (checkEls[i] = el)" class="sp-check" aria-hidden="true"
+              :class="{ 'is-ticked': optionState(i) === 'is-correct', 'is-crossed': optionState(i) === 'is-wrong' }">
+              <svg viewBox="0 0 30 30"><circle class="sp-check-ring" cx="15" cy="15" r="12" /><path class="sp-check-ink" d="M15 3.2C22 3 27.2 8.4 26.8 15.3 26.4 22 21 27 14.6 26.8 8 26.6 3 21.4 3.3 14.8 3.6 8.2 9 3.4 16 3.6" /><path class="sp-check-tick" d="M9.5 15.5l3.8 3.8 7.4-8.3" /><path class="sp-check-cross" d="M10.5 10.5l9 9" /><path class="sp-check-cross" d="M19.5 10.5l-9 9" /></svg>
+            </span>
+            <span class="option-main"><span class="option-text">{{ option }}</span></span>
           </button>
         </div>
 
@@ -229,7 +237,7 @@ function backToGarden() {
 
         <footer v-if="chosen !== null" class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
           <p class="text-body-strong m-0" role="status">
-            {{ current.options[chosen] === current.answer ? '🌸 Correct!' : '🥀 Not quite. The right answer is highlighted.' }}
+            {{ current.options[chosen] === current.answer ? '🌸 Correct!' : '🥀 Not quite. The right answer is ticked.' }}
           </p>
           <button type="button" class="btn-primary border-0 text-button w-auto" data-testid="quiz-next" @click="next">
             {{ isLast ? 'See results' : 'Next question' }}
@@ -287,84 +295,89 @@ function backToGarden() {
   color: var(--bark-muted);
 }
 
+/* header, question and answers all snap to the sheet's 44px rules: the header fills down to the
+   second rule (sheet padding-top is 28px, 20px on phones) and every question line is one rule tall,
+   so the answers start on a rule however many lines the question wraps to */
+.quiz-head {
+  height: calc(2 * var(--lh) - 28px);
+}
+
 .question {
   font-family: var(--f-display);
   font-weight: 600;
   font-size: clamp(1.4rem, 3.5vw, 1.75rem);
-  line-height: 1.3;
+  line-height: var(--lh);
   letter-spacing: -.01em;
 }
 
-.option-text {
-  font-family: var(--f-body);
-  font-weight: 600;
-  font-size: 1.05rem;
-  line-height: 1.4;
+.quiz > .streak,
+.quiz > footer {
+  margin-top: 24px;
 }
 
+@media (max-width: 480px) {
+  .quiz-head { height: calc(2 * var(--lh) - 20px); }
+}
+
+/* an answer is a bare to-do line (PlannerBook .task / .t-text), no box */
 .option {
-  display: flex;
+  display: grid;
+  grid-template-columns: 34px 1fr;
   align-items: center;
-  gap: 16px;
+  gap: 0 12px;
   width: 100%;
-  padding: 16px 20px;
-  border: 2px solid var(--linen);
-  border-radius: 16px;
-  background: var(--paper);
-  color: var(--bark);
-  box-shadow: 0 4px 0 var(--linen);
-  transition: transform 0.18s var(--spring), box-shadow 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+  min-height: var(--lh);
+  padding: 4px 4px 4px 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  animation: write-in .55s var(--ease) backwards; /* not "both": a kept clip-path would cut off the leaf burst */
+  transition: opacity .3s;
 }
 
-.option:hover:not(:disabled) {
-  border-color: var(--peach);
-  box-shadow: 0 6px 0 var(--peach);
-  transform: translateY(-2px);
+.option:hover:not(:disabled) .sp-check-ring {
+  stroke: var(--leaf);
 }
 
 .option:focus-visible {
   outline: 3px solid var(--periwinkle);
-  outline-offset: 3px;
+  outline-offset: 2px;
+  border-radius: 8px;
 }
 
 .option:disabled {
   cursor: default;
 }
 
-.option-letter {
-  display: grid;
-  place-items: center;
-  flex: 0 0 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--linen);
-  color: var(--bark-muted);
+.option-main {
+  min-width: 0;
+  line-height: 1.25;
 }
 
-.option.is-correct {
-  border-color: var(--mint-deep);
-  background: var(--mint);
-  box-shadow: 0 4px 0 var(--mint-deep);
+/* inline so the strike-through follows wrapped lines */
+.option-text {
+  font-family: var(--f-hand);
+  font-weight: 600;
+  font-size: 1.42rem;
+  line-height: 1.25;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  background: linear-gradient(var(--berry-deep), var(--berry-deep)) no-repeat 0 58% / 0% 2px;
+  transition: background-size .45s var(--ease), color .3s;
 }
 
-.option.is-correct .option-letter {
-  background: var(--mint-deep);
-  color: var(--paper);
-}
-
-.option.is-wrong {
-  border-color: var(--berry);
-  background: color-mix(in srgb, var(--berry) 14%, var(--paper));
-  box-shadow: 0 4px 0 var(--berry);
-}
-
-.option.is-wrong .option-letter {
-  background: var(--berry);
-  color: var(--paper);
+/* a wrong pick gets struck through, like a done to-do */
+.option.is-wrong .option-text {
+  background-size: 100% 2px;
+  color: var(--ink-faint);
 }
 
 .option.is-dim {
   opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .option { animation: none; }
 }
 
 .streak {

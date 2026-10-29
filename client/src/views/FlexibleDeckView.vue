@@ -182,8 +182,8 @@ function backToGarden() {
         <article v-if="!flipped" class="deck-face" data-testid="flashcard-front" @click="showAnswer">
           <div class="deck-top">
             <button type="button" class="btn-close deck-close" aria-label="Quit and go back to garden" @click.stop="backToGarden" />
-            <span class="deck-subject">{{ seed.title }}</span>
             <span class="card-count" data-testid="card-count">Card {{ cardNumber }} of {{ totalCards }}</span>
+            <span class="deck-subject">{{ seed.title }}</span>
           </div>
           <div class="deck-middle">
             <h2 class="flashcard-text m-0">{{ current.question }}</h2>
@@ -196,8 +196,8 @@ function backToGarden() {
         <article v-else class="deck-face" data-testid="flashcard-back">
           <div class="deck-top">
             <button type="button" class="btn-close deck-close" aria-label="Quit and go back to garden" @click="backToGarden" />
-            <span class="deck-subject">{{ seed.title }}</span>
             <span class="card-count">Card {{ cardNumber }} of {{ totalCards }}</span>
+            <span class="deck-subject">{{ seed.title }}</span>
           </div>
           <div class="deck-middle">
             <p class="hand m-0">Q: {{ current.question }}</p>
@@ -269,23 +269,6 @@ function backToGarden() {
   color: var(--bark-muted);
 }
 
-/* sits in the card's top-left corner, inside the margin strip left of the coral line */
-.deck-close {
-  position: absolute;
-  top: 18px;
-  left: calc((var(--mx) - 32px) / 2);
-  z-index: 1;
-  box-sizing: border-box;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: 2px solid #3e3553;
-  border-radius: 50%;
-  background-color: #ffffff;
-  background-size: 12px;
-  opacity: 1;
-}
-
 /* the session card fills the box the notebook sheet used to (the sheet stays for loading and results);
    ruled like the Figma Flashcard: coral margin at x=56, periwinkle rules every 40px from y=110 */
 .deck-card {
@@ -305,8 +288,7 @@ function backToGarden() {
   box-shadow: 0 12px 32px rgba(62, 53, 83, 0.16), 3px 4px 0 #3e3553;
 }
 
-.deck-card.is-back,
-.deck-card.is-back .deck-close {
+.deck-card.is-back {
   background-color: #fdebe2;
 }
 
@@ -335,11 +317,14 @@ function backToGarden() {
   outline: 3px solid #c9d0fb;
 }
 
+/* plain X, seed title and card count on one row, like the quiz pages' header; the row's middle is
+   halfway between the card's top edge and the first rule at 110px (55px), under the 26px top padding */
 .deck-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  flex-shrink: 0;
+  height: calc(110px - 2 * 26px);
+  gap: 16px;
   width: 100%;
   text-align: left;
 }
@@ -358,6 +343,7 @@ function backToGarden() {
 .deck-subject {
   flex: 1;
   min-width: 0;
+  text-align: right; /* fills the row after the card count, so its text is pushed to the far right */
   font-family: var(--f-body);
   font-size: 0.78rem;
   font-weight: 800;
@@ -495,5 +481,6 @@ function backToGarden() {
 @media (max-width: 480px) {
   .deck-card { --mx: 44px; min-height: calc(100vh - 48px); }
   .deck-face { padding: 20px 16px 24px calc(var(--mx) + 14px); }
+  .deck-top { height: calc(110px - 2 * 20px); }
 }
 </style>

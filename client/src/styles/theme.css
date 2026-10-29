@@ -115,6 +115,25 @@
   to   { transform: translate(-50%, -50%) rotate(var(--r)) translateY(-46px) scale(1); opacity: 0; }
 }
 
+/* hand-drawn check circle (planner to-do, quiz answers): ink loops round the circle, then the tick or cross writes in.
+   .is-ticked = done / right answer, .is-crossed = wrong answer */
+.sp-check { flex: none; width: 30px; height: 30px; padding: 0; border: 0; background: none; display: grid; place-items: center; border-radius: 50%; }
+.sp-check svg { width: 28px; height: 28px; overflow: visible; }
+.sp-check-ring { fill: #fff; stroke: var(--ink-faint); stroke-width: 1.6; transition: stroke .2s, fill .3s; }
+.sp-check-ink { fill: none; stroke: var(--leaf); stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 90; stroke-dashoffset: 90; transition: stroke-dashoffset .45s var(--ease); }
+.sp-check-tick, .sp-check-cross { fill: none; stroke: var(--leaf-deep); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 30; stroke-dashoffset: 30; transition: stroke-dashoffset .3s var(--ease) .25s; }
+.sp-check-cross { stroke: var(--berry-deep); stroke-dasharray: 14; stroke-dashoffset: 14; }
+.sp-check-cross + .sp-check-cross { transition-delay: .45s; }
+button.sp-check:hover .sp-check-ring { stroke: var(--leaf); }
+button.sp-check:active svg { transform: scale(.88); }
+.sp-check.is-ticked .sp-check-ring { fill: var(--leaf-soft); }
+.sp-check.is-ticked .sp-check-ink, .sp-check.is-ticked .sp-check-tick { stroke-dashoffset: 0; }
+.sp-check.is-crossed .sp-check-ring { fill: var(--berry-soft); }
+.sp-check.is-crossed .sp-check-ink { stroke: var(--berry); stroke-dashoffset: 0; }
+.sp-check.is-crossed .sp-check-cross { stroke-dashoffset: 0; }
+/* a to-do line being written onto the page */
+@keyframes write-in { from { clip-path: inset(0 100% 0 0); opacity: .3; } to { clip-path: inset(0 0 0 0); opacity: 1; } }
+
 .sp-icon-btn {
   width: 40px; height: 40px; border-radius: 50%;
   display: inline-grid; place-items: center;

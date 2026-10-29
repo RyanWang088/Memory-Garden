@@ -314,10 +314,10 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
                     :style="{ animationDelay: `${Math.min(i * 45, 400)}ms` }" data-testid="planner-task"
                   >
                     <button
-                      type="button" class="check" role="checkbox" :aria-checked="row.task.done"
+                      type="button" class="sp-check" :class="{ 'is-ticked': row.task.done }" role="checkbox" :aria-checked="row.task.done"
                       :aria-label="`Mark “${row.task.text}” ${row.task.done ? 'not done' : 'done'}`" @click="toggle(row.task, $event)"
                     >
-                      <svg viewBox="0 0 30 30" aria-hidden="true"><circle class="ring" cx="15" cy="15" r="12" /><path class="ring-ink" d="M15 3.2C22 3 27.2 8.4 26.8 15.3 26.4 22 21 27 14.6 26.8 8 26.6 3 21.4 3.3 14.8 3.6 8.2 9 3.4 16 3.6" /><path class="tick" d="M9.5 15.5l3.8 3.8 7.4-8.3" /></svg>
+                      <svg viewBox="0 0 30 30" aria-hidden="true"><circle class="sp-check-ring" cx="15" cy="15" r="12" /><path class="sp-check-ink" d="M15 3.2C22 3 27.2 8.4 26.8 15.3 26.4 22 21 27 14.6 26.8 8 26.6 3 21.4 3.3 14.8 3.6 8.2 9 3.4 16 3.6" /><path class="sp-check-tick" d="M9.5 15.5l3.8 3.8 7.4-8.3" /></svg>
                     </button>
                     <div class="t-main">
                       <span
@@ -561,18 +561,9 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 }
 .tasks { list-style: none; margin: 0; padding: 0; }
 .task { position: relative; display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 0 12px; min-height: var(--lh); padding: 4px 4px 4px 0; animation: write-in .55s var(--ease) both; }
-@keyframes write-in { from { clip-path: inset(0 100% 0 0); opacity: .3; } to { clip-path: inset(0 0 0 0); opacity: 1; } }
 .task.removing { animation: tear .35s ease forwards; }
 @keyframes tear { to { transform: translateX(30px) rotate(2deg); opacity: 0; } }
-.check { width: 30px; height: 30px; padding: 0; border: 0; background: none; display: grid; place-items: center; border-radius: 50%; }
-.check svg { width: 28px; height: 28px; overflow: visible; }
-.check .ring { fill: #fff; stroke: var(--ink-faint); stroke-width: 1.6; transition: stroke .2s, fill .3s; }
-.check .ring-ink { fill: none; stroke: var(--leaf); stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 90; stroke-dashoffset: 90; transition: stroke-dashoffset .45s var(--ease); }
-.check .tick { fill: none; stroke: var(--leaf-deep); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 30; stroke-dashoffset: 30; transition: stroke-dashoffset .3s var(--ease) .25s; }
-.check:hover .ring { stroke: var(--leaf); }
-.check:active svg { transform: scale(.88); }
-.task.done .ring { fill: var(--leaf-soft); }
-.task.done .ring-ink, .task.done .tick { stroke-dashoffset: 0; }
+/* check circle + write-in animations live in theme.css (.sp-check), shared with the quiz answers */
 .t-main { min-width: 0; line-height: 1.25; }
 .t-text {
   position: relative; display: inline; font-family: var(--f-hand); font-weight: 600; font-size: 1.42rem; color: var(--ink);
