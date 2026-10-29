@@ -64,14 +64,13 @@ const visibleFireflies = computed(() => {
 <template>
   <div class="critters" :data-mood="mood" :data-weather="weather" aria-hidden="true" data-testid="critters">
     <div v-for="(b, i) in scene.butterflies" :key="`b${i}`" class="bfly" :style="b.style">
-      <svg viewBox="-13 -11 26 22">
-        <g class="wing">
-          <path d="M0 0C-4-10-14-12-12-3-11 3-4 3 0 0Z" stroke-width="1" :style="{ fill: b.light, stroke: b.deep }" />
-          <path d="M0 0C-3 6-10 10-10 5-10 2-5 1 0 0Z" :style="{ fill: b.deep }" />
-          <path d="M0 0C4-10 14-12 12-3 11 3 4 3 0 0Z" stroke-width="1" :style="{ fill: b.light, stroke: b.deep }" />
-          <path d="M0 0C3 6 10 10 10 5 10 2 5 1 0 0Z" :style="{ fill: b.deep }" />
+      <svg viewBox="-13 -11 26 22" aria-hidden="true">
+        <g class="wing" style="will-change: transform; transform-origin: center;">
+          <path d="M0 0C-4-10-14-12-12-3c1 6 8 6 12 3ZM0 0c4-10 14-12 12-3-1 6-8 6-12 3Z" stroke-width="1"
+            :style="{ fill: b.light, stroke: b.deep }" />
+          <path d="M0 0C-3 6-10 10-10 5c0-3 5-4 10-5ZM0 0c3 6 10 10 10 5 0-3-5-4-10-5Z" :style="{ fill: b.deep }" />
+          <rect x="-1" y="-6" width="2" height="11" rx="1" style="fill: var(--ink)" />
         </g>
-        <rect x="-1" y="-6" width="2" height="11" rx="1" style="fill: var(--ink)" />
       </svg>
     </div>
 
@@ -85,12 +84,26 @@ const visibleFireflies = computed(() => {
 
 <style scoped>
 /* nothing to see, so nothing to animate (same trick the rain uses when it is dry) */
-.critters:not([data-mood='dusk'], [data-mood='night']) .flies i { animation-play-state: paused; }
+.critters:not([data-mood='dusk'], [data-mood='night']) .flies i {
+  animation-play-state: paused;
+}
+
 .critters[data-mood='night'] :is(.bfly, .bfly .wing),
-.critters:is([data-weather='rainy'], [data-weather='stormy']) :is(.bfly, .bfly .wing) { animation-play-state: paused; }
+.critters:is([data-weather='rainy'], [data-weather='stormy']) :is(.bfly, .bfly .wing) {
+  animation-play-state: paused;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .critters .bfly, .critters .bfly .wing, .critters .flies i, .critters .petal { animation: none; }
-  .critters .petal { display: none; }
+
+  .critters .bfly,
+  .critters .bfly .wing,
+  .critters .flies i,
+  .critters .petal {
+    animation: none;
+  }
+
+  .critters .petal {
+    display: none;
+  }
 }
 </style>

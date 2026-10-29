@@ -1,10 +1,10 @@
 <script setup>
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useUiStore } from '@/stores/ui'
 import { useFlowerStore } from '@/stores/flower'
 import { useToastStore } from '@/stores/toast'
 import { SEED_COLORS } from '@/lib/tagColors'
-import { plantSpriteUrl, BLOOM_STAGE } from '@/lib/plantSprites'
+import { foliageUrl } from '@/lib/plantSprites'
 import { burst } from '@/lib/burst'
 import coinSvg from '@/assets/ui/coin.svg'
 
@@ -12,24 +12,25 @@ const ui = useUiStore()
 const flower = useFlowerStore()
 const toast = useToastStore()
 
-const DRAG_THRESHOLD = 8 // px a pointer must travel before a press on a packet becomes a drag
+const HOLD_MS = 250      // touch/pen: how long to hold the flower before it can be dragged
+const DRAG_THRESHOLD = 8 // px: moving this far before the hold ends is a scroll, after it is a drag
 
 const root = ref(null)
-const chosenId = ref(null)     // the one packet that shows its colour swatches
+const chosenId = ref(null)     // the packet the user selected; it shows the swatches and its flower is the drag handle
+const armedId = ref(null)      // the flower that has been held long enough to drag
 const justBought = ref(null)
 
 const TAPES = ['', 'is-leaf', 'is-butter']
 const tapeOf = (n) => TAPES[n % TAPES.length]
 
-// exactly one owned packet is "active": the one you chose, else the first you own
 const owned = computed(() => flower.flowers.filter((s) => s.status === 'owned'))
-const activeId = computed(() => (owned.value.some((s) => s.id === chosenId.value) ? chosenId.value : owned.value[0]?.id ?? null))
+// the "active" packet is the one you chose, or none
+const activeId = computed(() => (owned.value.some((s) => s.id === chosenId.value) ? chosenId.value : null))
 
 // the active packet previews the petal colour you pick
-const art = (seed) => plantSpriteUrl(BLOOM_STAGE, seed.id, seed.id === activeId.value ? ui.selectedSeedColor : undefined)
+const art = (seed) => foliageUrl(`${seed.id}-${seed.id === activeId.value ? ui.selectedSeedColor : 'pink'}-4`)
 const short = (seed) => Math.max(0, seed.price - flower.coins)
 const pct = (seed) => (seed.price > 0 ? Math.min(100, Math.round((flower.coins / seed.price) * 100)) : 100)
-
 const isPicked = (seed) => ui.seedPicked && ui.selectedSeedFlower === seed.id
 
 function pick(seed) {
@@ -37,28 +38,51 @@ function pick(seed) {
   ui.selectedSeedFlower = seed.id
 }
 
-// A press on a packet only becomes a drag once the pointer has moved a little,
-// so a tap just selects the packet (and a swipe on touch scrolls the shed instead).
+// start every visit to the shed with nothing selected, so a scroll can't start a drag
+watch(() => ui.shedOpen, (open) => { if (!open) chosenId.value = null })
+
+// Select first, then drag the selected packet's flower. A touch must hold for HOLD_MS first, and moving
+// before that cancels the press so the shed scrolls normally. A mouse is armed immediately.
 let press = null
 
 function onPressStart(e, seed) {
+  if (seed.id !== activeId.value) return
   if (e.pointerType === 'mouse' && e.button !== 0) return
-  press = { seed, x: e.clientX, y: e.clientY }
-  e.currentTarget.setPointerCapture(e.pointerId) // keep receiving moves even if the pointer leaves the packet
+  press = { seed, x: e.clientX, y: e.clientY, armed: e.pointerType === 'mouse', timer: null }
+  if (!press.armed) press.timer = setTimeout(armPress, HOLD_MS)
+  e.currentTarget.setPointerCapture(e.pointerId) // keep receiving moves even if the pointer leaves the flower
+}
+
+function armPress() {
+  if (!press) return
+  press.armed = true
+  armedId.value = press.seed.id
+  navigator.vibrate?.(15) // small buzz where supported
 }
 
 function onPressMove(e) {
   if (!press) return
   if (Math.hypot(e.clientX - press.x, e.clientY - press.y) < DRAG_THRESHOLD) return
-  startDrag(press.seed, e.pointerId)
-  press = null
+  if (!press.armed) return endPress() // moved before the hold finished: the user is scrolling
+  const { seed } = press
+  endPress()
+  startDrag(seed, e.pointerId)
 }
 
-const onPressEnd = () => { press = null }
+function endPress() {
+  clearTimeout(press?.timer)
+  press = null
+  armedId.value = null
+}
+
+// once armed, stop the browser from turning the same touch into a scroll
+function onTouchMove(e) {
+  if (press?.armed && e.cancelable) e.preventDefault()
+}
 
 // useSeedDrag (in the garden) takes over from here and follows this pointer
 function startDrag(seed, pointerId) {
-  pick(seed)
+  pick(seed) // the garden plants whatever is in ui.selectedSeedFlower, so make sure it matches
   ui.seedDragPointerId = pointerId
   ui.seedPicked = true
   ui.shedOpen = false
@@ -113,7 +137,7 @@ onMounted(() => flower.load())
     <header class="d-grid gap-2 pb-3 border-bottom">
       <span class="sp-eyebrow">Potting Bench</span>
       <h3 class="m-0 fs-3">Plant a <em>new seed</em></h3>
-      <p class="small text-body-secondary m-0">Drag a packet onto the field to start a new deck of flashcards.</p>
+      <p class="small text-body-secondary m-0">Select a packet, then drag it onto the field to start a new deck.</p>
     </header>
 
     <p v-if="flower.loading && !flower.catalog.length" class="text-body-small" role="status">
@@ -129,7 +153,7 @@ onMounted(() => flower.load())
 
     <div v-if="flower.flowers.length" class="sp-packet-grid">
       <div v-for="(seed, n) in flower.flowers" :key="seed.id" class="sp-reveal" :style="{ '--i': Math.min(n, 8) }">
-        <!-- owned: draggable packet; only the active one opens its swatch drawer -->
+        <!-- owned: tap to select; only the selected (active) packet opens its swatch drawer and can be dragged by its flower -->
         <article
           v-if="seed.status === 'owned'" class="sp-packet"
           :class="{ 'is-active': activeId === seed.id, 'is-picked': isPicked(seed), 'is-new': justBought === seed.id }"
@@ -137,13 +161,18 @@ onMounted(() => flower.load())
           <span class="sp-tape" :class="tapeOf(n)" aria-hidden="true"></span>
           <div
             class="packet-face" role="button" tabindex="0"
-            :aria-pressed="activeId === seed.id" :aria-label="`${seed.name} seed. Drag to the field to plant`"
+            :aria-pressed="activeId === seed.id" :aria-label="`${seed.name} seed`"
             :data-testid="`seed-${seed.id}`"
             @click="pick(seed)" @keydown.enter.space.prevent="pick(seed)"
-            @pointerdown="onPressStart($event, seed)" @pointermove="onPressMove"
-            @pointerup="onPressEnd" @pointercancel="onPressEnd" @dragstart.prevent
           >
-            <span class="sp-packet-art"><img :src="art(seed)" alt="" draggable="false" /><span class="sp-ledge"></span></span>
+            <span
+              class="sp-packet-art" :class="{ 'is-armed': armedId === seed.id }" :data-testid="`drag-${seed.id}`"
+              @pointerdown="onPressStart($event, seed)" @pointermove="onPressMove"
+              @pointerup="endPress" @pointercancel="endPress"
+              @touchmove="onTouchMove" @contextmenu.prevent
+            >
+              <img :src="art(seed)" alt="" draggable="false" /><span class="sp-ledge"></span>
+            </span>
             <span class="sp-packet-name">{{ seed.name }} seed</span>
           </div>
           <span class="sp-chip owned-chip">{{ seed.price === 0 ? 'Free' : 'Owned' }}</span>
@@ -158,8 +187,7 @@ onMounted(() => flower.load())
                   :aria-label="`${color} plant color`" :title="color" @click="ui.selectedSeedColor = color"
                 ></button>
               </div>
-              <p class="drag-hint">←drag me to the field
-              </p>
+              <p class="drag-hint"><span class="d-md-none">↑ Hold, then drag</span><span class="d-none d-md-inline">← Drag</span> the flower to the field</p>
             </div>
           </div>
         </article>
@@ -193,10 +221,11 @@ onMounted(() => flower.load())
 </template>
 
 <style scoped>
-.packet-face { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; border-radius: 10px; cursor: grab; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; outline: none; touch-action: pan-y; }
-/* only the selected packet claims touch for dragging; the others still let the shed scroll */
-.sp-packet.is-active .packet-face { touch-action: none; }
-.packet-face:active { cursor: grabbing; }
+.packet-face { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; border-radius: 10px; cursor: pointer; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; outline: none; touch-action: pan-y; }
+/* the selected packet's flower is the drag handle; it scrolls like the rest of the shed until a touch hold arms it */
+.sp-packet.is-active .sp-packet-art { cursor: grab; }
+.sp-packet.is-active .sp-packet-art:active { cursor: grabbing; }
+.sp-packet-art.is-armed { transform: scale(1.08); transition: transform .2s var(--spring); }
 .packet-face:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--leaf) 35%, transparent); }
 
 .owned-chip { padding: .1em .7em; font-size: .72rem; background: var(--leaf-soft); border-color: var(--leaf); color: var(--leaf-deep); }
@@ -205,14 +234,11 @@ onMounted(() => flower.load())
 /* swatch drawer (only ever open on the active packet) */
 .swatch-label { margin: 8px 0 8px; font-family: var(--f-hand); font-size: 1.15rem; line-height: 1; color: var(--ink-soft); text-transform: capitalize; }
 .swatch-red { --sw: var(--berry); }
-.swatch-white { --sw: var(--paper); }
 .swatch-yellow { --sw: var(--butter); }
 .swatch-pink { --sw: var(--margin); }
 .swatch-purple { --sw: var(--lilac); }
 .sp-drawer.is-open .sp-swatch { animation: pop-in .45s var(--spring) both; animation-delay: calc(var(--k) * 55ms + 160ms); }
-.drag-hint { display: inline-flex; align-items: center; gap: 6px; margin: 12px 0 2px; font-family: var(--f-hand); font-size: 1.1rem; line-height: 1; color: var(--berry-deep); }
-.drag-hint svg { animation: nudge 1s ease-in-out infinite alternate; }
-@keyframes nudge { to { transform: translateX(5px); } }
+.drag-hint { margin: 12px 0 2px; font-family: var(--f-hand); font-size: 1.1rem; line-height: 1; color: var(--berry-deep); }
 
 /* just bought: the packet pops in */
 .sp-packet.is-new { animation: pack-pop .8s var(--spring); }
@@ -223,7 +249,7 @@ onMounted(() => flower.load())
 }
 
 /* locked packet */
-.is-locked .sp-packet-art img { filter: grayscale(.85) brightness(1.04); opacity: .6; }
+.is-locked .sp-packet-art img { filter: grayscale(.85) brightness(0.1); opacity: .5; }
 .sp-lock { position: absolute; z-index: 2; top: 6%; right: 6%; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: var(--sheet); box-shadow: 0 3px 0 #2c201b; }
 .is-locked:hover .sp-lock { animation: lock-shake .5s ease; }
 @keyframes lock-shake { 20% { transform: rotate(-14deg); } 40% { transform: rotate(12deg); } 60% { transform: rotate(-8deg); } 80% { transform: rotate(5deg); } }

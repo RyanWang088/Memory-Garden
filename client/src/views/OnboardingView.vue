@@ -21,7 +21,7 @@ const STEPS = [
   { name: 'Ready', art: 'FLOWER' },
 ]
 const GOALS = ['IGCSE', 'IB Diploma', 'A-Levels', 'University', 'Something else']
-const FLOWERS = ['pink', 'red', 'purple', 'yellow', 'white']
+const FLOWERS = ['pink', 'red', 'purple', 'yellow']
 
 const saved = auth.profile?.onboarding_answers ?? {}
 const answers = reactive({

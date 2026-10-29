@@ -1,41 +1,33 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import { useGardenStore } from '@/stores/garden'
 import { useUiStore } from '@/stores/ui'
 import { useToastStore } from '@/stores/toast'
+import { useWeatherStore } from '@/stores/weather'
 import { CELL_SIZE } from '@/lib/floorLayout'
 import { createGardenCamera, SCROLL_RANGE } from '@/lib/gardenCamera'
 import { drawMeadow } from '@/lib/meadowRenderer'
+import { useSeedDrag } from '@/composables/useSeedDrag'
+import { useMeadowPalette } from '@/composables/useMeadowPalette'
 import PlantSprite from './PlantSprite.vue'
 import Modal from './Modal.vue'
-import SceneCritters from './SceneCritters.vue'
-import { useSeedDrag } from '@/composables/useSeedDrag'
-import { storeToRefs } from 'pinia'
-import { useWeatherStore } from '@/stores/weather'
-import { useMeadowPalette } from '@/composables/useMeadowPalette'
 
 const garden = useGardenStore()   // garden.gardenSeeds: { id, col, row, mastery, last_reviewed }, the plants still in the garden
 const ui = useUiStore()
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
-const seedToDelete = ref(null)
-const deletingSeed = ref(false)
-const deleteError = ref('')
 
 const cam = createGardenCamera()
 const { camera, measure: measureCamera, updateScroll: updateCameraScroll, worldToScreen, screenToCell, screenPoint } = cam
 
-const stageById = { get: id => garden.stageOf(garden.gardenSeeds.find(s => s.id === id)) }
-
 const scrollerEl = ref(null), stageEl = ref(null), canvasEl = ref(null), ghostRef = ref(null)
+const ghostBlocked = ref(false)
 const plantElements = new Map()
 const plantInfoElements = new Map()
-const hoveredPlantInfoId = ref(null)
-const ghostBlocked = ref(false)
-let renderQueued = false, resizeObserver
-let scrollIdleTimer
+let renderQueued = false, resizeObserver, scrollIdleTimer
 
 // the canvas, the plants and the critters all follow the same look as the sky (mood + weather), and crossfade with it
 const { look } = storeToRefs(useWeatherStore())
@@ -44,14 +36,16 @@ const { palette } = useMeadowPalette(look, requestRender)
 const occupiedCells = computed(() => new Set(garden.gardenSeeds.map(seed => `${seed.col},${seed.row}`)))
 const registerPlant = (id, el) => (el ? plantElements.set(id, el) : plantElements.delete(id))
 const registerPlantInfo = (id, el) => (el ? plantInfoElements.set(id, el) : plantInfoElements.delete(id))
-const isPlantInfoVisible = id => hoveredPlantInfoId.value === id || ui.selectedGardenSeedId === id
 
-function onPlantPointerEnter(id) {
-  hoveredPlantInfoId.value = id
+// Only one name bubble is open at a time: a hovered plant wins over the selected one.
+const hoveredPlantId = ref(null)
+const isPlantInfoVisible = id => hoveredPlantId.value === id || ui.selectedGardenSeedId === id
+function onPlantPointerEnter(id, event) {
+  if (event.pointerType !== 'touch') hoveredPlantId.value = id
 }
 
 function onPlantPointerLeave(id) {
-  if (hoveredPlantInfoId.value === id) hoveredPlantInfoId.value = null
+  if (hoveredPlantId.value === id) hoveredPlantId.value = null
 }
 
 function measureView() {
@@ -100,7 +94,7 @@ function render() {
 // are written when they actually change, so scrolling doesn't invalidate style on every plant every frame.
 const placed = new WeakMap()
 
-const placedState = (el) => {
+function placedState(el) {
   if (!placed.has(el)) placed.set(el, { display: '', z: null, clipped: null })
   return placed.get(el)
 }
@@ -112,7 +106,7 @@ function setDisplay(el, display) {
   el.style.display = display
   last.display = display
 }
-const hideSprite = (el) => setDisplay(el, 'none')
+const hideSprite = el => setDisplay(el, 'none')
 
 function placeSprite(el, col, row) {
   const visible = worldToScreen((col + 0.5) * CELL_SIZE, (row + 0.5) * CELL_SIZE)
@@ -120,7 +114,6 @@ function placeSprite(el, col, row) {
   if (!visible) return
 
   const last = placedState(el)
-
   const { x, y, scale, clipped } = screenPoint
   el.style.transform = `translate3d(${x}px,${y}px,0) scale(${scale})`
   // plants are depth-sorted by row and that order never changes while scrolling, so z-index is just the row
@@ -138,6 +131,19 @@ function placePlantInfo(el, col, row) {
   el.style.zIndex = 10000
 }
 
+// the scrollLeft that centres the plant horizontally once the garden is scrolled to `top`
+// (asks the camera where the plant would land, then puts the camera back)
+function leftFor(seed, top) {
+  const { scrollTop, scrollLeft } = scrollerEl.value
+  updateCameraScroll(top, scrollLeft)
+  const visible = worldToScreen((seed.col + 0.5) * CELL_SIZE, (seed.row + 0.5) * CELL_SIZE)
+  const { x, scale } = screenPoint
+  updateCameraScroll(scrollTop, scrollLeft)
+  if (!visible) return scrollLeft // the camera can't place it, so keep the current position instead of using a stale x
+  const left = scrollLeft + (x - camera.viewWidth / 2) / (scale || 1)
+  return Math.max(0, Math.min(camera.contentWidth - camera.viewWidth, left))
+}
+
 function scrollToSeed() {
   const seedId = route.query.scrollTo
   if (typeof seedId !== 'string') return
@@ -150,7 +156,8 @@ function scrollToSeed() {
   const angle = Math.asin(sine)
   const depth = (seed.row + 0.5) * CELL_SIZE
   const targetScrollPos = Math.max(0, Math.min(SCROLL_RANGE, depth - (angle * camera.radius) / camera.scale))
-  scrollerEl.value.scrollTo({ top: SCROLL_RANGE - targetScrollPos, behavior: 'smooth' })
+  const top = SCROLL_RANGE - targetScrollPos
+  scrollerEl.value.scrollTo({ top, left: leftFor(seed, top), behavior: 'smooth' })
   ui.selectGardenSeed(seedId)
   const query = { ...route.query }
   delete query.scrollTo
@@ -173,22 +180,17 @@ function drawFloor() {
 }
 
 // the whole grid is plantable now that the path is gone; only taken cells are blocked
-function isBlocked(col, row) {
-  return occupiedCells.value.has(`${col},${row}`)
-}
+const isBlocked = (col, row) => occupiedCells.value.has(`${col},${row}`)
 
-const seedDrag = useSeedDrag({
-  scrollerEl,
-  stageEl,
-  ghostRef,
-  ghostBlocked,
-  screenToCell,
-  isBlocked,
-  placeSprite,
-  hideSprite,
-  requestRender,
+const { updateGhost } = useSeedDrag({
+  scrollerEl, stageEl, ghostRef, ghostBlocked,
+  screenToCell, isBlocked, placeSprite, hideSprite, requestRender,
 })
-const { updateGhost } = seedDrag
+
+// ---- opening and deleting plants ----
+const seedToDelete = ref(null)
+const deletingSeed = ref(false)
+const deleteError = ref('')
 
 function onPlantClick(seed, event) {
   if (event && !event.target.closest('.sprite')) return
@@ -232,7 +234,8 @@ watch(() => garden.gardenSeeds, () => {
 }, { deep: true, flush: 'post' })
 watch(() => route.query.scrollTo, scrollToSeed, { flush: 'post' })
 // a name bubble that just started showing needs its position before it fades in
-watch([hoveredPlantInfoId, () => ui.selectedGardenSeedId], requestRender, { flush: 'post' })
+watch([hoveredPlantId, () => ui.selectedGardenSeedId], requestRender, { flush: 'post' })
+
 onMounted(() => {
   resizeObserver = new ResizeObserver(measureView)
   resizeObserver.observe(scrollerEl.value)
@@ -266,14 +269,14 @@ onBeforeUnmount(() => {
           :key="seed.id"
           :id="seed.id"
           :ref="c => registerPlant(seed.id, c?.$el)"
-          :stage="stageById.get(seed.id)"
+          :stage="garden.stageOf(seed)"
           :flower="seed.flower"
           :color="seed.color"
           :wilting="garden.isWilted(seed)"
           :alert="seed.alert"
           :class="{ 'is-highlighted': ui.selectedGardenSeedId === seed.id }"
           role="button" tabindex="0" :aria-label="`Open ${seed.title}`"
-          @pointerenter="onPlantPointerEnter(seed.id)"
+          @pointerenter="onPlantPointerEnter(seed.id, $event)"
           @pointerleave="onPlantPointerLeave(seed.id)"
           @click="onPlantClick(seed, $event)"
           @keydown.enter.space.prevent="onPlantClick(seed)"
@@ -288,9 +291,7 @@ onBeforeUnmount(() => {
             <p class="p-1 text-body-strong text-center my-auto">{{ seed.title }}</p>
           </div>
         </div>
-
         <PlantSprite ref="ghostRef" ghost :blocked="ghostBlocked" />
-        <SceneCritters class="garden-critters" :mood="look.mood" :weather="look.weather" :fireflies="20" :flies-from="20" />
       </div>
     </div>
   </div>
@@ -307,15 +308,12 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.scroller { height: 100%; overflow: auto; overscroll-behavior: contain;scrollbar-width: none; }
+.scroller { height: 100%; overflow: auto; overscroll-behavior: contain; scrollbar-width: none; }
 .track { width: var(--content-width); height: calc(var(--view-height) + var(--scroll-range)); }
 .stage { position: sticky; top: 0; left: 0; width: var(--view-width); height: var(--view-height); overflow: hidden; user-select: none; }
 canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-/* above the plants (<= 2000), below the name bubbles (10000) and the drag ghost (9000) */
-.garden-critters { z-index: 2500;}
-.plant-info {
-  position: absolute; top: 0; left: 0; pointer-events: none;
-}
+
+.plant-info { position: absolute; top: 0; left: 0; pointer-events: none; }
 .plant-info-details {
   position: absolute; top: 0; left: 50%; width: max-content; max-width: 200px;
   padding: 6px 12px; border-radius: 999px; background: var(--cream);

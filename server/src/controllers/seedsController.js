@@ -30,7 +30,7 @@ function cleanTraps(list, answer) {
 }
 const isUuid = (v) => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)
 const isCell = (v) => Number.isInteger(v) && v >= 0 && v < 1000
-const SEED_COLORS = ['red', 'white', 'purple', 'yellow', 'pink']
+const SEED_COLORS = ['red', 'purple', 'yellow', 'pink']
 // A real YYYY-MM-DD date, today or later. Compared with yesterday in UTC so a user ahead of UTC can still pick their today.
 const isUpcomingDate = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v))
   && new Date(v).toISOString().slice(0, 10) === v && v >= new Date(Date.now() - 86_400_000).toISOString().slice(0, 10)

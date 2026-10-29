@@ -234,7 +234,7 @@ erDiagram
         smallint row
         smallint col
         text flower FK "= flowers.id, default tulip"
-        text color "pink|red|purple|white|yellow, default pink"
+        text color "pink|red|purple|yellow, default pink"
         timestamptz last_reviewed
         boolean in_house
         timestamptz created_at

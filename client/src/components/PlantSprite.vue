@@ -27,7 +27,7 @@ const src = computed(() => props.ghost ? plantSpriteUrl(1) : plantSpriteUrl(prop
         <img :key="src" class="art" :class="ghost ? '' : `st-${stage}`" :src="src" alt="" draggable="false" />
       </Transition>
     </div>
-    <span v-if="alert && !ghost" class="alert-mark text-center text-stat" title="Revise this soon" data-testid="plant-alert">!</span>
+    <span v-if="alert && !ghost" class="alert-mark" title="Revise this soon" data-testid="plant-alert"><img src="../assets/ui/droplet.svg" alt=""></span>
   </div>
 </template>
 
@@ -55,6 +55,7 @@ const src = computed(() => props.ghost ? plantSpriteUrl(1) : plantSpriteUrl(prop
 :global(.is-scrolling) .sprite { animation-play-state: paused; }
 
 .art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; transform-origin: 50% 96%; }
+.is-highlighted .art { filter: brightness(1.2) drop-shadow(0 0 10px var(--butter-soft)) drop-shadow(0 0 20px var(--butter-deep)); }
 /* CHANGE ANIMATION LTR TO ADD TIME DELAY PLUS SPARKLE SAME SPARKLE WILL ALSO TRIGGER UPON SEED PLANT */
 /* ---- stage change: the new picture fades + springs in ON TOP of the old one, then the old one is removed.
         (old stays opaque until the new one has arrived, so you never see two stems at half opacity) ---- */
@@ -69,17 +70,39 @@ const src = computed(() => props.ghost ? plantSpriteUrl(1) : plantSpriteUrl(prop
   .stage-enter-active, .stage-leave-active, .sprite { transition-duration: .01s; transition-delay: 0s; }
 }
 
-.plant[data-stage="2"][data-wilting] .sprite { filter: sepia(1) saturate(.75) brightness(.88); }
-.plant[data-stage="3"][data-wilting] .sprite { filter: sepia(.5) saturate(1.6) hue-rotate(-25deg) brightness(1.08); }
-/* "!" bubble, sitting just above the top of each stage's sprite */
+.plant[data-stage="2"][data-wilting] .sprite,.plant[data-stage="3"][data-wilting] .sprite { 
+  filter: sepia(.7) saturate(.75) brightness(.88); 
+}
+
 .alert-mark {
-  position: absolute; left: -20px; bottom: 150px; width: 40px; height: 40px; border-radius: 50%;
-  background: var(--peach); color: var(--berry-ink); box-shadow: 0 2px 4px var(--shadow-card);
+  position: absolute; 
+  left: -25px; 
+  bottom: 170px; 
+  width: 50px; 
+  height: 50px; 
+  border-radius: 50%;
   animation: alertBob 1.6s ease-in-out infinite;
 }
-.plant[data-stage="1"] .alert-mark { bottom: 40px; }
-.plant[data-stage="2"] .alert-mark { bottom: 65px; }
-.plant[data-stage="3"] .alert-mark { bottom: 105px; }
+.plant[data-stage="1"] .alert-mark { 
+  bottom: 40px; 
+}
+.plant[data-stage="2"] .alert-mark,
+.plant[data-stage="8"] .alert-mark { 
+  bottom: 65px; 
+}
+.plant[data-stage="3"] .alert-mark,
+.plant[data-stage="7"] .alert-mark { 
+  bottom: 95px; 
+}
+.plant[data-stage="6"] .alert-mark { 
+  bottom: 80px; 
+}
+.plant[data-stage="5"] .alert-mark { 
+  bottom: 130px; 
+}
+.plant[data-stage="4"] .alert-mark { 
+  bottom: 170px; /* Full bloom height */
+}
 @keyframes alertBob {
   50% { transform: translateY(-4px); }
 }

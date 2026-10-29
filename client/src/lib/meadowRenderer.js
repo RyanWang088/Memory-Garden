@@ -99,21 +99,20 @@ function drawBand(ctx, cam, palette, props, { firstDepth, lastDepth, viewWidth, 
     const py = screenY(a)
     const u = scale * shrinkTo(FAR_SIZE, a) * p.s
 
-if (p.k === 'flower') {
+    if (p.k === 'flower') {
       const r = Math.max(0.9, 4.6 * u)
-      
-      // If palette.flowerAlpha is high (daytime), keep opacity near 1. 
-      // If it's low (night/dark weather), drop it down cleanly so it doesn't compete with fireflies.
-      const isNightOrDark = palette.flowerAlpha < 0.7
-      ctx.globalAlpha = palette.flowerAlpha * (isNightOrDark ? 0.35 : 1.0)
-      
+
+      // dim as the light drops: full at flowerAlpha 1, 35% at 0.55 or below\
+      const t = Math.min(1, Math.max(0, (palette.flowerAlpha - 0.55) / 0.45))
+      ctx.globalAlpha = palette.flowerAlpha * (0.35 + 0.65 * t * t)
+
       ctx.fillStyle = palette.flowers[p.c]
       ctx.beginPath(); ctx.arc(px, py - r, r, 0, TAU); ctx.fill()
-      
-      if (r > 2.6 && (!isNightOrDark || palette.flowerAlpha > 0.4)) { 
+
+      if (r > 2.6 && palette.flowerAlpha > 0.4) {
         ctx.fillStyle = palette.flowerEye
         ctx.beginPath(); ctx.arc(px, py - r, r * 0.35, 0, TAU)
-        ctx.fill() 
+        ctx.fill()
       }
       ctx.globalAlpha = 1
     } else {
@@ -131,7 +130,7 @@ if (p.k === 'flower') {
 let backdrop = null
 
 function buildBackdrop(viewWidth, horizonY) {
-  const rand = seeded(9)
+  const rand = seeded(12)
   const room = Math.max(24, horizonY - 4)           // all the sky height the camera leaves above the horizon
   const pad = viewWidth * 0.12
   const ridge = (base, amp, freq) => {
@@ -144,7 +143,7 @@ function buildBackdrop(viewWidth, horizonY) {
     }
     return pts
   }
-  const near = ridge(horizonY, room*0.3, 1.1)
+  const near = ridge(horizonY, room*0.4, 1.1)
   const yAt = (pts, x) => {
     for (let i = 0; i < pts.length - 1; i++) {
       if (x >= pts[i][0] && x <= pts[i + 1][0]) return pts[i][1] + (pts[i + 1][1] - pts[i][1]) * ((x - pts[i][0]) / (pts[i + 1][0] - pts[i][0]))

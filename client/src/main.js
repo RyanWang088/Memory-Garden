@@ -2,7 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './style.css'
-import './styles/theme.css' // journal look (ported from the reviewed Sproutly Interactive HTML)
+import './styles/theme.css'
 import App from './App.vue'
 import router from './router'
 

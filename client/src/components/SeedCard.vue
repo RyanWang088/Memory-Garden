@@ -90,7 +90,6 @@ const flowerImage = computed(() => plantSpriteUrl(stage.value, props.seed.flower
   transition: transform .3s var(--spring), box-shadow .25s var(--ease);
 }
 .seed-card:hover { transform: translateY(-3px) rotate(-.6deg); box-shadow: var(--shadow-2); }
-.seed-card:active { transform: scale(.98); }
 .seed-card:focus-visible { outline: 3px solid color-mix(in srgb, var(--leaf) 45%, transparent); outline-offset: 2px; }
 
 .status-new { --tone: var(--lilac); --tone-soft: color-mix(in srgb, var(--lilac) 28%, var(--paper)); }
@@ -104,9 +103,6 @@ const flowerImage = computed(() => plantSpriteUrl(stage.value, props.seed.flower
 .sc-stub::after { content: ""; position: absolute; right: -6px; top: 0; bottom: 0; width: 12px; background: radial-gradient(circle at 6px 8px, var(--paper)4px, transparent 4.5px) 0 0 / 12px 16px; }
 .sc-stub img { width: 64px; height: 72px; object-fit: contain; object-position: 50% 100%; transform-origin: 50% 100%; transition: transform .45s var(--spring); }
 .seed-card:hover .sc-stub img { transform: scale(1.12) rotate(-3deg); }
-.status-wilting .sc-stub img { filter: saturate(.55) sepia(.2); animation: droop 2.4s ease-in-out infinite alternate; }
-@keyframes droop { from { rotate: -2deg; } to { rotate: 5deg; translate: 1px 1px; } }
-.status-mastered .sc-stub::before { content: ""; position: absolute; z-index: 1; top: 10px; right: 12px; width: 14px; height: 14px; background: var(--butter); clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); animation: twinkle 1.6s ease-in-out infinite alternate; }
 
 .sc-body { display: grid; gap: 3px; align-content: center; min-width: 0; padding: 12px 84px 12px 20px; }
 .sc-title { font-family: var(--f-hand); font-weight: 700; font-size: 1.35rem; line-height: 1.05; overflow-wrap: anywhere; }

@@ -1,17 +1,32 @@
 // Picture URL for a plant: stages 1-8 (see lib/plantStage.js), per flower type and colour.
+import { SEED_COLORS } from './tagColors'
+
 const sprites = import.meta.glob('../assets/foliage/*.svg', { eager: true, query: '?url', import: 'default' })
 const url = name => sprites[`../assets/foliage/${name}.svg`]
 
 export const BLOOM_STAGE = 4
 
-// shared by every plant type: 1 seed, 2 sprout, 8 stub.  Per flower: 3-7 (tulip-4, tulip-yellow-4 ...)
+// Shared by every plant type: 1 seed, 2 sprout, 8 stub. Flower sprites cover stages 3-7.
 const SHARED = { 1: 'seed', 2: 'sprout', 8: 'stub' }
-const spriteName = (stage, flower = 'tulip', color) =>
-  SHARED[stage] ?? `${flower}${color ? `-${color}` : ''}-${stage}`
+const flowerSpriteUrl = (flower, color, stage) =>
+  url(`${flower}-${color}-${stage}`) ??
+  url(`${flower}-pink-${stage}`) ??
+  url(`tulip-pink-${stage}`) ??
+  url('seed')
 
-// falls back to a plain tulip of that stage, then to the seed
-export const plantSpriteUrl = (stage, flower, color) =>
-  url(spriteName(stage, flower, color)) ?? url(spriteName(stage, 'tulip')) ?? url('seed')
+export const plantSpriteUrl = (stage, flower = 'tulip', color = 'pink') => {
+  if (SHARED[stage]) return url(SHARED[stage]) ?? url('seed')
+  const plantColor = SEED_COLORS.includes(color) ? color : 'pink'
+  return flowerSpriteUrl(flower, plantColor, stage)
+}
 
-// any foliage picture by file name (e.g. 'tulip-pink-4', 'sprout'), for illustrations outside the garden
-export const foliageUrl = (name) => url(name) ?? url('seed')
+// Any foliage picture by file name, for illustrations outside the garden.
+export const foliageUrl = (name) => {
+  const directUrl = url(name)
+  if (directUrl) return directUrl
+
+  const flowerStage = /^(tulip|hyacinth|lily|wind)(?:-(pink|red|purple|yellow))?-(3|4|5|6|7)$/.exec(name)
+  return flowerStage
+    ? flowerSpriteUrl(flowerStage[1], flowerStage[2] ?? 'pink', flowerStage[3])
+    : url('seed')
+}
