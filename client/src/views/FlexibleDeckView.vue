@@ -253,7 +253,6 @@ function backToGarden() {
           </div>
         </div>
 
-        <p class="text-body-small m-0">Counts are from the first time you saw each card.</p>
         <p v-if="error" class="text-danger m-0" role="alert">{{ error }}</p>
 
         <button type="button" class="btn-primary border-0 text-button finish-btn" data-testid="deck-finish"
@@ -474,6 +473,24 @@ function backToGarden() {
 }
 
 .stat .text-stat { color: var(--ink); }
+
+@media (max-width: 1080px) {
+  .stats {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 420px;
+  }
+  .stat { max-width: none; padding: 20px 8px; }
+}
+
+/* tablets: scale the result boxes up so they fill the sheet like on a phone */
+@media (min-width: 481px) and (max-width: 1080px) {
+  .stats { max-width: 560px; gap: 24px !important; }
+  .stat { padding: 36px 12px; gap: 8px; }
+  .stat .text-label-field { font-size: 18px; line-height: 24px; }
+  .stat .text-stat { font-size: 44px; line-height: 48px; }
+  .finish-btn { max-width: 560px; }
+}
 
 @media (max-width: 480px) {
   .deck-card { --mx: 44px; min-height: calc(100vh - 48px); }
