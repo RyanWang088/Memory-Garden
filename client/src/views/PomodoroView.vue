@@ -11,6 +11,7 @@ import { moodNow } from '@/lib/greeting'
 import { vBurst } from '@/lib/burst'
 import { useAuthStore } from '@/stores/auth'
 import { useGardenStore } from '@/stores/garden'
+import { usePlannerStore } from '@/stores/planner'
 const pomo = usePomodoroStore()
 const garden = useGardenStore()
 const auth = useAuthStore()
@@ -112,7 +113,10 @@ const ringNext = computed(() => (idle.value
 const focusStarted = computed(() => pomo.current.number)
 
 /* ---------- finished ---------- */
-const tasksDone = computed(() => pomo.tasks.filter(t => t.done).length)
+// tasks ticked since Start: this session's list, plus planner tasks (ticked here or on the planner page)
+const planner = usePlannerStore()
+const tasksDone = computed(() => [...pomo.tasks, ...planner.tasks]
+  .filter(t => t.done && !pomo.doneAtStart.includes(t.id)).length)
 // done screen: total focus time, e.g. "50 min" or "1h 40 min" (only shown after every block is finished)
 const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === 'focus').reduce((sum, b) => sum + b.seconds, 0)))
 </script>
@@ -163,7 +167,7 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
               <button v-else type="button" class="btn-primary border-0 text-button justify-content-center" @click="pomo.resume()">
                 <SproutIcon glyph="play" :size="16" /> Resume
               </button>
-              <button type="button" class="btn-secondary text-button" @click="pomo.endSession()">End early</button>
+              <button type="button" class="btn-secondary text-button" @click="pomo.endEarly()">End early</button>
             </div>
           </template>
         </div>

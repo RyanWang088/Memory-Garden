@@ -1,15 +1,40 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { usePomodoroStore, coinsFor, MIN_COIN_MINUTES } from '@/stores/pomodoro'
+import { usePlannerStore, isoDay } from '@/stores/planner'
 
 // Left card on the Focus page (before Start and while running): the to-do list and the coin reward.
-// The tasks live in the pomodoro store: the recommended reviews are added before Start, the user can add
-// their own, and the list is cleared when a session ends.
+// Two kinds of tasks:
+// - today's planner tasks, read straight from the planner store, so ticking one here ticks it in the planner too
+//   (× only hides one for this session; deleting is done in the planner)
+// - this session's tasks in the pomodoro store: the recommended reviews and the user's own, cleared when a session ends
 const pomo = usePomodoroStore()
+const planner = usePlannerStore()
+planner.load()
 const draft = ref('')
-const doneCount = computed(() => pomo.tasks.filter(t => t.done).length)
+
+// planner tasks first, then this session's; ticked ones drop to the bottom
+const list = computed(() => {
+  const today = isoDay(Date.now())
+  const all = [
+    ...planner.tasks.filter(t => t.date === today && !pomo.hiddenPlannerIds.includes(t.id))
+      .map(t => ({ ...t, key: `planner-${t.id}`, fromPlanner: true })),
+    ...pomo.tasks.map(t => ({ ...t, key: `session-${t.id}` })),
+  ]
+  return [...all.filter(t => !t.done), ...all.filter(t => t.done)]
+})
+const doneCount = computed(() => list.value.filter(t => t.done).length)
 // the first unticked task is the one you're on, so it gets highlighted
-const currentId = computed(() => pomo.tasks.find(t => !t.done)?.id)
+const currentKey = computed(() => list.value.find(t => !t.done)?.key)
+
+function toggle(task) {
+  if (task.fromPlanner) planner.toggleDone(task.id)
+  else pomo.toggleTask(task.id)
+}
+function remove(task) {
+  if (task.fromPlanner) pomo.hidePlannerTask(task.id)
+  else pomo.removeTask(task.id)
+}
 
 function add() {
   pomo.addTask(draft.value)
@@ -34,25 +59,28 @@ const reward = computed(() => {
     <!-- same header as the Timer settings and Garden Radio cards: label on the left, count on the right -->
     <div class="d-flex justify-content-between align-items-baseline gap-2 mb-2">
       <span id="todo-title" class="text-label-caption sp-card-label" data-testid="todo-heading">To-do list</span>
-      <span v-if="pomo.tasks.length" class="text-body-small" data-testid="todo-count">{{ doneCount }} / {{ pomo.tasks.length }} done</span>
+      <span v-if="list.length" class="text-body-small" data-testid="todo-count">{{ doneCount }} / {{ list.length }} done</span>
     </div>
 
-    <ul v-if="pomo.tasks.length" class="list-unstyled sp-rows mb-3">
+    <ul v-if="list.length" class="list-unstyled sp-rows mb-3">
       <li
-        v-for="task in pomo.tasks" :key="task.id"
-        class="task d-flex align-items-center gap-2" :class="{ done: task.done, current: task.id === currentId }"
+        v-for="task in list" :key="task.key"
+        class="task d-flex align-items-center gap-2" :class="{ done: task.done, current: task.key === currentKey }"
       >
         <input
-          :id="`task-${task.id}`" type="checkbox" class="form-check-input mt-0"
-          :checked="task.done" @change="pomo.toggleTask(task.id)"
+          :id="`task-${task.key}`" type="checkbox" class="form-check-input mt-0"
+          :checked="task.done" @change="toggle(task)"
         />
-        <label :for="`task-${task.id}`" class="flex-fill">{{ task.text }}</label>
+        <label :for="`task-${task.key}`" class="flex-fill">{{ task.text }}</label>
         <!-- a recommended review links to that seed's review page -->
         <RouterLink
           v-if="task.seedId" :to="{ name: 'seed-review', params: { id: task.seedId } }" class="review-link"
           :aria-label="`Open ${task.text}`" title="Open this review"
         >↗</RouterLink>
-        <button type="button" class="remove" :aria-label="`Remove ${task.text}`" @click="pomo.removeTask(task.id)">×</button>
+        <button
+          type="button" class="remove" :aria-label="`Remove ${task.text}`"
+          :title="task.fromPlanner ? 'Hide for this session (it stays in your planner)' : 'Remove'" @click="remove(task)"
+        >×</button>
       </li>
     </ul>
 

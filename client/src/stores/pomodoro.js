@@ -1,7 +1,9 @@
-import { defineStore, acceptHMRUpdate } from 'pinia'
+import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { useAuthStore } from './auth'
 import { useToastStore } from './toast'
+import { useGardenStore } from './garden'
+import { usePlannerStore, isoDay } from './planner'
 import { beep, ting, cancelSounds, unlockAudio, audioReady, unlockOnFirstInteraction } from '@/lib/beep'
 
 const STORAGE_KEY = 'sproutly.pomodoro' // the running session, saved so a page refresh doesn't lose it
@@ -110,6 +112,9 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     if (setupError.value) return
     blocks.value = [...plan.value]
     focusDoneSeconds.value = 0
+    // tasks already ticked before Start (planner ones, and reviews done earlier today), so the done screen
+    // only counts the ones ticked during the session (planner ids are text, this list's ids are numbers)
+    doneAtStart.value = [...usePlannerStore().tasks, ...tasks.value].filter(t => t.done).map(t => t.id)
     rebookedBlock = -1 // block 0 of this new session hasn't been re-booked yet
     phase.value = 'running'
     beginBlock(0)
@@ -160,6 +165,17 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     }
   }
 
+  // End early: once a focus block is finished, it ends like a full session (done card, "Nice work!", coins),
+  // keeping only the blocks that were finished; with none finished it goes straight back to setup
+  function endEarly() {
+    if (!focusDoneSeconds.value) return endSession()
+    pause()
+    blocks.value = blocks.value.slice(0, index.value) // so the done card counts only the finished focus time
+    phase.value = 'done'
+    announce()
+    awardCoins()
+  }
+
   // back to setup for a fresh session: the rhythm and the to-do list are cleared so each session starts
   // anew (Custom starts again from the Classic times); the number of rounds is kept
   function endSession() {
@@ -167,6 +183,7 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     if (phase.value === 'running') awardCoins() // End early still pays for the focus blocks already finished
     tasks.value = [] // the list can be filled in before Start, so it's cleared here, not when starting
     reviewsAdded = false // the next session gets fresh recommendations
+    hiddenPlannerIds.value = [] // and shows every planner task for the day again
     // forget the old blocks too, or the ring keeps the last block's look (e.g. a break) after End early
     blocks.value = []
     index.value = 0
@@ -191,17 +208,33 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
   function removeTask(id) {
     tasks.value = tasks.value.filter(t => t.id !== id)
   }
+  // planner tasks can't be deleted here, only hidden from this session's list (they stay in the planner)
+  const hiddenPlannerIds = ref([])
+  function hidePlannerTask(id) {
+    hiddenPlannerIds.value.push(id)
+  }
   // recommended reviews (the garden's "!" seeds) as normal tasks that remember their seed, so the
   // list can link to its review. Added once per session, so one the user removed doesn't come back.
+  // A seed already reviewed today comes in ticked, so a finished review stays done until tomorrow.
   let reviewsAdded = false
   function addReviewTasks(seeds) {
     if (reviewsAdded) return
     reviewsAdded = true
     for (const seed of seeds) {
       if (tasks.value.some(t => t.seedId === seed.id)) continue
-      tasks.value.push({ id: nextTaskId++, text: `Review: ${seed.title}`, done: false, seedId: seed.id })
+      const reviewedToday = !!seed.last_reviewed && isoDay(seed.last_reviewed) === isoDay(Date.now())
+      tasks.value.push({ id: nextTaskId++, text: `Review: ${seed.title}`, done: reviewedToday, seedId: seed.id })
     }
   }
+  // finishing a review on any quiz page saves it with garden.saveReview; once that works, tick its task here
+  // (true = keep listening for the whole app, not just while the page that first used this store is open)
+  useGardenStore().$onAction(({ name, args, after }) => {
+    if (name !== 'saveReview') return
+    after(() => {
+      const task = tasks.value.find(t => t.seedId === args[0])
+      if (task) task.done = true
+    })
+  }, true)
 
   // pop-up on whatever page the user is on, saying what just started (the TING plays at the same time)
   function announce() {
@@ -258,6 +291,7 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
      Coins are given once per session, when it ends (finished or End early), for the focus minutes
      finished, worked out by coinsFor() at the top. */
   const focusDoneSeconds = ref(0) // focus time finished so far this session
+  const doneAtStart = ref([]) // ids of the tasks that were already ticked when the session started
   async function awardCoins() {
     const seconds = focusDoneSeconds.value
     focusDoneSeconds.value = 0 // so the same minutes are never paid twice
@@ -281,12 +315,13 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
         phase: phase.value, blocks: blocks.value, index: index.value,
         running: running.value, endsAt, remaining: remaining.value, tasks: tasks.value, nextTaskId,
-        focusDoneSeconds: focusDoneSeconds.value,
+        focusDoneSeconds: focusDoneSeconds.value, doneAtStart: doneAtStart.value,
+        hiddenPlannerIds: hiddenPlannerIds.value,
       }))
     } catch { /* storage blocked (e.g. private mode): the session just won't survive a refresh */ }
   }
   // remaining isn't watched (it changes every second); endsAt covers a running timer, and pause() changes running
-  watch([phase, index, running, tasks, focusDoneSeconds], save, { deep: true })
+  watch([phase, index, running, tasks, focusDoneSeconds, hiddenPlannerIds], save, { deep: true })
 
   // called once when the app starts (App.vue): picks the saved session back up after a refresh
   function restore() {
@@ -301,6 +336,8 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     tasks.value = saved.tasks
     nextTaskId = saved.nextTaskId
     focusDoneSeconds.value = saved.focusDoneSeconds ?? 0
+    doneAtStart.value = saved.doneAtStart ?? []
+    hiddenPlannerIds.value = saved.hiddenPlannerIds ?? []
     if (saved.phase === 'running' && saved.running) {
       endsAt = saved.endsAt
       startTicking() // no sound yet: the new page hasn't been clicked, so the browser blocks it
@@ -312,10 +349,12 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
   return {
     preset, focusSeconds, breakSeconds, endBy, rounds, totalSeconds, errors, setupError, plan, choosePreset,
     phase, blocks, index, remaining, running, current, next, mode, focusTotal, breakTotal, progress, label,
-    startSession, resume, pause, endSession, restore,
-    tasks, addTask, toggleTask, removeTask, addReviewTasks, focusDoneSeconds,
+    startSession, resume, pause, endEarly, endSession, restore,
+    tasks, addTask, toggleTask, removeTask, hiddenPlannerIds, hidePlannerTask, addReviewTasks, focusDoneSeconds, doneAtStart,
   }
 })
 
-// lets Vite swap in edits to this store without a page refresh (otherwise the old store stays in memory)
-if (import.meta.hot) import.meta.hot.accept(acceptHMRUpdate(usePomodoroStore, import.meta.hot))
+// While coding: saving this file reloads the page instead of swapping the store in place. A swap left the old
+// timer ticking in the background, which could finish the session and pay coins again after End early.
+// The reload is safe: a running session comes back from sessionStorage.
+if (import.meta.hot) import.meta.hot.accept(() => window.location.reload())
