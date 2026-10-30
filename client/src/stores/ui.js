@@ -11,7 +11,6 @@ export const useUiStore = defineStore('ui', () => {
   const selectedSeedColor = ref('red')
   const selectedSeedFlower = ref('tulip')
   const selectedGardenSeedId = ref(null)
-  const modal = ref({ open: false, mode: null, seedId: null, draft: null }) // mode: 'create' | 'review'
 
   function setTool(tool) { activeTool.value = tool }
   function setShedTab(tab) {
@@ -24,13 +23,8 @@ export const useUiStore = defineStore('ui', () => {
   function selectGardenSeed(seedId) { selectedGardenSeedId.value = seedId }
   function clearGardenSeedSelection() { selectedGardenSeedId.value = null }
 
-  function openCreate(draft) { seedPicked.value = false; modal.value = { open: true, mode: 'create', seedId: null, draft } }
-  function openReview(seedId) { modal.value = { open: true, mode: 'review', seedId, draft: null } }
-  function closeModal() { modal.value = { open: false, mode: null, seedId: null, draft: null } }
-
   return {
-    activeTool, shedTab, shedOpen, seedPicked, seedDragPointerId, selectedSeedColor, selectedSeedFlower, selectedGardenSeedId, modal,
+    activeTool, shedTab, shedOpen, seedPicked, seedDragPointerId, selectedSeedColor, selectedSeedFlower, selectedGardenSeedId,
     setTool, setShedTab, pickDefaultTab, selectGardenSeed, clearGardenSeedSelection,
-    openCreate, openReview, closeModal,
   }
 })

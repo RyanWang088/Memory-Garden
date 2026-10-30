@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useGardenStore } from '@/stores/garden'
+import SproutIcon from '@/components/SproutIcon.vue'
 
 // Opens when a plant is clicked in the garden: the user picks a goal for the review session.
 const route = useRoute()
@@ -23,16 +24,16 @@ onMounted(async () => {
   }
 })
 
-function startStructuredQuiz() {
-  router.push({ name: 'structured-quiz', params: { id: route.params.id } })
+function startMultipleChoiceQuiz() {
+  router.push({ name: 'multiple-choice-quiz', params: { id: route.params.id } })
 }
 
 function startShortStructured() {
   router.push({ name: 'short-structured', params: { id: route.params.id } })
 }
 
-function startFlexibleDeck() {
-  router.push({ name: 'flexible-deck', params: { id: route.params.id } })
+function startFlashcard() {
+  router.push({ name: 'flashcard', params: { id: route.params.id } })
 }
 
 function backToGarden() {
@@ -53,19 +54,20 @@ function backToGarden() {
           <p class="text-body-small m-0">{{ seed.title }} · {{ seed.cards.length }} cards · Mastery {{ seed.mastery }}%</p>
         </header>
 
-        <button type="button" class="goal-option" data-testid="goal-structured-quiz" @click="startStructuredQuiz">
-          <span class="goal-icon" aria-hidden="true">🎯</span>
+        <!-- easiest to hardest -->
+        <button type="button" class="goal-option" data-testid="goal-flashcard" @click="startFlashcard">
+          <span class="goal-icon" aria-hidden="true"><SproutIcon name="flashcard" :size="34" /></span>
           <span class="d-flex flex-column text-start">
-            <span class="goal-name">Structured Quiz Mode</span>
-            <span class="text-body-small">Up to 10 quick multiple-choice questions.</span>
+            <span class="goal-name">Flashcard Mode</span>
+            <span class="text-body-small">Flip through up to 20 flashcards.</span>
           </span>
         </button>
 
-        <button type="button" class="goal-option" data-testid="goal-flexible-deck" @click="startFlexibleDeck">
-          <span class="goal-icon" aria-hidden="true">🌱</span>
+        <button type="button" class="goal-option" data-testid="goal-multiple-choice-quiz" @click="startMultipleChoiceQuiz">
+          <span class="goal-icon" aria-hidden="true">🎯</span>
           <span class="d-flex flex-column text-start">
-            <span class="goal-name">Flexible Deck Mode</span>
-            <span class="text-body-small">Flip through up to 20 flashcards.</span>
+            <span class="goal-name">Multiple Choice Quiz</span>
+            <span class="text-body-small">Up to 10 quick multiple-choice questions.</span>
           </span>
         </button>
 
@@ -87,7 +89,7 @@ function backToGarden() {
 
 <style scoped>
 .goal-dialog { background: var(--paper); animation: pop-in .35s var(--spring) both; }
-/* same type as the quiz: question in Fraunces, options in Nunito (StructuredQuizView .question / .option-text) */
+/* same type as the quiz: question in Fraunces, options in Nunito (MultipleChoiceQuizView .question / .option-text) */
 .goal-title {
   font-family: var(--f-display);
   font-weight: 600;

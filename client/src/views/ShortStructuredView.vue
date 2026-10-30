@@ -10,6 +10,7 @@ import { moodNow } from '@/lib/greeting'
 import SceneryBackdrop from '@/components/SceneryBackdrop.vue'
 import { ding, fanfare, unlockAudio } from '@/lib/beep'
 import ConfettiBurst from '@/components/ConfettiBurst.vue'
+import ScoreRing from '@/components/ScoreRing.vue'
 
 // "Short Structured Mode" review session: up to 10 questions from one seed. The user types each answer and the
 // server has AI mark it (one call per answer, see POST /api/seeds/:id/grade), then claims coins on a results screen.
@@ -57,8 +58,11 @@ const isLast = computed(() => index.value === total.value - 1)
 const verdict = computed(() => mark.value && VERDICTS[mark.value.rating])
 const correctCount = computed(() => results.value.filter(r => r.rating === 'short_correct').length)
 const accuracy = computed(() => (scores.value.length ? Math.round(scores.value.reduce((n, s) => n + s, 0) / scores.value.length) : 0))
-// 1.5x Structured Quiz's coins (30 / 20 / 10): typing answers from memory is the hardest mode
+// coins: 45 at 90%+, 30 at 75%+, 15 at 60%+
 const reward = computed(() => (accuracy.value >= 90 ? 45 : accuracy.value >= 75 ? 30 : accuracy.value >= 60 ? 15 : 0))
+// same tiers and headings as the Multiple Choice Quiz's results
+const tier = computed(() => (accuracy.value >= 75 ? 'high' : accuracy.value >= 60 ? 'mid' : 'low'))
+const heading = computed(() => ({ high: '🌷 Session Complete!', mid: '🌿 Session Complete!', low: '🌱 Session Complete!' })[tier.value])
 const timeTaken = computed(() => {
   const seconds = Math.round(elapsedMs.value / 1000)
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
@@ -222,10 +226,10 @@ function backToGarden() {
       </section>
 
       <!-- results -->
-      <section v-else class="d-flex flex-column align-items-center text-center gap-3" data-testid="short-results">
-        <img src="../assets/ui/sprout.svg" width="96" height="96" alt="">
+      <section v-else class="review-results d-flex flex-column align-items-center text-center gap-3" data-testid="short-results">
+        <ScoreRing :percent="accuracy" :tier="tier" />
         <div>
-          <h1 class="m-0">Session complete!</h1>
+          <h1 class="m-0">{{ heading }}</h1>
           <p class="bark-muted m-0">{{ correctCount }} of {{ total }} fully correct</p>
         </div>
 
@@ -244,7 +248,7 @@ function backToGarden() {
           </div>
         </div>
 
-        <p class="text-body-small m-0">{{ reward ? 'Typed answers earn 1.5× coins.' : 'Average 60% or more to earn coins (1.5× for typed answers).' }}</p>
+        <p v-if="!reward" class="text-body-small m-0">Average 60% or more to earn coins (1.5× for typed answers).</p>
         <p v-if="error" class="text-danger m-0" role="alert">{{ error }}</p>
 
         <button type="button" class="btn-primary border-0 text-button claim-btn" data-testid="short-claim"
@@ -273,7 +277,7 @@ function backToGarden() {
   resize: vertical;
 }
 
-/* same hand as the structured quiz's answer options (StructuredQuizView .option-text) */
+/* same hand as the multiple choice quiz's answer options (MultipleChoiceQuizView .option-text) */
 .answer-box::placeholder {
   font-family: var(--f-hand);
   font-weight: 600;
@@ -311,7 +315,7 @@ function backToGarden() {
   background: color-mix(in srgb, var(--berry) 14%, var(--paper));
 }
 
-/* header and question snap to the sheet's 44px rules, same as StructuredQuizView: the header fills
+/* header and question snap to the sheet's 44px rules, same as MultipleChoiceQuizView: the header fills
    down to the second rule (sheet padding-top is 28px, 20px on phones) and every question line is one
    rule tall; everything after the question is spaced 24px apart */
 .quiz-head {

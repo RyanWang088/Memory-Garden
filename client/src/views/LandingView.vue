@@ -39,7 +39,7 @@ const FEATURES = [
   { name: 'Focus timer', icon: focusArt, eyebrow: 'Focus', title: 'Focus in short blocks', spec: 'Your own rhythm · 25/5 classic · 50/10 deep work',
     text: 'Set your focus and break, a topic and a length. The ring counts down with break ideas ready when you need them.', chips: ['Pause & resume', 'Break ideas', 'Earn coins per block'], viz: 'ring' },
   { name: 'Memory seeds', icon: foliageUrl('tulip-pink-3'), eyebrow: 'Remember', title: 'Memory seeds', spec: 'Flashcards · Quizzes · Exam dates',
-    text: 'Plant a seed for a topic with cards from your notes. Review it on time and it grows; leave it too long and it wilts. After the exam, it goes on your shelf.', chips: ['Structured quizzes', 'Flexible decks', 'Flower shelf'], viz: 'flash' },
+    text: 'Plant a seed for a topic with cards from your notes. Review it on time and it grows; leave it too long and it wilts. After the exam, it goes on your shelf.', chips: ['Multiple choice quizzes', 'Flashcards', 'Flower shelf'], viz: 'flash' },
   { name: 'Garden Radio', icon: potArt, eyebrow: 'Listen', title: 'Garden Radio', spec: 'Calm lo-fi, matched to the weather',
     text: 'Quiet music for studying that follows the sky: bright tracks on sunny days, softer ones when it rains.', chips: ['Weather-matched', 'Volume control', 'CC0 music'], viz: 'vinyl' },
   { name: 'Streaks & coins', icon: coinArt, eyebrow: 'Rewards', title: 'Streaks and coins', spec: 'Daily streak · Coins',

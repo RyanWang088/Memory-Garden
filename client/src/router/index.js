@@ -15,9 +15,9 @@ const routes = [
       { path: 'seeds/:id', name: 'seed-review', component: () => import('@/views/SeedReviewView.vue'), meta: { showNav: false } },
     ],
   },
-  { path: '/review/:id/structured-quiz', name: 'structured-quiz', component: () => import('@/views/StructuredQuizView.vue'), meta: { requiresAuth: true } },
+  { path: '/review/:id/multiple-choice-quiz', name: 'multiple-choice-quiz', component: () => import('@/views/MultipleChoiceQuizView.vue'), meta: { requiresAuth: true } },
   { path: '/review/:id/short-structured', name: 'short-structured', component: () => import('@/views/ShortStructuredView.vue'), meta: { requiresAuth: true } },
-  { path: '/review/:id/flexible-deck', name: 'flexible-deck', component: () => import('@/views/FlexibleDeckView.vue'), meta: { requiresAuth: true } },
+  { path: '/review/:id/flashcard', name: 'flashcard', component: () => import('@/views/FlashcardView.vue'), meta: { requiresAuth: true } },
   // Planner: to-do list (left page) + month calendar with exams and reviews due (right page).
   { path: '/planner', name: 'planner', component: () => import('@/views/PlannerView.vue'), meta: { requiresAuth: true, showNav: true } },
   { path: '/journal', redirect: '/planner' },

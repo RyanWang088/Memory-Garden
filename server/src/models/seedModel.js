@@ -8,32 +8,25 @@ const SEED_WITH_RELATIONS = '*, subjects(name, exam_date, exam_choice, shelf_slo
 const DAY = 86_400_000
 
 // How each rating changes ONE card:
-//   points  = added to card_mastery (kept between 0 and 100)
-//   spacing = share of the card's review gap (see reviewInDays) until it is due again; 0 = due again now
-// forgot / hard / easy come from Flexible Deck Mode, correct / wrong from Structured Quiz Mode,
+//   points = added to card_mastery (kept between 0 and 100)
+//   days   = days until the card is due again; 0 = due again today
+// forgot / hard / easy come from Flashcard Mode, correct / wrong from Multiple Choice Quiz,
 // short_* from Short Structured Mode (typed answers, marked by AI; see shortAnswerRating).
 // Typing the answer from memory is the strongest proof, so short_correct earns the most.
 export const RATING_RULES = {
-  forgot: { points: -5, spacing: 0 },
-  hard: { points: 5, spacing: 0.5 },
-  easy: { points: 12, spacing: 1 },
-  correct: { points: 5, spacing: 1 },
-  wrong: { points: -5, spacing: 0 },
-  short_correct: { points: 15, spacing: 1 },
-  short_partial: { points: 6, spacing: 0.5 },
-  short_wrong: { points: -5, spacing: 0 },
+  forgot: { points: -5, days: 0 },
+  hard: { points: 2, days: 1 },
+  easy: { points: 5, days: 3 },
+  correct: { points: 5, days: 1 },
+  wrong: { points: -5, days: 0 },
+  short_correct: { points: 15, days: 5 },
+  short_partial: { points: 6, days: 3 },
+  short_wrong: { points: -5, days: 0 },
 }
 
 // AI score (0-100) for a typed answer -> its rating: 80+ correct, 50-79 partial, below 50 wrong
 export function shortAnswerRating(score) {
   return score >= 80 ? 'short_correct' : score >= 50 ? 'short_partial' : 'short_wrong'
-}
-
-// Review gap by the card's mastery after the rating: the better a card is known, the later it comes back
-//   0-19 -> 1 day, 20-39 -> 2, 40-59 -> 4, 60-79 -> 7, 80-99 -> 14, 100 -> 30
-const REVIEW_GAPS = [[20, 1], [40, 2], [60, 4], [80, 7], [100, 14]] // [mastery below, days]
-export function reviewInDays(mastery) {
-  return REVIEW_GAPS.find(([below]) => mastery < below)?.[1] ?? 30
 }
 
 // seed row + joined subject/cards -> the flat shape the client uses
@@ -123,9 +116,7 @@ export const SeedModel = {
 
       const rule = RATING_RULES[rating]
       const card_mastery = Math.max(0, Math.min(100, card.card_mastery + rule.points))
-      // a remembered card waits at least a day; hard waits half as long as easy/correct
-      const days = rule.spacing && Math.max(1, Math.round(reviewInDays(card_mastery) * rule.spacing))
-      const next_review = new Date(Date.now() + days * DAY).toISOString()
+      const next_review = new Date(Date.now() + rule.days * DAY).toISOString()
       check(await supabase.from('cards').update({ card_mastery, next_review }).eq('id', card.id).eq('user_id', userId))
     }
 

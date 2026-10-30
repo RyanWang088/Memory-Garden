@@ -153,7 +153,7 @@ export const seedsController = {
   },
 
   // POST /api/seeds/:id/reviews  body: { ratings: [{ card_id, rating }] }
-  // rating: forgot | hard | easy (Flexible Deck), correct | wrong (Structured Quiz)
+  // rating: forgot | hard | easy (Flashcard), correct | wrong (Multiple Choice Quiz)
   // or short_correct | short_partial | short_wrong (Short Structured)
   async review(req, res, next) {
     try {

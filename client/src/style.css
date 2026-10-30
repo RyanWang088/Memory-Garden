@@ -462,7 +462,7 @@ button.product-card.is-picked {
 ::selection {
   background-color: var(--peri-soft);
 }
-/* Review sessions (Structured Quiz, Short Structured): page shell, score pill, progress, results stats, claim button */
+/* Review sessions (Multiple Choice Quiz, Short Structured): page shell, score pill, progress, results stats, claim button */
 /* no background: the meadow scenery (SceneryBackdrop) shows behind the sheet, like the Focus page */
 .review-page {
   position: relative;
@@ -505,9 +505,15 @@ button.product-card.is-picked {
   text-transform: uppercase;
   color: var(--ink-soft);
 }
+/* a results screen fills the sheet (its min-height less its top + bottom padding) and sits in the middle */
+.review-results {
+  min-height: calc(100vh - 80px - 64px);
+  justify-content: center;
+}
 @media (max-width: 480px) {
   .review-page { padding: 16px 8px 32px; }
   .review-sheet { --margin-x: 26px; padding: 20px 14px 28px calc(var(--margin-x) + 14px); }
+  .review-results { min-height: calc(100vh - 80px - 48px); }
 }
 .score-pill {
   padding: 2px 14px;

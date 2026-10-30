@@ -11,16 +11,20 @@ let timer
 
 function rain() {
   clearTimeout(timer)
-  pieces.value = Array.from({ length: 90 }, (_, id) => ({
-    id,
-    style: {
-      left: `${Math.random() * 100}%`,
-      background: CONFETTI_COLORS[id % CONFETTI_COLORS.length],
-      animationDelay: `${Math.random() * 1.2}s`,
-      animationDuration: `${1.6 + Math.random() * 1.2}s`,
-      transform: `rotate(${Math.random() * 360}deg)`,
-    },
-  }))
+  const list = []
+  for (let id = 0; id < 90; id++) {
+    list.push({
+      id,
+      style: {
+        left: `${Math.random() * 100}%`,
+        background: CONFETTI_COLORS[id % CONFETTI_COLORS.length],
+        animationDelay: `${Math.random() * 1.2}s`,
+        animationDuration: `${1.6 + Math.random() * 1.2}s`,
+        transform: `rotate(${Math.random() * 360}deg)`,
+      },
+    })
+  }
+  pieces.value = list
   timer = setTimeout(() => { pieces.value = [] }, CONFETTI_MS)
 }
 

@@ -94,18 +94,6 @@ export const useGardenStore = defineStore('garden', () => {
     return seed
   }
 
-  // rating: 'forgot' | 'hard' | 'easy'. Replace with real spaced-repetition scheduling later.
-  async function rateReview(seedId, rating) {
-    const delta = { forgot: -5, hard: 5, easy: 12 }[rating]
-    const seed = seeds.value.find(s => s.id === seedId)
-    if (!seed) throw new Error('Seed not found. Refresh the garden and try again.')
-    if (delta === undefined) throw new Error('Choose a valid review rating.')
-    const mastery = Math.max(0, Math.min(100, seed.mastery + delta))
-    const updated = await apiFetch(`/api/seeds/${seedId}`, { method: 'PATCH', body: { mastery, last_reviewed: new Date().toISOString() } })
-    Object.assign(seed, updated)
-    refreshPriority()
-  }
-
   // Short Structured Mode: the server has AI mark one typed answer. Saves nothing.
   // Returns { score, rating: 'short_correct' | 'short_partial' | 'short_wrong', feedback }
   async function gradeAnswer(seedId, cardId, response, signal) {
@@ -113,7 +101,7 @@ export const useGardenStore = defineStore('garden', () => {
   }
 
   // Saves a review session card by card. ratings: [{ card_id, rating }]
-  // rating: forgot | hard | easy (Flexible Deck), correct | wrong (Structured Quiz)
+  // rating: forgot | hard | easy (Flashcard), correct | wrong (Multiple Choice Quiz)
   // or short_correct | short_partial | short_wrong (Short Structured)
   async function saveReview(seedId, ratings) {
     const seed = seeds.value.find(s => s.id === seedId)
@@ -164,6 +152,6 @@ export const useGardenStore = defineStore('garden', () => {
 
   return {
     seeds, loaded, gardenSeeds, hasPlants, housedSubjects, shelfSlots, freeShelfSlots, examsOver,
-    stageOf, isWilted, fetchSeeds, plantSeed, rateReview, gradeAnswer, saveReview, deleteSeed, chooseExamOutcome, unlockShelf, readiness,
+    stageOf, isWilted, fetchSeeds, plantSeed, gradeAnswer, saveReview, deleteSeed, chooseExamOutcome, unlockShelf, readiness,
   }
 })

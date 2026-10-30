@@ -1,7 +1,7 @@
 import { onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 
-// Active study time in a review session (Flexible Deck, Structured Quiz) for the profile's "studied" stat.
+// Active study time in a review session (Flashcard, Multiple Choice Quiz) for the profile's "studied" stat.
 // Counts the time between the user's actions, each gap capped at MAX_GAP_MS, so time away from the screen
 // doesn't count. Saved once when the page closes, finished or not: only the time up to the last action counts.
 //   start() when the first card/question shows, mark() on every answer

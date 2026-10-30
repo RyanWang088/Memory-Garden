@@ -221,7 +221,7 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
               <span class="sp-eyebrow">Memory seeds</span>
               <h1>Plant <em>memory seeds</em></h1>
               <p>Turn your notes into a seed of flashcards for one topic. Review it when it's due and it grows from sprout to flower by your exam date.</p>
-              <ul class="points"><li>Quizzes, flexible decks and short answers.</li><li>Forget to water a seed and it starts to wilt.</li><li>After the exam, keep your flower on a shelf.</li></ul>
+              <ul class="points"><li>Multiple choice quizzes, flashcards and short answers.</li><li>Forget to water a seed and it starts to wilt.</li><li>After the exam, keep your flower on a shelf.</li></ul>
             </div>
             <div v-else-if="i === 4" key="s4" class="slide form-slide">
               <span class="sp-eyebrow">About you</span>

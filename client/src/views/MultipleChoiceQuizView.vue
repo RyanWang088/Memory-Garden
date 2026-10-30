@@ -11,9 +11,10 @@ import SceneryBackdrop from '@/components/SceneryBackdrop.vue'
 import { ding, fanfare } from '@/lib/beep'
 import ConfettiBurst from '@/components/ConfettiBurst.vue'
 import SproutIcon from '@/components/SproutIcon.vue'
+import ScoreRing from '@/components/ScoreRing.vue'
 import { burst } from '@/lib/burst'
 
-// "Structured Quiz Mode" review session: up to 10 multiple-choice questions from one seed,
+// "Multiple Choice Quiz" review session: up to 10 multiple-choice questions from one seed,
 // then a results screen where the user claims coins for their score.
 const MAX_QUESTIONS = 10
 const LETTERS = ['A', 'B', 'C', 'D']
@@ -58,11 +59,6 @@ const timeTaken = computed(() => {
   const seconds = Math.round(elapsedMs.value / 1000)
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
 })
-
-// results ring
-const RING_RADIUS = 52
-const RING_LENGTH = 2 * Math.PI * RING_RADIUS
-const ringOffset = computed(() => RING_LENGTH * (1 - accuracy.value / 100))
 
 const norm = (text) => text.trim().toLowerCase()
 
@@ -247,15 +243,8 @@ function backToGarden() {
       </section>
 
       <!-- results -->
-      <section v-else class="d-flex flex-column align-items-center text-center gap-3" data-testid="quiz-results">
-        <div class="ring" :class="`tier-${tier}`">
-          <svg viewBox="0 0 120 120" aria-hidden="true">
-            <circle cx="60" cy="60" :r="RING_RADIUS" class="ring-track" />
-            <circle cx="60" cy="60" :r="RING_RADIUS" class="ring-fill" :stroke-dasharray="RING_LENGTH"
-              :stroke-dashoffset="ringOffset" />
-          </svg>
-          <span class="ring-label text-display">{{ accuracy }}%</span>
-        </div>
+      <section v-else class="review-results d-flex flex-column align-items-center text-center gap-3" data-testid="quiz-results">
+        <ScoreRing :percent="accuracy" :tier="tier" />
 
         <div>
           <h1 class="m-0">{{ heading }}</h1>
@@ -399,47 +388,6 @@ function backToGarden() {
 }
 
 /* results */
-.ring {
-  position: relative;
-  width: 200px;
-  height: 200px;
-}
-
-.ring svg {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-
-.ring-track,
-.ring-fill {
-  fill: none;
-  stroke-width: 10;
-}
-
-.ring-track {
-  stroke: var(--linen);
-}
-
-.ring-fill {
-  stroke-linecap: round;
-  transition: stroke-dashoffset 1s ease-out;
-}
-
-.ring-label {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-}
-
-.tier-high .ring-fill { stroke: var(--mint-deep); }
-.tier-high .ring-label { color: var(--mint-deep); }
-.tier-mid .ring-fill { stroke: var(--butter-deep); }
-.tier-mid .ring-label { color: var(--butter-deep); }
-.tier-low .ring-fill { stroke: var(--berry); }
-.tier-low .ring-label { color: var(--berry-ink); }
-
 @media (max-width: 480px) {
   .stats {
     gap: 8px !important;

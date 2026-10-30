@@ -8,7 +8,7 @@ import { useStudyTimer } from '@/composables/useStudyTimer'
 import { moodNow } from '@/lib/greeting'
 import SceneryBackdrop from '@/components/SceneryBackdrop.vue'
 
-// "Flexible Deck Mode" review session: flip flashcards, up to 20 cards from one seed.
+// "Flashcard Mode" review session: flip flashcards, up to 20 cards from one seed.
 // Forgot brings the card back soon, Hard brings it back later; Easy finishes it for today.
 // (The server then schedules each card's next review: forgot today, hard in 1 day, easy in 3 days.)
 const MAX_CARDS = 20
@@ -153,7 +153,7 @@ async function finishSession() {
   saving.value = true
   error.value = ''
   try {
-    // each card's first rating: forgot -5 / hard +5 / easy +12 mastery; also waters the plant
+    // each card's first rating: forgot -5 / hard +2 / easy +5 mastery; also waters the plant
     const ratings = []
     for (const [card_id, rating] of firstRatings) ratings.push({ card_id, rating })
     await garden.saveReview(seed.value.id, ratings)
@@ -228,8 +228,7 @@ function backToGarden() {
       </section>
 
       <!-- results -->
-      <section v-else class="d-flex flex-column align-items-center text-center gap-3" data-testid="deck-results">
-        <div>
+      <section v-else class="review-results d-flex flex-column align-items-center text-center gap-3" data-testid="deck-results">        <div>
           <h1 class="m-0">🌱 Deck Complete!</h1>
           <p class="bark-muted m-0">You went through {{ totalCards }} cards.</p>
         </div>

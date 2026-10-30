@@ -70,7 +70,7 @@ export const useAuthStore = defineStore('auth', () => {
       })
   }
 
-  // Study time (Pomodoro focus blocks, Flexible Deck, Structured Quiz). The database adds it, so two tabs
+  // Study time (Pomodoro focus blocks, Flashcard, Multiple Choice Quiz). The database adds it, so two tabs
   // adding at once can't overwrite each other.
   async function addStudyTime(seconds) {
     const total = check(await supabase.rpc('add_study_time', { p_seconds: Math.round(seconds) }))
