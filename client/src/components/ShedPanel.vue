@@ -4,7 +4,6 @@ import { useUiStore } from '@/stores/ui'
 import { useToastStore } from '@/stores/toast'
 import ShedTabSeeds from './ShedTabSeeds.vue'
 import ShedTabStudy from './ShedTabStudy.vue'
-import ShedTabShop from './ShedTabShop.vue'
 
 // the shed's own tab pictures (assets/ui), as in the original garden
 const icon = (name) => new URL(`../assets/ui/${name}.svg`, import.meta.url).href
@@ -16,7 +15,6 @@ const router = useRouter()
 const tabs = [
   { id: 'seeds', label: 'Seeds', img: 'seed' },
   { id: 'study', label: 'Study', img: 'wateringCanIcon' },
-  { id: 'shop', label: 'Supplies', img: 'shop' },
   { id: 'weed', label: 'Weed', img: 'shovel', action: true },
 ]
 
@@ -71,8 +69,7 @@ function onSeedSelect(seed) {
     <main class="shed-notebook-page" role="tabpanel">
       <span class="sp-tape is-leaf shed-tape" aria-hidden="true"></span>
       <ShedTabSeeds v-if="ui.shedTab === 'seeds'" />
-      <ShedTabStudy v-else-if="ui.shedTab === 'study'" @select="onSeedSelect" />
-      <ShedTabShop v-else />
+      <ShedTabStudy v-else @select="onSeedSelect" />
     </main>
   </aside>
 </template>

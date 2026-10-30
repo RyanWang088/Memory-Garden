@@ -4,7 +4,7 @@ import { ref } from 'vue'
 // Pure client state: nothing here is persisted to the backend.
 export const useUiStore = defineStore('ui', () => {
   const activeTool = ref('pointer')   // 'pointer' | 'shovel' | 'wateringCan'
-  const shedTab = ref('seeds')        // 'seeds' | 'study' | 'shop'
+  const shedTab = ref('seeds')        // 'seeds' | 'study'
   const shedOpen = ref(true)          // mobile: collapse/expand the shed
   const seedPicked = ref(false)       // seed packet being dragged, or tapped and waiting for a garden spot
   const seedDragPointerId = ref(null)
