@@ -36,14 +36,14 @@ const FEATURES = [
     text: 'A real two-page planner. Your tasks sit on the left, the month sits on the right, and both pages follow the day you pick.', chips: ['Page-turn months', 'Washi tape', 'Ribbon bookmark'], viz: 'book' },
   { name: 'To-do list', icon: foliageUrl('sprout'), small: true, eyebrow: 'Tasks', title: 'A to-do list that grows', spec: 'Subjects · Due dates · Priorities',
     text: "Write tasks by subject, star the important ones and tick them off with an ink stroke. The day's sprout grows as you go.", chips: ['Double-click to edit', 'Upcoming view', 'Stars for priorities'], viz: 'list' },
-  { name: 'Focus timer', icon: focusArt, eyebrow: 'Focus', title: 'Focus in short blocks', spec: 'Your own rhythm · 25/5 classic · 50/10 deep work',
-    text: 'Set your focus and break, a topic and a length. The ring counts down with break ideas ready when you need them.', chips: ['Pause & resume', 'Break ideas', 'Earn coins per block'], viz: 'ring' },
+  { name: 'Focus timer', icon: focusArt, eyebrow: 'Focus', title: 'Focus in short rounds', spec: 'Your own rhythm · 25/5 classic · 50/10 deep work',
+    text: 'Set your focus time, break time and number of rounds. The ring counts down each round, and your to-do list stays beside it.', chips: ['Session to-do list', 'Mini timer on every page', 'Earn coins'], viz: 'ring' },
   { name: 'Memory seeds', icon: foliageUrl('tulip-pink-3'), eyebrow: 'Remember', title: 'Memory seeds', spec: 'Flashcards · Quizzes · Exam dates',
     text: 'Plant a seed for a topic with cards from your notes. Review it on time and it grows; leave it too long and it wilts. After the exam, it goes on your shelf.', chips: ['Multiple choice quizzes', 'Flashcards', 'Flower shelf'], viz: 'flash' },
   { name: 'Garden Radio', icon: potArt, eyebrow: 'Listen', title: 'Garden Radio', spec: 'Calm lo-fi, matched to the weather',
     text: 'Quiet music for studying that follows the sky: bright tracks on sunny days, softer ones when it rains.', chips: ['Weather-matched', 'Volume control', 'CC0 music'], viz: 'vinyl' },
   { name: 'Streaks & coins', icon: coinArt, eyebrow: 'Rewards', title: 'Streaks and coins', spec: 'Daily streak · Coins',
-    text: 'Come back each day to grow your streak. Finishing focus blocks and quizzes earns coins to spend on new seeds in the garden shop.', chips: ['Daily streak', 'Garden shop'], viz: 'coins' },
+    text: 'Come back each day to grow your streak. Finishing focus rounds and quizzes earns coins to spend on new seeds in the garden shop.', chips: ['Daily streak', 'Garden shop'], viz: 'coins' },
 ]
 const fi = ref(0)
 const feature = computed(() => FEATURES[fi.value])
@@ -54,17 +54,17 @@ const vizUp = (e) => { if (sx !== null && Math.abs(e.clientX - sx) > 40) show(fi
 
 
 /* 20-second focus demo */
-const mt = ref({ left: 20, running: false, note: 'a real block is 25 minutes' })
+const mt = ref({ left: 20, running: false, note: 'a real focus round is 25 minutes' })
 let mtTimer = null
 const mtStage = computed(() => { const p = 1 - mt.value.left / 20; return p < .33 ? 'seed' : p < .66 ? 'sprout' : p < 1 ? 'tulip-3' : 'tulip-yellow-4' })
 function toggleDemo() {
   if (mt.value.running) { clearInterval(mtTimer); mt.value = { ...mt.value, running: false }; return }
   const end = Date.now() + 20000
-  mt.value = { left: 20, running: true, note: 'a real block is 25 minutes' }
+  mt.value = { left: 20, running: true, note: 'a real focus round is 25 minutes' }
   mtTimer = setInterval(() => {
     const left = Math.max(0, (end - Date.now()) / 1000)
     mt.value.left = left
-    if (left <= 0) { clearInterval(mtTimer); mt.value = { left: 0, running: false, note: 'In the app, that block would earn 10 coins.' } }
+    if (left <= 0) { clearInterval(mtTimer); mt.value = { left: 0, running: false, note: 'In the app, that focus round would earn 10 coins.' } }
   }, 100)
 }
 
@@ -104,14 +104,14 @@ onBeforeUnmount(() => { clearInterval(heroTimer); clearInterval(mtTimer) })
           <div class="hero-copy">
             <span class="sp-eyebrow">Study planner · Focus garden</span>
             <h1 id="hero-title"><span class="sp-hand">good habits grow here</span>Study a little. <em>Grow</em> a lot.</h1>
-            <p class="sp-lede">Sproutly is a cozy study space. Plan your days in an open-book planner, focus in short blocks, and turn revision into a garden that blooms before your exams.</p>
+            <p class="sp-lede">Sproutly is a cozy study space. Plan your days in an open-book planner, focus in short rounds, and turn revision into a garden that blooms before your exams.</p>
             <div class="cta-row">
               <RouterLink v-burst class="sp-btn" :to="signup">Start growing <span class="arrow">→</span></RouterLink>
               <button class="sp-btn sp-btn-ghost" type="button" @click="scrollTo('features')">See the garden tools</button>
             </div>
             <div class="proof">
               <span><img :src="plannerArt" alt="" />To-do + calendar</span>
-              <span><img :src="focusArt" alt="" />Focus blocks</span>
+              <span><img :src="focusArt" alt="" />Focus rounds</span>
               <span><img :src="coinArt" alt="" />Coins &amp; streaks</span>
             </div>
           </div>
@@ -156,7 +156,7 @@ onBeforeUnmount(() => { clearInterval(heroTimer); clearInterval(mtTimer) })
           </div>
           <div class="notes">
             <article class="note"><span class="sp-tape" aria-hidden="true"></span><span class="was">Tasks scattered across apps and sticky notes</span><span class="now">One planner for tasks and dates</span><p>A to-do list and a month calendar on facing pages. Pick a day and see what's due.</p></article>
-            <article class="note"><span class="sp-tape is-leaf" aria-hidden="true"></span><span class="was">Hours of study with nothing to show</span><span class="now">Every focus block earns coins</span><p>A focus timer with breaks built in. Finish a block, earn coins, grow your garden.</p></article>
+            <article class="note"><span class="sp-tape is-leaf" aria-hidden="true"></span><span class="was">Hours of study with nothing to show</span><span class="now">Every focus round earns coins</span><p>A focus timer with breaks built in. Finish a focus round, earn coins, grow your garden.</p></article>
             <article class="note"><span class="sp-tape is-butter" aria-hidden="true"></span><span class="was">Cramming the night before</span><span class="now">Memory seeds remind you to review</span><p>Flashcards from your notes, timed to your exam. Skip a review and the seed wilts.</p></article>
           </div>
         </div>
@@ -214,7 +214,7 @@ onBeforeUnmount(() => { clearInterval(heroTimer); clearInterval(mtTimer) })
             <p class="sp-lede" style="margin-top: 14px">Set your own focus and break, or pick 25 on and 5 off. While you focus, night falls over the meadow and the fireflies come out. On a break, the sun comes back.</p>
             <ul class="feat-list">
               <li><img :src="focusArt" alt="" />Your own rhythm, classic or deep work</li>
-              <li><img :src="coinArt" alt="" />+ coins for every block you finish</li>
+              <li><img :src="coinArt" alt="" />+ coins for every focus round you finish</li>
               <li><img :src="plannerArt" alt="" />"Focus on this" straight from your planner</li>
             </ul>
           </div>
@@ -240,7 +240,7 @@ onBeforeUnmount(() => { clearInterval(heroTimer); clearInterval(mtTimer) })
           <div class="how">
             <svg class="vine" viewBox="0 0 1000 60" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 C120 0 220 60 340 30 S560 0 660 30 880 60 1000 30" /></svg>
             <div class="how-step"><div class="how-art"><span class="n">one</span><img class="s" :src="foliageUrl('seed')" alt="" /></div><h3>Plant</h3><p>Add your subjects and exam dates, and plant a seed of flashcards for each topic.</p></div>
-            <div class="how-step"><div class="how-art"><span class="n">two</span><img class="s" :src="foliageUrl('sprout')" alt="" /></div><h3>Tend</h3><p>Tick off tasks, run focus blocks and review memory seeds when they're due.</p></div>
+            <div class="how-step"><div class="how-art"><span class="n">two</span><img class="s" :src="foliageUrl('sprout')" alt="" /></div><h3>Tend</h3><p>Tick off tasks, run focus rounds and review memory seeds when they're due.</p></div>
             <div class="how-step"><div class="how-art"><span class="n">three</span><img :src="foliageUrl('tulip-pink-4')" alt="" /></div><h3>Bloom</h3><p>By exam day your garden is full, and each flower is a topic you know.</p></div>
           </div>
         </div>

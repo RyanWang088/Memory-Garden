@@ -6,8 +6,10 @@ import SceneryBackdrop from '@/components/SceneryBackdrop.vue'
 import { foliageUrl } from '@/lib/plantSprites'
 import { vBurst } from '@/lib/burst'
 import potArt from '@/assets/ui/pot.svg'
+import canArt from '@/assets/ui/wateringcan.png'
+import SproutIcon from '@/components/SproutIcon.vue'
 
-// Onboarding tour (journal look): four short "how it works" steps, an About-you step, then Ready.
+// Onboarding tour (journal look): five short "how it works" steps, an About-you step, then Ready.
 // Saves through auth.completeOnboarding(answers, avatar) as before, plus the optional name as display_name.
 const auth = useAuthStore()
 const router = useRouter()
@@ -16,7 +18,8 @@ const STEPS = [
   { name: 'Welcome', art: 'seed' },
   { name: 'Planner', art: 'sprout' },
   { name: 'Focus', art: 'tulip-3' },
-  { name: 'Seeds', art: 'tulip-pink-3' },
+  { name: 'Plant', art: 'tulip-purple-3' },
+  { name: 'Review', art: 'tulip-pink-3' },
   { name: 'About you', art: 'tulip-yellow-3' },
   { name: 'Ready', art: 'FLOWER' },
 ]
@@ -115,7 +118,7 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
       <span class="sp-tape is-butter" aria-hidden="true"></span>
       <nav class="steps" aria-label="Onboarding steps">
         <p class="script">Let's get <em>growing</em></p>
-        <p class="small">Six quick steps. You can jump around.</p>
+        <p class="small">Seven quick steps. You can jump around.</p>
         <div class="sp-menu">
           <button
             v-for="(s, k) in STEPS" :key="s.name" type="button" class="sp-menu-btn" :class="{ done: k < i }"
@@ -166,26 +169,71 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
                 <i class="ff" style="left: 22%; top: 30%"></i><i class="ff" style="left: 72%; top: 44%; animation-delay: -.7s"></i><i class="ff" style="left: 34%; top: 70%; animation-delay: -1.2s"></i>
               </div>
             </div>
-            <!-- 4 seeds -->
-            <div v-else-if="i === 3" key="a3" class="art a-seeds">
-              <div class="seeds-art">
-                <div class="flash"><div class="flash-in">
-                  <div class="face q"><div><small>STATISTICS · SEED 3</small>What is a Type I error?</div></div>
-                  <div class="face a"><div><small>ANSWER</small>Rejecting a true null hypothesis</div></div>
-                </div></div>
-                <span class="tag-w">review on time → it grows</span>
-                <div class="bed"><img class="s" :src="foliageUrl('sprout')" alt="" /><img :src="foliageUrl('tulip-3')" alt="" /><img :src="foliageUrl('tulip-red-4')" alt="" /></div>
+            <!-- 4 plant -->
+            <div v-else-if="i === 3" key="a3" class="art a-plant">
+              <div class="plant-art">
+                <!-- mini Seeds tab (same theme classes as the shed) -->
+                <div class="shed-mini">
+                  <div class="sp-packet-grid">
+                    <div>
+                      <article class="sp-packet">
+                        <span class="sp-tape"></span>
+                        <span class="sp-packet-art"><img :src="foliageUrl('tulip-pink-4')" alt="" /><span class="sp-ledge"></span></span>
+                        <span class="sp-packet-name">Tulip seed</span>
+                        <span class="sp-chip owned-chip">Free</span>
+                      </article>
+                    </div>
+                    <div>
+                      <article class="sp-packet picked">
+                        <span class="sp-tape is-leaf"></span>
+                        <span class="sp-packet-art">
+                          <img class="c-pink" :src="foliageUrl('hyacinth-pink-4')" alt="" /><img class="c-red" :src="foliageUrl('hyacinth-red-4')" alt="" /><img class="c-purple" :src="foliageUrl('hyacinth-purple-4')" alt="" />
+                          <span class="sp-ledge"></span>
+                        </span>
+                        <span class="sp-packet-name">Hyacinth seed</span>
+                        <span class="sp-chip owned-chip">Owned</span>
+                        <div class="mini-drawer">
+                          <p class="swatch-label">Petal colour · <span class="word"><span class="c-red">red</span><span class="c-purple">purple</span></span></p>
+                          <div class="sp-swatches"><i class="sp-swatch red"></i><i class="sp-swatch purple"></i><i class="sp-swatch yellow"></i><i class="sp-swatch pink"></i></div>
+                          <p class="drag-hint">← Drag the flower to the field</p>
+                        </div>
+                      </article>
+                    </div>
+                  </div>
+                </div>
+                <div class="bed plant-bed">
+                  <span class="spot"></span><span class="puff"></span>
+                  <img class="grow seed" :src="foliageUrl('seed')" alt="" />
+                </div>
+                <div class="drag"><img :src="foliageUrl('seed')" alt="" /><SproutIcon class="cursor" glyph="pointer" :size="32" /></div>
               </div>
             </div>
-            <!-- 5 you -->
-            <div v-else-if="i === 4" key="a4" class="art a-you">
+            <!-- 5 review -->
+            <div v-else-if="i === 4" key="a4" class="art a-seeds">
+              <div class="seeds-art">
+                <!-- mini "Choose a goal" pop-up (same look as SeedReviewView) -->
+                <div class="goal-mini">
+                  <div class="goal-dialog">
+                    <h2 class="goal-title">Choose a goal for this session</h2>
+                    <p class="goal-sub">Statistics · 12 cards · Mastery 40%</p>
+                    <span class="goal-option pick"><span class="goal-icon"><SproutIcon name="flashcard" :size="34" /></span><span class="goal-text"><span class="goal-name">Flashcard Mode</span><span class="goal-sub">Flip through up to 20 flashcards.</span></span></span>
+                    <span class="goal-option"><span class="goal-icon">🎯</span><span class="goal-text"><span class="goal-name">Multiple Choice Quiz</span><span class="goal-sub">Up to 10 quick multiple-choice questions.</span></span></span>
+                    <span class="goal-option"><span class="goal-icon">✍️</span><span class="goal-text"><span class="goal-name">Short Structured Mode</span><span class="goal-sub">Think you've mastered 'em all? Try this out</span></span></span>
+                  </div>
+                </div>
+                <div class="bed"><img class="s" :src="foliageUrl('sprout')" alt="" /><img :src="foliageUrl('tulip-3')" alt="" /><img :src="foliageUrl('tulip-red-4')" alt="" /></div>
+                <img class="tap-can" :src="canArt" alt="" />
+              </div>
+            </div>
+            <!-- 6 you -->
+            <div v-else-if="i === 5" key="a5" class="art a-you">
               <div class="you-art">
                 <span class="hours">{{ answers.hours }} h / week</span>
                 <img :key="answers.flower" class="flower" :src="flowerUrl" alt="" :style="{ transform: `scale(${0.55 + (Math.min(answers.hours, 30) / 30) * 0.6})` }" />
               </div>
             </div>
-            <!-- 6 ready -->
-            <div v-else key="a5" class="art a-ready">
+            <!-- 7 ready -->
+            <div v-else key="a6" class="art a-ready">
               <div class="ready-art">
                 <img class="s" :src="foliageUrl('seed')" alt="" /><img class="s" :src="foliageUrl('sprout')" alt="" /><img :src="foliageUrl('tulip-3')" alt="" /><img :src="flowerUrl" alt="" />
               </div>
@@ -214,16 +262,22 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
             <div v-else-if="i === 2" key="s2" class="slide">
               <span class="sp-eyebrow">Focus</span>
               <h1>Grow with <em>focus</em></h1>
-              <p>Short focus blocks with breaks in between, like 25 minutes on and 5 off. Night falls over the meadow while you work.</p>
-              <ul class="points"><li>Earn coins for every focus block you finish.</li><li>Keep a small to-do list for the session.</li><li>Play Garden Radio: calm lo-fi picked to match the weather.</li></ul>
+              <p>Short focus rounds with breaks in between, like 25 minutes on and 5 off. Night falls over the meadow while you work.</p>
+              <ul class="points"><li>Earn coins for every focus round you finish.</li><li>Keep a small to-do list for the session.</li><li>Play Garden Radio: calm lo-fi picked to match the weather.</li></ul>
             </div>
             <div v-else-if="i === 3" key="s3" class="slide">
-              <span class="sp-eyebrow">Memory seeds</span>
-              <h1>Plant <em>memory seeds</em></h1>
-              <p>Turn your notes into a seed of flashcards for one topic. Review it when it's due and it grows from sprout to flower by your exam date.</p>
-              <ul class="points"><li>Multiple choice quizzes, flashcards and short answers.</li><li>Forget to water a seed and it starts to wilt.</li><li>After the exam, keep your flower on a shelf.</li></ul>
+              <span class="sp-eyebrow">Planting</span>
+              <h1>Plant your <em>first seed</em></h1>
+              <p>Each seed holds the flashcards for one topic. Open the shed in your garden, choose a seed from the Seeds tab and plant it in the garden.</p>
+              <ul class="points"><li>Tap a seed packet, pick a colour, then drag it onto any free spot in the garden.</li><li>On a phone, press and hold the seed packet for a moment before dragging.</li><li>Then type your cards, or upload your notes and let AI write them for you.</li></ul>
             </div>
-            <div v-else-if="i === 4" key="s4" class="slide form-slide">
+            <div v-else-if="i === 4" key="s4" class="slide">
+              <span class="sp-eyebrow">Reviewing</span>
+              <h1>Review to help it <em>grow</em></h1>
+              <p>Click a seed or flower in your garden to review its content. Review it when it's due and it grows from sprout to flower by your exam date.</p>
+              <ul class="points"><li>Pick Flashcard Mode, a Multiple Choice Quiz or Short Structured Mode.</li><li>Forget to water a seed and it starts to wilt.</li><li>After the exam, you have the choice to keep your flower on a collection shelf.</li></ul>
+            </div>
+            <div v-else-if="i === 5" key="s5" class="slide form-slide">
               <span class="sp-eyebrow">About you</span>
               <h1 style="font-size: clamp(1.8rem, 3vw, 2.4rem)">Tell us <em>a little</em></h1>
               <div class="q"><span id="goal-l" class="sp-label">What are you studying for?</span>
@@ -245,12 +299,12 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
                 </div>
               </div>
             </div>
-            <div v-else key="s5" class="slide">
+            <div v-else key="s6" class="slide">
               <span class="sp-eyebrow">All set</span>
               <h1>{{ answers.name.trim() ? `${answers.name.trim()}, your` : 'Your' }} garden is <em>ready</em></h1>
               <div class="summary">
                 <span>Studying for <b>{{ answers.goal || 'your exams' }}</b></span>
-                <span>About <b>{{ answers.hours }} hours</b> a week · try {{ blocksPerDay }} focus block{{ blocksPerDay === 1 ? '' : 's' }} a day</span>
+                <span>About <b>{{ answers.hours }} hours</b> a week · try {{ blocksPerDay }} focus round{{ blocksPerDay === 1 ? '' : 's' }} a day</span>
                 <span>Your flower: <b>{{ answers.flower }} tulip</b></span>
               </div>
               <p v-if="error" class="status-err" role="alert">{{ error }} <button class="linkish" type="button" @click="finish()">Try again</button></p>
@@ -379,23 +433,88 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
 @keyframes grow-tul { 0% { transform: scale(.3); } 80%, 100% { transform: scale(1); } }
 .focus-art i.ff { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #fff3a8; box-shadow: 0 0 8px 3px rgba(255,236,140,.6); animation: glow 1.8s ease-in-out infinite alternate; }
 @keyframes glow { from { opacity: .15; } to { opacity: 1; } }
-/* art 4 */
+/* art 5 */
 .seeds-art { position: relative; width: min(420px, 96%); height: 300px; }
-.flash { position: absolute; left: 50%; top: 10px; width: 210px; height: 140px; margin-left: -105px; perspective: 900px; }
-.flash-in { position: absolute; inset: 0; transform-style: preserve-3d; animation: flip-card 4s ease-in-out infinite; }
-@keyframes flip-card { 0%, 35% { transform: rotateY(0); } 50%, 85% { transform: rotateY(180deg); } 100% { transform: rotateY(360deg); } }
-.face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 16px; display: grid; place-items: center; padding: 16px; text-align: center; box-shadow: var(--shadow-1); }
-.face.q { background: #fff; border: 2px solid var(--line); font-family: var(--f-display); font-size: 1.05rem; }
-.face.a { background: var(--leaf-soft); border: 2px solid var(--leaf); transform: rotateY(180deg); font-family: var(--f-hand); font-size: 1.5rem; color: var(--leaf-deep); }
-.face small { display: block; font-family: var(--f-body); font-size: .62rem; font-weight: 800; letter-spacing: .14em; color: var(--ink-soft); margin-bottom: 4px; }
+/* mini goal pop-up: SeedReviewView's dialog at full size, shrunk to fit */
+.goal-mini { position: absolute; z-index: 3; left: 50%; top: -14px; width: 440px; transform: translateX(-50%) scale(.56); transform-origin: top center; }
+.goal-dialog { display: flex; flex-direction: column; gap: 16px; padding: 24px; border-radius: 1rem; background: var(--paper); box-shadow: var(--shadow-2); opacity: 0; animation: goal-open 5s var(--spring) infinite; }
+.goal-title { margin: 0; text-align: center; font-family: var(--f-display); font-weight: 600; font-size: 1.75rem; line-height: 1.3; letter-spacing: -.01em; }
+.goal-sub { margin: 0; font-size: 14px; line-height: 22px; color: var(--ink-soft); }
+.goal-dialog > .goal-sub { margin-top: -12px; text-align: center; }
+.goal-option { display: flex; align-items: center; gap: 16px; padding: 16px 20px; border: 2px solid var(--linen); border-radius: 16px; background: var(--paper); color: var(--bark); box-shadow: 0 4px 0 var(--linen); }
+.goal-option.pick { animation: goal-pick 5s ease infinite; }
+.goal-icon { display: grid; place-items: center; flex: 0 0 48px; height: 48px; border-radius: 12px; background: var(--cream); font-size: 24px; }
+.goal-text { display: flex; flex-direction: column; }
+.goal-name { font-family: var(--f-body); font-weight: 600; font-size: 1.05rem; line-height: 1.4; }
+@keyframes goal-open { 0%, 24% { opacity: 0; transform: translateY(24px) scale(.94); } 30%, 88% { opacity: 1; transform: none; } 94%, 100% { opacity: 0; transform: translateY(10px); } }
+@keyframes goal-pick { 0%, 46%, 84%, 100% { transform: none; } 52%, 80% { transform: translateY(-2px); border-color: var(--peach); box-shadow: 0 6px 0 var(--peach); } }
 .bed { position: absolute; left: 0; right: 0; bottom: 0; height: 120px; border-radius: 50% 50% 18px 18px / 30% 30% 18px 18px; background: linear-gradient(#8a5a3f, #6e4532); display: flex; justify-content: space-around; align-items: flex-end; padding: 0 20px 34px; }
 .bed img { width: 80px; height: 80px; margin-bottom: -6px; animation: pop-in .6s var(--spring) both; }
 .bed img.s { transform: scale(1.7); transform-origin: 50% 90%; animation-name: pop-in-s; }
 .bed img:nth-child(2) { animation-delay: .25s; } .bed img:nth-child(3) { animation-delay: .5s; }
 @keyframes pop-in { from { transform: scale(0); } }
 @keyframes pop-in-s { from { transform: scale(0); } to { transform: scale(1.7); } }
-.tag-w { position: absolute; right: 0; top: 152px; font-family: var(--f-hand); font-size: 1.2rem; color: var(--berry-deep); transform: rotate(-6deg); }
-/* art 5 */
+/* cursor (plant) */
+.cursor { color: var(--sheet); filter: drop-shadow(0 0 1px var(--ink)) drop-shadow(0 0 1px var(--ink)) drop-shadow(0 3px 3px rgba(74, 54, 46, .4)); }
+/* watering can (the garden's Study cursor) glides onto the middle plant and clicks it, then the pop-up opens */
+.tap-can { position: absolute; z-index: 2; left: calc(50% - 4px); bottom: 60px; width: 52px; height: auto; transform-origin: 10% 40%; filter: drop-shadow(0 3px 3px rgba(74, 54, 46, .3)); animation: tap-can 5s ease-in-out infinite; }
+@keyframes tap-can { 0% { transform: translate(70px, 30px); opacity: 0; } 4% { opacity: 1; } 14%, 19% { transform: none; } 21% { transform: scale(.85); } 23% { transform: none; opacity: 1; } 30%, 100% { transform: none; opacity: 0; } }
+/* art 4: tap packet → pick purple → drag straight to the soil → planted as a seed (6.5s loop) */
+.plant-art { position: relative; width: min(420px, 96%); height: 300px; }
+.shed-mini { position: absolute; left: 0; top: -6px; width: 360px; transform: scale(.52); transform-origin: top left; }
+.shed-mini .sp-packet-grid { padding-top: 0; }
+.shed-mini .sp-packet { transition: none; }
+.owned-chip { padding: .1em .7em; font-size: .72rem; background: var(--leaf-soft); border-color: var(--leaf); color: var(--leaf-deep); }
+.sp-packet-art img { grid-area: 1 / 1; }
+.picked { animation: plant-pick 6.5s ease infinite; }
+.picked .c-red, .picked .c-purple { opacity: 0; }
+.picked img.c-pink { animation: plant-c-pink 6.5s ease infinite; }
+.picked .c-red { animation: plant-c-red 6.5s ease infinite; }
+.picked .c-purple { animation: plant-c-purple 6.5s ease infinite; }
+.swatch-label .word { display: inline-grid; } .swatch-label .word > span { grid-area: 1 / 1; }
+/* colour drawer */
+.mini-drawer { display: grid; justify-items: center; width: 100%; height: 0; overflow: hidden; opacity: 0; animation: plant-drawer 6.5s ease infinite; }
+.swatch-label { position: relative; margin: 8px 0; font-family: var(--f-hand); font-size: 1.15rem; line-height: 1; color: var(--ink-soft); }
+.drag-hint { margin: 10px 0 2px; font-family: var(--f-hand); font-size: 1.1rem; line-height: 1; color: var(--berry-deep); }
+.sp-swatch.red { --sw: var(--berry); }
+.sp-swatch.purple { --sw: var(--lilac); }
+.sp-swatch.yellow { --sw: var(--butter); }
+.sp-swatch.pink { --sw: var(--margin); }
+.mini-drawer .sp-swatch.red { animation: plant-sw-red 6.5s ease infinite; }
+.mini-drawer .sp-swatch.purple { animation: plant-sw-purple 6.5s ease infinite; }
+.plant-bed { height: 110px; }
+.spot, .puff { position: absolute; left: 70%; top: 26px; width: 74px; height: 30px; margin-left: -37px; border-radius: 50%; opacity: 0; }
+.spot { border: 2px dashed var(--butter); animation: plant-spot 6.5s ease-in-out infinite; }
+.puff { border: 3px dotted var(--sheet-3); animation: plant-puff 6.5s ease-out infinite; }
+.plant-bed img.grow { position: absolute; left: 70%; top: -24px; width: 70px; height: 70px; margin: 0 0 0 -35px; transform: scale(0); transform-origin: 50% 90%; }
+.plant-bed img.seed { animation: plant-seed 6.5s var(--spring) infinite; }
+.drag { position: absolute; z-index: 2; left: 0; top: 0; width: 62px; animation: plant-drag 6.5s ease-in-out infinite; }
+.drag img { display: block; height: 62px; width: auto; margin: 0 auto; opacity: 0; transform: scale(1.6); transform-origin: 50% 90%; animation: plant-carry 6.5s ease-in-out infinite; } /* see-through seed, like the garden's drag ghost */
+.drag .cursor { position: absolute; right: 2px; bottom: 0; }
+@keyframes plant-drag {
+  0% { transform: translate(150px, 150px); opacity: 0; }
+  6% { opacity: 1; }
+  12%, 18% { transform: translate(111px, 11px); }
+  15% { transform: translate(111px, 11px) scale(.92); }
+  25%, 30% { transform: translate(98px, 109px); }
+  27% { transform: translate(98px, 109px) scale(.92); }
+  36% { transform: translate(111px, 11px); }
+  58% { transform: translate(263px, 170px); opacity: 1; }
+  64%, 100% { transform: translate(263px, 174px); opacity: 0; }
+}
+@keyframes plant-carry { 0%, 35% { opacity: 0; } 37%, 58% { opacity: .6; } 61%, 100% { opacity: 0; } }
+@keyframes plant-pick { 0%, 14%, 94%, 100% { transform: rotate(var(--r, 0deg)); } 16%, 90% { transform: translateY(-3px) rotate(0deg); box-shadow: 0 0 0 3px var(--berry-soft), var(--shadow-2); } }
+@keyframes plant-drawer { 0%, 15%, 92%, 100% { height: 0; opacity: 0; } 20%, 88% { height: 108px; opacity: 1; } }
+@keyframes plant-c-pink { 0%, 15% { opacity: 1; } 16%, 94% { opacity: 0; } 97%, 100% { opacity: 1; } }
+@keyframes plant-c-red { 0%, 15% { opacity: 0; } 16%, 27% { opacity: 1; } 28%, 100% { opacity: 0; } }
+@keyframes plant-c-purple { 0%, 27% { opacity: 0; } 28%, 94% { opacity: 1; } 97%, 100% { opacity: 0; } }
+@keyframes plant-sw-red { 0%, 27%, 100% { box-shadow: 0 0 0 2.5px var(--ink); transform: scale(1.15) translateY(-2px); } 28%, 99% { box-shadow: 0 0 0 1.5px var(--line); transform: none; } }
+@keyframes plant-sw-purple { 0%, 27%, 100% { box-shadow: 0 0 0 1.5px var(--line); transform: none; } 28%, 99% { box-shadow: 0 0 0 2.5px var(--ink); transform: scale(1.15) translateY(-2px); } }
+@keyframes plant-spot { 0%, 35% { opacity: 0; } 40%, 58% { opacity: 1; } 63%, 100% { opacity: 0; } }
+@keyframes plant-puff { 0%, 57% { opacity: 0; transform: scale(.4); } 60% { opacity: 1; } 70%, 100% { opacity: 0; transform: scale(1.7); } }
+/* stays a seed (it grows on the Review step) */
+@keyframes plant-seed { 0% { transform: scale(1.7); } 6%, 59% { transform: scale(0); } 64%, 100% { transform: scale(1.7); } }
+/* art 6 */
 .you-art { position: relative; width: min(300px, 80%); display: grid; place-items: end center; height: 340px; }
 .you-art .flower { position: absolute; bottom: 0; height: 330px; width: auto; transform-origin: 50% 100%; transition: transform .6s var(--spring); animation: pop-in .5s var(--spring); }
 .you-art .hours { position: absolute; top: 10px; left: -30px; z-index: 2; font-family: var(--f-hand); font-size: 1.6rem; color: var(--ink); transform: rotate(6deg); background: var(--butter-soft); padding: 4px 12px; border-radius: 10px; box-shadow: var(--shadow-1); }
@@ -408,7 +527,7 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
 .sw img { width: 46px; height: 46px; }
 .sw[aria-pressed="true"] { border-color: var(--berry); transform: translateY(-3px) rotate(-4deg); box-shadow: 0 0 0 3px var(--berry-soft); }
 .form-slide { gap: 12px; }
-/* art 6 */
+/* art 7 */
 .ready-art { position: relative; width: 260px; height: 320px; display: grid; place-items: end center; }
 .ready-art img { position: absolute; bottom: 0; height: 300px; width: auto; opacity: 0; transform-origin: 50% 100%; animation: stage 3.2s ease forwards; }
 .ready-art img.s { height: 150px; transform: scale(1.4); }
@@ -443,14 +562,18 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
   .orbit { width: 270px; }
   .mini-book { width: 300px; }
   .focus-art { width: 220px; }
-  .seeds-art { transform: scale(.78); transform-origin: top center; }
+  .seeds-art, .plant-art { transform: scale(.78); transform-origin: top center; }
+  .plant-art, .seeds-art { margin-top: 14px; } /* room for the packets' tape and the pop-up */
   .you-art { transform: scale(.55); transform-origin: bottom center; height: 260px; }
   .ready-art { transform: scale(.62); transform-origin: bottom center; }
   .slide-art { overflow: hidden; }
   .ob-foot { flex-wrap: wrap; padding: 12px 18px 18px; gap: 10px; }
   .hint { display: none; }
   .sp-thumbs { width: 100%; justify-content: space-between; }
-  .sp-thumb { width: 46px; height: 46px; } .sp-thumb img { width: 40px; height: 40px; }
+  /* thumbnails share the row */
+  .sp-thumbs { gap: 4px; }
+  .sp-thumb { flex: 1 1 0; min-width: 0; max-width: 46px; width: auto; height: auto; aspect-ratio: 1; padding: 2px; }
+  .sp-thumb img { width: 100%; height: auto; }
   .nav-btns { width: 100%; }
   .nav-btns .sp-btn:last-child { flex: 1; }
 }
