@@ -646,7 +646,7 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 .curl:hover span, .curl:focus-visible span { opacity: 1; }
 
 /* page turn: the old month swings over the spine (next), or the previous month swings back in (prev) */
-.leaf-next-leave-active, .leaf-prev-enter-active { position: absolute; inset: 0; z-index: 15; transform-origin: left center; backface-visibility: hidden; box-shadow: -10px 0 30px -12px rgba(60, 40, 20, .35); }
+.leaf-next-leave-active, .leaf-prev-enter-active { position: absolute; inset: 0; z-index: 15; transform-origin: left center; backface-visibility: visible;  box-shadow: -10px 0 30px -12px rgba(60, 40, 20, .35); }
 .leaf-next-leave-active { animation: turn-next .9s cubic-bezier(.45, .05, .3, 1) forwards; }
 .leaf-prev-enter-active { animation: turn-prev .9s cubic-bezier(.45, .05, .3, 1) both; }
 .leaf-next-enter-active, .leaf-prev-leave-active { transition: none; }
