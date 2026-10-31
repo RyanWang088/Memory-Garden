@@ -41,7 +41,9 @@ function cleanSeed(body = {}) {
   const subject = text(body.subject, 60)
   const color = text(body.color || 'red', 20)
   const flower = text(body.flower || 'tulip', 40)
-  const exam_date = text(body.exam_date, 10) // optional
+  // the exam is optional: a date with no name is called 'Exam'; neither = the seed has no exam
+  const exam_name = text(body.exam_name, 40)
+  const exam_date = text(body.exam_date, 10)
   const cards = (Array.isArray(body.cards) ? body.cards : [])
     .map(c => {
       const answer = text(c?.answer, 500)
@@ -61,7 +63,8 @@ function cleanSeed(body = {}) {
   if (cards.length > 200) return 'A study set can have at most 200 cards.'
   if (!isCell(body.col) || !isCell(body.row)) return 'Pick a spot in the garden.'
 
-  return { title, subject, exam_date: exam_date || undefined, tags, cards, col: body.col, row: body.row, flower, color }
+  const exam = exam_name || exam_date ? { name: exam_name || 'Exam', exam_date: exam_date || undefined } : undefined
+  return { title, subject, exam, tags, cards, col: body.col, row: body.row, flower, color }
 }
 
 export const seedsController = {
@@ -72,7 +75,7 @@ export const seedsController = {
     } catch (err) { next(err) }
   },
 
-  // POST /api/seeds  body: { title, subject, exam_date?, tags, cards: [{ question, answer, wrong_options? }], col, row, color?, flower? }
+  // POST /api/seeds  body: { title, subject, exam_name?, exam_date?, tags, cards: [{ question, answer, wrong_options? }], col, row, color?, flower? }
   async create(req, res, next) {
     try {
       const seed = cleanSeed(req.body)

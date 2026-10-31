@@ -23,6 +23,21 @@ CREATE TABLE public.cards (
   CONSTRAINT cards_card_mastery_check CHECK (((card_mastery >= 0) AND (card_mastery <= 100)))
 );
 
+-- A subject can have many exams; exam_choice is set only by choose_exam_outcome
+CREATE TABLE public.exams (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  user_id uuid DEFAULT auth.uid() NOT NULL,
+  subject_id uuid NOT NULL,
+  name text NOT NULL,
+  exam_date date,
+  exam_choice text,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT exams_pkey PRIMARY KEY (id),
+  CONSTRAINT exams_id_subject_unique UNIQUE (id, subject_id),
+  CONSTRAINT exams_name_check CHECK ((length(btrim(name)) > 0)),
+  CONSTRAINT exams_exam_choice_check CHECK ((exam_choice = ANY (ARRAY['garden'::text, 'house'::text])))
+);
+
 CREATE TABLE public.flowers (
   id text NOT NULL,
   name text NOT NULL,
@@ -70,6 +85,7 @@ CREATE TABLE public.seeds (
   created_at timestamp with time zone DEFAULT now() NOT NULL,
   color text DEFAULT 'pink'::text NOT NULL,
   in_house boolean DEFAULT false NOT NULL,
+  exam_id uuid,
   CONSTRAINT seeds_pkey PRIMARY KEY (id),
   CONSTRAINT seeds_color_check CHECK ((color = ANY (ARRAY['pink'::text, 'red'::text, 'purple'::text, 'yellow'::text])))
 );
@@ -91,14 +107,11 @@ CREATE TABLE public.subjects (
   id uuid DEFAULT gen_random_uuid() NOT NULL,
   user_id uuid DEFAULT auth.uid() NOT NULL,
   name text NOT NULL,
-  exam_date date,
   created_at timestamp with time zone DEFAULT now() NOT NULL,
   color character varying(50) DEFAULT 'peri'::character varying,
-  exam_choice text,
   shelf_slot smallint,
   CONSTRAINT subjects_name_user_unique UNIQUE (user_id, name),
   CONSTRAINT subjects_pkey PRIMARY KEY (id),
-  CONSTRAINT subjects_exam_choice_check CHECK ((exam_choice = ANY (ARRAY['garden'::text, 'house'::text]))),
   CONSTRAINT subjects_shelf_slot_check CHECK (((shelf_slot >= 0) AND (shelf_slot <= 17)))
 );
 
@@ -108,18 +121,25 @@ ALTER TABLE public.cards ADD CONSTRAINT cards_user_id_fkey FOREIGN KEY (user_id)
 ALTER TABLE public.inventory ADD CONSTRAINT inventory_item_id_fkey FOREIGN KEY (item_id) REFERENCES shop_items(id);
 ALTER TABLE public.inventory ADD CONSTRAINT inventory_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 ALTER TABLE public.profiles ADD CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.exams ADD CONSTRAINT exams_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.exams ADD CONSTRAINT exams_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE;
+-- a seed's exam must belong to the seed's own subject; deleting the exam keeps the seed and clears exam_id
+ALTER TABLE public.seeds ADD CONSTRAINT seeds_exam_fkey FOREIGN KEY (exam_id, subject_id) REFERENCES exams(id, subject_id) ON DELETE SET NULL (exam_id);
 ALTER TABLE public.seeds ADD CONSTRAINT seeds_flower_fkey FOREIGN KEY (flower) REFERENCES flowers(id);
 ALTER TABLE public.seeds ADD CONSTRAINT seeds_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE RESTRICT;
 ALTER TABLE public.seeds ADD CONSTRAINT seeds_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 ALTER TABLE public.subjects ADD CONSTRAINT subjects_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
 -- Indexes
+CREATE UNIQUE INDEX exams_subject_name_unique ON public.exams USING btree (subject_id, lower(name)); -- "Midterm" = "midterm"
+CREATE INDEX seeds_exam_id ON public.seeds USING btree (exam_id);
 CREATE UNIQUE INDEX subjects_user_shelf_slot ON public.subjects USING btree (user_id, shelf_slot);
 
 -- =========================================================
 -- Row level security
 -- =========================================================
 ALTER TABLE public.cards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.exams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.flowers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inventory ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -128,6 +148,10 @@ ALTER TABLE public.shop_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subjects ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "own cards" ON public.cards AS PERMISSIVE FOR ALL TO authenticated
+  USING ((auth.uid() = user_id))
+  WITH CHECK ((auth.uid() = user_id));
+
+CREATE POLICY "own exams" ON public.exams AS PERMISSIVE FOR ALL TO authenticated
   USING ((auth.uid() = user_id))
   WITH CHECK ((auth.uid() = user_id));
 
@@ -157,6 +181,10 @@ CREATE POLICY "own subjects" ON public.subjects AS PERMISSIVE FOR ALL TO authent
 -- =========================================================
 -- Supabase gives anon and authenticated full rights on public tables by default; RLS above
 -- limits which rows they reach. These are the exceptions:
+
+-- exam_choice changes only through choose_exam_outcome.
+REVOKE UPDATE ON public.exams FROM anon, authenticated;
+GRANT UPDATE (name, exam_date) ON public.exams TO authenticated;
 
 -- Inventory changes only through buy_item / use_item.
 REVOKE INSERT, UPDATE, DELETE ON public.inventory FROM anon, authenticated;
@@ -290,37 +318,42 @@ end;
 $function$
 ;
 
-CREATE OR REPLACE FUNCTION public.choose_exam_outcome(p_subject uuid, p_choice text)
+-- "Exam is over" per exam: 'house' moves only that exam's seeds. The shelf slot belongs to the subject,
+-- so the first exam moved gets one and later exams of the same subject reuse it.
+CREATE OR REPLACE FUNCTION public.choose_exam_outcome(p_exam uuid, p_choice text)
  RETURNS json
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$
 DECLARE
-  s subjects%ROWTYPE;
+  e exams%ROWTYPE;
+  slot smallint;
   slots integer;
 BEGIN
   IF auth.uid() IS NULL THEN RAISE EXCEPTION 'NOT_AUTHENTICATED'; END IF;
   IF p_choice IS NULL OR p_choice NOT IN ('garden', 'house') THEN RAISE EXCEPTION 'INVALID_CHOICE'; END IF;
-  SELECT * INTO s FROM subjects WHERE id = p_subject AND user_id = auth.uid() FOR UPDATE;
+  SELECT * INTO e FROM exams WHERE id = p_exam AND user_id = auth.uid() FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'NOT_FOUND'; END IF;
   -- CURRENT_DATE is UTC; a user ahead of UTC already sees the next day, so the exam day itself is allowed here
-  IF s.exam_date IS NULL OR s.exam_date > CURRENT_DATE THEN RAISE EXCEPTION 'EXAM_NOT_OVER'; END IF;
-  IF s.exam_choice IS NOT NULL THEN RAISE EXCEPTION 'ALREADY_CHOSEN'; END IF;
+  IF e.exam_date IS NULL OR e.exam_date > CURRENT_DATE THEN RAISE EXCEPTION 'EXAM_NOT_OVER'; END IF;
+  IF e.exam_choice IS NOT NULL THEN RAISE EXCEPTION 'ALREADY_CHOSEN'; END IF;
 
+  SELECT shelf_slot INTO slot FROM subjects WHERE id = e.subject_id FOR UPDATE;
   IF p_choice = 'house' THEN
-    IF s.shelf_slot IS NULL THEN
+    IF slot IS NULL THEN
       -- locking the profile row makes two moves at once queue up instead of taking the same slot
       SELECT CASE WHEN shelf_unlocked THEN 18 ELSE 12 END INTO slots FROM profiles WHERE id = auth.uid() FOR UPDATE;
-      SELECT min(n) INTO s.shelf_slot FROM generate_series(0, slots - 1) AS n
+      SELECT min(n) INTO slot FROM generate_series(0, slots - 1) AS n
         WHERE n NOT IN (SELECT shelf_slot FROM subjects WHERE user_id = auth.uid() AND shelf_slot IS NOT NULL);
-      IF s.shelf_slot IS NULL THEN RAISE EXCEPTION 'SHELF_FULL'; END IF;
+      IF slot IS NULL THEN RAISE EXCEPTION 'SHELF_FULL'; END IF;
+      UPDATE subjects SET shelf_slot = slot WHERE id = e.subject_id;
     END IF;
-    UPDATE seeds SET in_house = true WHERE subject_id = s.id AND user_id = auth.uid();
+    UPDATE seeds SET in_house = true WHERE exam_id = e.id AND user_id = auth.uid();
   END IF;
 
-  UPDATE subjects SET exam_choice = p_choice, shelf_slot = s.shelf_slot WHERE id = s.id;
-  RETURN json_build_object('exam_choice', p_choice, 'shelf_slot', s.shelf_slot);
+  UPDATE exams SET exam_choice = p_choice WHERE id = e.id;
+  RETURN json_build_object('exam_choice', p_choice, 'shelf_slot', slot);
 END;
 $function$
 ;
@@ -446,6 +479,8 @@ $function$
 
 -- Function execute rights. The other RPCs keep Supabase's default (anon + authenticated) and
 -- reject callers without auth.uid() themselves.
+REVOKE ALL ON FUNCTION public.choose_exam_outcome(p_exam uuid, p_choice text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.choose_exam_outcome(p_exam uuid, p_choice text) TO authenticated;
 REVOKE ALL ON FUNCTION public.buy_flower(p_flower text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.buy_flower(p_flower text) TO authenticated;
 REVOKE ALL ON FUNCTION public.buy_item(p_item text, p_qty integer) FROM PUBLIC, anon;

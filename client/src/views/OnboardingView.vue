@@ -10,7 +10,7 @@ import canArt from '@/assets/ui/wateringcan.png'
 import SproutIcon from '@/components/SproutIcon.vue'
 
 // Onboarding tour (journal look): five short "how it works" steps, an About-you step, then Ready.
-// Saves through auth.completeOnboarding(answers, avatar) as before, plus the optional name as display_name.
+// Saves through auth.completeOnboarding(answers, avatar) as before, plus the required name as display_name.
 const auth = useAuthStore()
 const router = useRouter()
 
@@ -38,13 +38,30 @@ const reached = ref(0)
 const back = ref(false)
 const saving = ref(false)
 const error = ref('')
+// ‹ › beside the About you tulip step through the flower colours
+function stepFlower(d) {
+  const k = FLOWERS.indexOf(answers.flower)
+  answers.flower = FLOWERS[(k + d + FLOWERS.length) % FLOWERS.length]
+}
 const isSmall = (a) => a === 'seed' || a === 'sprout'
 const artOf = (s) => (s.art === 'FLOWER' ? `tulip-${answers.flower}-4` : s.art)
 const flowerUrl = computed(() => foliageUrl(`tulip-${answers.flower}-4`))
 const blocksPerDay = computed(() => Math.max(1, Math.round((answers.hours * 60) / 30 / 7)))
 
+// the name is required: steps past About you (and Skip tour) stay locked until it is filled in
+const ABOUT = STEPS.findIndex((s) => s.name === 'About you')
+const nameMissing = ref(false) // shown after trying to move on without a name
+const nameInput = ref(null)
+watch(() => answers.name, (n) => { if (n.trim()) nameMissing.value = false })
+function needName() {
+  nameMissing.value = true
+  if (i.value !== ABOUT) go(ABOUT)
+  setTimeout(() => nameInput.value?.focus(), 350) // after the slide transition
+}
+
 function go(n) {
   if (n < 0 || n >= STEPS.length || n === i.value) return
+  if (n > ABOUT && !answers.name.trim()) return needName()
   back.value = n < i.value
   i.value = n
   reached.value = Math.max(reached.value, n)
@@ -67,14 +84,14 @@ async function save() {
   error.value = ''
   try {
     await auth.completeOnboarding({ ...answers }, answers.flower)
-    if (answers.name.trim()) await auth.updateProfile({ display_name: answers.name.trim() })
+    await auth.updateProfile({ display_name: answers.name.trim() })
   } catch (e) {
     error.value = "Couldn't save your answers. Check your connection and try again."
   } finally {
     saving.value = false
   }
 }
-const skip = () => leaveTo('garden')
+const skip = () => (answers.name.trim() ? leaveTo('garden') : needName())
 
 /* illustrations: a ticking focus clock and a confetti burst on the last step */
 const ft = ref(25 * 60)
@@ -88,6 +105,7 @@ const miniCal = Array.from({ length: 35 }, (_, k) => k - 2)
 /* keyboard ← → and swipe on the picture */
 function onKey(e) {
   if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return
+  if (e.target.closest?.('.flower-carousel')) return // ← → change the flower there, not the step
   if (e.key === 'ArrowRight') go(i.value + 1)
   if (e.key === 'ArrowLeft') go(i.value - 1)
 }
@@ -133,7 +151,7 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
       </nav>
 
       <section class="stage" :class="{ 'dir-back': back }" aria-live="polite">
-        <div class="slide-art" aria-hidden="true" @pointerdown="onDown">
+        <div class="slide-art" :aria-hidden="i === 5 ? undefined : 'true'" @pointerdown="onDown">
           <span class="sp-plate"></span>
           <Transition name="art">
             <!-- 1 welcome -->
@@ -231,6 +249,11 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
                 <span class="hours">{{ answers.hours }} h / week</span>
                 <img :key="answers.flower" class="flower" :src="flowerUrl" alt="" :style="{ transform: `scale(${0.55 + (Math.min(answers.hours, 30) / 30) * 0.6})` }" />
               </div>
+              <!-- sized like the round backdrop, so the arrows sit at its sides however tall the tulip grows -->
+              <div class="flower-carousel" @pointerdown.stop @keydown.left.prevent="stepFlower(-1)" @keydown.right.prevent="stepFlower(1)">
+                <button class="fc-btn prev" type="button" data-testid="flower-prev" @click="stepFlower(-1)"><SproutIcon glyph="chevron-left" :size="30" /></button>
+                <button class="fc-btn next" type="button" data-testid="flower-next" @click="stepFlower(1)"><SproutIcon glyph="chevron-right" :size="30" /></button>
+              </div>
             </div>
             <!-- 7 ready -->
             <div v-else key="a6" class="art a-ready">
@@ -288,15 +311,11 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
               <div class="q"><label class="sp-label" for="ob-hours">How many hours a week can you study?</label>
                 <div class="range-row"><input id="ob-hours" v-model.number="answers.hours" class="range" type="range" min="1" max="40" /><output for="ob-hours">{{ answers.hours }} h</output></div>
               </div>
-              <div class="q"><label class="sp-label" for="ob-name">What should we call you? <span class="sp-muted" style="font-weight: 600">(optional)</span></label>
-                <input id="ob-name" v-model="answers.name" class="sp-input" maxlength="24" placeholder="e.g. Mia" autocomplete="given-name" data-testid="onboarding-name" />
-              </div>
-              <div class="q"><span id="fl-l" class="sp-label">Pick your gardener flower</span>
-                <div class="swatches" role="group" aria-labelledby="fl-l">
-                  <button v-for="c in FLOWERS" :key="c" class="sw" type="button" :aria-label="`${c} tulip`" :aria-pressed="answers.flower === c" @click="answers.flower = c">
-                    <img :src="foliageUrl(`tulip-${c}-4`)" alt="" />
-                  </button>
-                </div>
+              <div class="q"><label class="sp-label" for="ob-name">What should we call you?</label>
+                <input id="ob-name" ref="nameInput" v-model="answers.name" class="sp-input" :class="{ 'is-invalid': nameMissing }" maxlength="24"
+                  placeholder="e.g. Mia" autocomplete="given-name" required :aria-invalid="nameMissing"
+                  :aria-describedby="nameMissing ? 'ob-name-err' : undefined" data-testid="onboarding-name" />
+                <p v-if="nameMissing" id="ob-name-err" class="status-err" role="alert">Please enter a name to continue.</p>
               </div>
             </div>
             <div v-else key="s6" class="slide">
@@ -522,10 +541,13 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
 .range { width: 100%; accent-color: var(--leaf); }
 .range-row { display: flex; gap: 12px; align-items: center; }
 .range-row output { font-family: var(--f-hand); font-size: 1.5rem; min-width: 5ch; }
-.swatches { display: flex; gap: 10px; flex-wrap: wrap; }
-.sw { width: 52px; height: 52px; border-radius: 14px; border: 2px solid var(--line); background: #fff; padding: 0; display: grid; place-items: end center; overflow: hidden; transition: transform .25s var(--spring), border-color .2s; }
-.sw img { width: 46px; height: 46px; }
-.sw[aria-pressed="true"] { border-color: var(--berry); transform: translateY(-3px) rotate(-4deg); box-shadow: 0 0 0 3px var(--berry-soft); }
+.flower-carousel { position: absolute; z-index: 2; width: min(400px, 92%); aspect-ratio: 1; pointer-events: none; }
+.fc-btn { position: absolute; top: 50%; width: 44px; height: 44px; margin-top: -22px; padding: 0; border: 0; background: none; color: var(--ink); opacity: .45; display: grid; place-items: center; pointer-events: auto; transition: opacity .2s, transform .2s var(--spring); }
+.fc-btn.prev { left: 2%; }
+.fc-btn.next { right: 2%; }
+.fc-btn:hover, .fc-btn:focus-visible { opacity: 1; }
+.fc-btn.prev:hover { transform: translateX(-3px); }
+.fc-btn.next:hover { transform: translateX(3px); }
 .form-slide { gap: 12px; }
 /* art 7 */
 .ready-art { position: relative; width: 260px; height: 320px; display: grid; place-items: end center; }
@@ -555,6 +577,7 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
   .slide-art { min-height: 260px; height: 260px; }
   .copy { min-height: 380px; align-items: flex-start; }
   .sp-plate { width: 250px; }
+  .flower-carousel { width: 250px; }
   .orbit img { height: 76px; }
   .avatar-slot { height: 230px; }
   .guide-slot { width: 70px; height: 96px; }

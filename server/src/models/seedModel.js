@@ -1,10 +1,11 @@
 // Model: data access for the `seeds` table (a seed = one topic = one plant).
-// Schema (supabase/schema.sql): subjects -> seeds -> cards. Mastery lives on cards only,
-// so a seed's mastery is the average card_mastery, calculated here.
+// Schema (supabase/schema.sql): subjects -> seeds -> cards, and subjects -> exams -> seeds (a seed's exam is
+// optional). Mastery lives on cards only, so a seed's mastery is the average card_mastery, calculated here.
 import { supabase, check } from '../lib/supabase.js'
 import { markTopPriority } from '../lib/priority.js'
 
-const SEED_WITH_RELATIONS = '*, subjects(name, exam_date, exam_choice, shelf_slot), cards(id, question, answer, wrong_options, card_mastery, next_review)'
+const SEED_WITH_RELATIONS = '*, subjects(name, shelf_slot), exams!seeds_exam_fkey(name, exam_date, exam_choice), '
+  + 'cards(id, question, answer, wrong_options, card_mastery, next_review)'
 const DAY = 86_400_000
 
 // How each rating changes ONE card:
@@ -29,14 +30,15 @@ export function shortAnswerRating(score) {
   return score >= 80 ? 'short_correct' : score >= 50 ? 'short_partial' : 'short_wrong'
 }
 
-// seed row + joined subject/cards -> the flat shape the client uses
-// exam_date, exam_choice and shelf_slot belong to the subject (shared by all its seeds). The plant's stage is
-// worked out on the client (client/src/lib/plantStage.js) because it changes with time since last_reviewed.
-function shape({ subjects, cards = [], ...seed }) {
+// seed row + joined subject/exam/cards -> the flat shape the client uses
+// exam_name, exam_date and exam_choice belong to the seed's exam (null when it has none); shelf_slot belongs to
+// the subject (one vase per subject). The plant's stage is worked out on the client (client/src/lib/plantStage.js)
+// because it changes with time since last_reviewed.
+function shape({ subjects, exams, cards = [], ...seed }) {
   const mastery = cards.length ? Math.round(cards.reduce((n, c) => n + c.card_mastery, 0) / cards.length) : 0
   return {
-    ...seed, subject: subjects?.name ?? '', exam_date: subjects?.exam_date ?? null,
-    exam_choice: subjects?.exam_choice ?? null, shelf_slot: subjects?.shelf_slot ?? null,
+    ...seed, subject: subjects?.name ?? '', shelf_slot: subjects?.shelf_slot ?? null,
+    exam_name: exams?.name ?? null, exam_date: exams?.exam_date ?? null, exam_choice: exams?.exam_choice ?? null,
     cards, mastery,
   }
 }
@@ -45,14 +47,24 @@ async function getOne(userId, seedId) {
   return shape(check(await supabase.from('seeds').select(SEED_WITH_RELATIONS).eq('id', seedId).eq('user_id', userId).single()))
 }
 
-// Find the user's subject by name, or create it. A given exam_date (YYYY-MM-DD) is saved on the subject;
-// leaving it out never clears a saved one. A new exam date also clears exam_choice, so "exam is over" asks again
-// after that exam (a subject already on the shelf keeps its shelf_slot).
-async function subjectIdFor(userId, name, exam_date) {
-  const found = check(await supabase.from('subjects').select('id, exam_date').eq('user_id', userId).eq('name', name).maybeSingle())
-  if (!found) return check(await supabase.from('subjects').insert({ user_id: userId, name, exam_date }).select('id').single()).id
+// Find the user's subject by name, or create it
+async function subjectIdFor(userId, name) {
+  const found = check(await supabase.from('subjects').select('id').eq('user_id', userId).eq('name', name).maybeSingle())
+  if (found) return found.id
+  return check(await supabase.from('subjects').insert({ user_id: userId, name }).select('id').single()).id
+}
+
+// Find the subject's exam by name (ignoring case, like the unique index), or create it. A given exam_date
+// (YYYY-MM-DD) is saved on the exam; leaving it out never clears a saved one. A new date also clears exam_choice,
+// so "exam is over" asks again after the new date.
+async function examIdFor(userId, subject_id, { name, exam_date }) {
+  const exams = check(await supabase.from('exams').select('id, name, exam_date').eq('user_id', userId).eq('subject_id', subject_id))
+  const found = exams.find(e => e.name.toLowerCase() === name.toLowerCase())
+  if (!found) {
+    return check(await supabase.from('exams').insert({ user_id: userId, subject_id, name, exam_date }).select('id').single()).id
+  }
   if (exam_date && exam_date !== found.exam_date) {
-    check(await supabase.from('subjects').update({ exam_date, exam_choice: null }).eq('id', found.id).eq('user_id', userId))
+    check(await supabase.from('exams').update({ exam_date, exam_choice: null }).eq('id', found.id).eq('user_id', userId))
   }
   return found.id
 }
@@ -68,11 +80,12 @@ export const SeedModel = {
       .map(shape))
   },
 
-  // seed: { title, subject, exam_date?, tags, cards: [{ question, answer, wrong_options }], col, row, flower, color }
-  async create(userId, { title, subject, exam_date, tags, cards, col, row, flower, color }) {
-    const subject_id = await subjectIdFor(userId, subject, exam_date)
+  // seed: { title, subject, exam?: { name, exam_date? }, tags, cards: [{ question, answer, wrong_options }], col, row, flower, color }
+  async create(userId, { title, subject, exam, tags, cards, col, row, flower, color }) {
+    const subject_id = await subjectIdFor(userId, subject)
+    const exam_id = exam ? await examIdFor(userId, subject_id, exam) : null
     const seed = check(await supabase.from('seeds')
-      .insert({ user_id: userId, subject_id, title, tags, col, row, flower, color })
+      .insert({ user_id: userId, subject_id, exam_id, title, tags, col, row, flower, color })
       .select('id').single())
 
     const { error } = await supabase.from('cards')

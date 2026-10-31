@@ -177,16 +177,19 @@ API endpoints today: `POST /api/auth/register`, `GET|POST /api/seeds`, `POST /ap
 
 ### 3.4 ER diagram
 
-Built from the live Supabase database (checked 2026-10-23), the same as `server/supabase/schema.sql`. There are 7 public tables.
+Built from the live Supabase database (checked 2026-10-23, `exams` added 2026-10-31), the same as `server/supabase/schema.sql`. There are 8 public tables.
 
 ```mermaid
 erDiagram
     AUTH_USERS ||--|| PROFILES : "has"
     AUTH_USERS ||--o{ SUBJECTS : "owns"
+    AUTH_USERS ||--o{ EXAMS : "owns"
     AUTH_USERS ||--o{ SEEDS : "owns"
     AUTH_USERS ||--o{ CARDS : "owns"
     AUTH_USERS ||--o{ INVENTORY : "owns"
     SUBJECTS ||--o{ SEEDS : "groups"
+    SUBJECTS ||--o{ EXAMS : "has"
+    EXAMS |o--o{ SEEDS : "tests"
     SEEDS ||--|{ CARDS : "contains"
     FLOWERS ||--o{ SEEDS : "species of"
     SHOP_ITEMS ||--o{ INVENTORY : "stocked as"
@@ -219,9 +222,17 @@ erDiagram
         uuid user_id FK "cascade"
         text name "unique per user"
         varchar color "default peri"
+        smallint shelf_slot "0-17, unique per user"
+        timestamptz created_at
+    }
+
+    EXAMS {
+        uuid id PK
+        uuid user_id FK "cascade"
+        uuid subject_id FK "cascade"
+        text name "unique per subject, ignoring case"
         date exam_date
         text exam_choice "garden | house | null"
-        smallint shelf_slot "0-17, unique per user"
         timestamptz created_at
     }
 
@@ -229,6 +240,7 @@ erDiagram
         uuid id PK
         uuid user_id FK "cascade"
         uuid subject_id FK "restrict"
+        uuid exam_id FK "optional, same subject, set null"
         text title
         jsonb tags
         smallint row
@@ -283,6 +295,7 @@ erDiagram
 - **`user_id` on seeds and cards is denormalised.** It could be reached through subject → user, but storing it lets RLS and queries filter by owner directly.
 - **Seed → cards is 1..many.** The controller enforces it (1 to 200 cards per seed); the schema doesn't.
 - **Subject → seeds is 0..many.** A subject is created along with its first seed, but it stays when its seeds are deleted. `ON DELETE RESTRICT` blocks deleting a subject that still has seeds.
+- **Subject → exams is 0..many, exam → seeds is 0..many, and a seed's exam is optional.** An exam (e.g. WAD2 Midterm) owns `exam_date` and `exam_choice`; when it is over, `choose_exam_outcome` moves only that exam's seeds to the flower house. The subject owns `shelf_slot`: one vase per subject, shared by all its exams. The `seeds_exam_fkey` foreign key on `(exam_id, subject_id)` makes sure a seed's exam belongs to the seed's own subject.
 - **`auth.users`** belongs to Supabase. The `on_auth_user_created` trigger makes a `profiles` row for every new user.
 - **Flower unlocks:** `buy_flower` adds to `profiles.unlocked_flowers` and spends coins. The `seeds_guard_flower` trigger (`guard_seed_flower`, before insert/update of `flower`) rejects a seed whose flower isn't in the owner's `unlocked_flowers`.
 - **Shop:** `flowers`, `shop_items` are readable by any signed-in user; `inventory` only by its owner. All writes go through `buy_item` / `use_item` / `buy_flower` (all `SECURITY DEFINER`, `FOR UPDATE`).

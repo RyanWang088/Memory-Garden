@@ -1,11 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { useAuthStore } from './auth'
-import { useGardenStore } from './garden'
+import { useGardenStore, examLabel } from './garden'
 
 // Planner: the to-do list (left page) and the month calendar (right page).
 // Tasks are kept per user in this browser (localStorage) for now: there is no `tasks` table yet.
-// Exams and reviews due come from the garden (seeds/subjects in Supabase).
+// Exams and reviews due come from the garden (seeds/subjects/exams in Supabase).
 const KEY = (userId) => `sproutly.journal.${userId}` // old name kept so tasks already saved in this browser aren't lost
 const LIFE = 'Life'
 // subject colours: a fixed palette, picked by the order subjects appear (Life is always the soft brown)
@@ -44,12 +44,12 @@ export const usePlannerStore = defineStore('planner', () => {
   })
   const colorOf = (name) => subjects.value.find((s) => s.name === name)?.color ?? '#9A8174'
 
-  // one exam per subject that has a date (from the garden), like the planner's milestones
+  // every exam with a date (from the garden), like the planner's milestones; a subject can have several
   const exams = computed(() => {
     const seen = new Map()
     for (const s of garden.gardenSeeds) {
       const date = s.exam_date?.slice(0, 10)
-      if (date && !seen.has(s.subject)) seen.set(s.subject, { date, subject: s.subject, title: `${s.subject} exam` })
+      if (date && !seen.has(s.exam_id)) seen.set(s.exam_id, { date, subject: s.subject, title: examLabel(s.subject, s.exam_name) })
     }
     return [...seen.values()].sort((a, b) => a.date.localeCompare(b.date))
   })

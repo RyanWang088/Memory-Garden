@@ -2,9 +2,9 @@
 // Plant a seed: name the study set, pick a subject and tags, build flashcards by hand or upload a
 // document for the AI to turn into flashcards, browse/edit them in the preview, then save.
 // Shown after the seed packet is dropped on the garden.
-// Emits 'save' with { title, subject, exam_date, tags, cards } and 'cancel'.
+// Emits 'save' with { title, subject, exam_name, exam_date, tags, cards } and 'cancel'.
 import { computed, markRaw, onBeforeUnmount, ref, watch } from 'vue'
-import { useGardenStore } from '@/stores/garden'
+import { useGardenStore, examLabel } from '@/stores/garden'
 import { apiFetch } from '@/lib/http'
 import { tagColors, tagStyle } from '@/lib/tagColors'
 import { VueDatePicker } from '@vuepic/vue-datepicker'
@@ -33,24 +33,30 @@ const tagInput = ref('')
 const tagColor = ref(tagColors[0].id) // colour for the next tag
 const knownSubjects = computed(() => [...new Set(garden.seeds.map((s) => s.subject).filter(Boolean))]) // suggestions only
 
-// Exam date (optional) belongs to the subject. An existing subject's upcoming date is filled in; a past one is not,
-// so it can't block planting. Leaving it blank keeps whatever the subject already has.
-// Shown as DD-MM-YYYY, stored as YYYY-MM-DD.
+// Exam (optional): a subject can have several, e.g. Midterm and Final. The name and date belong to the exam and
+// are shared by all its seeds; a date with no name is saved as an exam called 'Exam'. An existing exam's upcoming
+// date is filled in; a past one is not, so it can't block planting. Leaving the date blank keeps whatever the
+// exam already has. Shown as DD-MM-YYYY, stored as YYYY-MM-DD.
+const examName = ref('')
 const examDate = ref(null) // YYYY-MM-DD
 const now = new Date()
 const minExamDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()) // start of today, local
 const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+const subjectSeeds = computed(() => garden.seeds.filter((s) => s.subject === subject.value.trim() && s.exam_id))
+const knownExams = computed(() => [...new Set(subjectSeeds.value.map((s) => s.exam_name))]) // suggestions only
+const examKey = computed(() => (examName.value.trim() || 'Exam').toLowerCase())
 const savedExamDate = computed(() => {
-  const date = garden.seeds.find((s) => s.subject === subject.value.trim() && s.exam_date)?.exam_date
+  const date = subjectSeeds.value.find((s) => s.exam_name.toLowerCase() === examKey.value && s.exam_date)?.exam_date
   return date && date >= today ? date : ''
 })
 watch(savedExamDate, (date) => { examDate.value = date || null })
 const examPast = computed(() => !!examDate.value && examDate.value < today)
 const examHelp = computed(() => {
-  const name = subject.value.trim()
-  if (savedExamDate.value && examDate.value === savedExamDate.value) return `Saved for all your ${name} seeds.`
-  if (savedExamDate.value) return `This changes the exam date for all your ${name} seeds.`
-  return name ? `When is your ${name} exam? Optional.` : 'Optional.'
+  const label = examLabel(subject.value.trim(), examName.value.trim())
+  if (savedExamDate.value && examDate.value === savedExamDate.value) return `Saved for all your ${label} seeds.`
+  if (savedExamDate.value) return `This changes the date for all your ${label} seeds.`
+  if (!subject.value.trim()) return 'Optional.'
+  return examName.value.trim() || examDate.value ? `When is your ${label}? Optional.` : 'Optional. Name it if the subject has more than one exam.'
 })
 
 function addTag() {
@@ -278,7 +284,8 @@ function save() {
   addCard() // a filled-in card that wasn't added with + yet is kept, not lost
   addTag() // same for a typed tag that wasn't added with Enter
   emit('save', {
-    title: title.value.trim(), subject: subject.value.trim(), exam_date: examDate.value || undefined, tags: tags.value,
+    title: title.value.trim(), subject: subject.value.trim(),
+    exam_name: examName.value.trim() || undefined, exam_date: examDate.value || undefined, tags: tags.value,
     cards: cards.value.map(({ question, answer, traps }) => ({ question, answer, wrong_options: cleanTraps(traps, answer) })),
   })
 }
@@ -317,6 +324,13 @@ function save() {
         <input v-model="subject" maxlength="60" list="seed-subjects" placeholder="e.g. WAD2" data-testid="seed-subject" />
         <datalist id="seed-subjects">
           <option v-for="s in knownSubjects" :key="s" :value="s" />
+        </datalist>
+      </label>
+      <label class="field">
+        <span class="text-label-field">Exam</span>
+        <input v-model="examName" maxlength="40" list="seed-exams" placeholder="e.g. Midterm" data-testid="seed-exam-name" />
+        <datalist id="seed-exams">
+          <option v-for="e in knownExams" :key="e" :value="e" />
         </datalist>
       </label>
       <div class="field">

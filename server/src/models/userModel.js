@@ -8,7 +8,7 @@ export const UserModel = {
   },
 
   // Deletes the user. Seeds go first because seeds -> subjects is ON DELETE RESTRICT;
-  // profiles, subjects, cards and inventory then cascade from auth.users.
+  // profiles, subjects, exams, cards and inventory then cascade from auth.users.
   async remove(userId) {
     check(await supabase.from('seeds').delete().eq('user_id', userId))
     return check(await supabase.auth.admin.deleteUser(userId))

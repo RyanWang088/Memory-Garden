@@ -1,9 +1,10 @@
 <script setup>
 import { computed } from 'vue'
+import { examLabel } from '@/stores/garden'
 
-// Asks where a subject lives after its exam: keep its plants in the garden, or move it to the flower house
-// as one keepsake flower. Emits 'choose' with 'garden' | 'house'; the parent does the work.
-//   exam = { id, name, shelf_slot, seedIds } from garden.examsOver
+// Asks where an exam's plants live once it is over: keep them in the garden, or move them to the flower house,
+// where the subject shows as one keepsake flower. Emits 'choose' with 'garden' | 'house'; the parent does the work.
+//   exam = { id, name, subject, subject_id, shelf_slot, seedIds } from garden.examsOver
 const props = defineProps({
   exam: { type: Object, required: true },
   freeSlots: { type: Number, required: true },
@@ -19,7 +20,7 @@ const canMove = computed(() => props.exam.shelf_slot !== null || props.freeSlots
 
 <template>
   <section class="exam-over" role="dialog" aria-labelledby="exam-over-title" data-testid="exam-over">
-    <h3 id="exam-over-title" class="m-0">{{ exam.name }} is over</h3>
+    <h3 id="exam-over-title" class="m-0">{{ examLabel(exam.subject, exam.name) }} is over</h3>
     <p class="text-body-small m-0">
       Where should its {{ plantCount }} {{ plantCount === 1 ? 'bloom' : 'blooms' }} live? In the house they become
       keepsakes and stop asking for reviews.

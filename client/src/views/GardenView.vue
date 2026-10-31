@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, onBeforeUnmount, computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useGardenStore } from '@/stores/garden'
+import { useGardenStore, examLabel } from '@/stores/garden'
 import { useUiStore } from '@/stores/ui'
 import { useWeatherStore } from '@/stores/weather'
 import GardenBed from '@/components/GardenBed.vue'
@@ -35,7 +35,7 @@ const hud = computed(() => {
   return {
     hello: `${greeting()}${name}.`,
     line: !seeds.length ? 'Plant your first seed.' : thirsty ? 'Some seeds are thirsty.' : 'Your garden is growing.',
-    thirsty, next: next ? `${next.subject} exam ${days === 0 ? 'today' : `in ${days} day${days === 1 ? '' : 's'}`}` : null, planted: seeds.length,
+    thirsty, next: next ? `${examLabel(next.subject, next.exam_name)} ${days === 0 ? 'today' : `in ${days} day${days === 1 ? '' : 's'}`}` : null, planted: seeds.length,
   }
 })
 function openStudy() { ui.setShedTab('study'); ui.shedOpen = true }
@@ -48,19 +48,20 @@ function openStudyForQuery() {
 
 watch(() => route.query.q, openStudyForQuery)
 
-// "Exam is over": one subject at a time, oldest exam first, only on the garden itself (not over a seed page)
+// "Exam is over": one exam at a time, oldest first, only on the garden itself (not over a seed page)
 const examChoice = ref('')  // the choice being saved
 const examError = ref('')
 const exam = computed(() => (route.name === 'garden' ? garden.examsOver[0] : null))
 
 async function chooseExamOutcome(choice) {
   if (examChoice.value || !exam.value) return
-  const { id } = exam.value
+  const { id, subject_id } = exam.value
   examChoice.value = choice
   examError.value = ''
   try {
     await garden.chooseExamOutcome(id, choice)
-    if (choice === 'house') await router.push({ name: 'profile', query: { new: id } })
+    // the shelf shows one flower per subject, so the new flower is found by subject
+    if (choice === 'house') await router.push({ name: 'profile', query: { new: subject_id } })
   } catch (e) {
     examError.value = e instanceof Error ? e.message : String(e)
   } finally {

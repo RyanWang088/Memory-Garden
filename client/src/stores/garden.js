@@ -12,7 +12,7 @@ export const SHELF_UNLOCK_PRICE = 80
 const MESSAGES = {
   SHELF_FULL: 'Your shelves are full. Unlock more space on your profile.',
   EXAM_NOT_OVER: "This exam isn't over yet.",
-  ALREADY_CHOSEN: 'You already chose where this subject lives.',
+  ALREADY_CHOSEN: 'You already chose where these plants live.',
   INSUFFICIENT_COINS: 'Not enough coins for that yet.',
   NOT_AUTHENTICATED: 'Please log in again.',
 }
@@ -21,6 +21,9 @@ const friendly = (e) => {
   return new Error(key ? MESSAGES[key] : 'Something went wrong. Please try again.')
 }
 const today = () => new Date().toLocaleDateString('en-CA') // local YYYY-MM-DD
+
+// How an exam is named on screen: "WAD2 Midterm", or "WAD2 exam" for one just called "Exam" (the default)
+export const examLabel = (subject, name) => (!name || name.toLowerCase() === 'exam' ? `${subject} exam` : `${subject} ${name}`)
 const reviewedAt = (seed) => new Date(seed.last_reviewed ?? 0).getTime()
 
 export const useGardenStore = defineStore('garden', () => {
@@ -28,7 +31,7 @@ export const useGardenStore = defineStore('garden', () => {
   const seeds = ref([]) // every seed, including ones moved to the flower house
   const loaded = ref(false)
 
-  // Seeds of a subject moved to the flower house leave the garden (they stay in the database)
+  // Seeds of an exam moved to the flower house leave the garden (they stay in the database)
   const gardenSeeds = computed(() => seeds.value.filter(s => !s.in_house))
   const hasPlants = computed(() => gardenSeeds.value.length > 0)
 
@@ -46,18 +49,21 @@ export const useGardenStore = defineStore('garden', () => {
   const shelfSlots = computed(() => (auth.profile?.shelf_unlocked ? UNLOCKED_SHELF_SLOTS : SHELF_SLOTS))
   const freeShelfSlots = computed(() => Math.max(0, shelfSlots.value - housedSubjects.value.length))
 
-  // Subjects whose exam day has passed (local time) and that haven't been asked about yet, oldest exam first.
-  // [{ id, name, exam_date, shelf_slot, seedIds }]. Only subjects with plants still in the garden.
+  // Exams whose day has passed (local time) and that haven't been asked about yet, oldest exam first.
+  // [{ id, name, subject, subject_id, exam_date, shelf_slot, seedIds }]. Only exams with plants still in the garden;
+  // shelf_slot is the subject's (set if an earlier exam of it is already on the shelf).
   const examsOver = computed(() => {
-    const bySubject = new Map()
+    const byExam = new Map()
     for (const s of gardenSeeds.value) {
       const examDay = s.exam_date?.slice(0, 10)
-      if (!examDay || s.exam_choice || examDay >= today()) continue
-      const exam = bySubject.get(s.subject_id) ?? { id: s.subject_id, name: s.subject, exam_date: examDay, shelf_slot: s.shelf_slot, seedIds: [] }
+      if (!s.exam_id || !examDay || s.exam_choice || examDay >= today()) continue
+      const exam = byExam.get(s.exam_id) ?? {
+        id: s.exam_id, name: s.exam_name, subject: s.subject, subject_id: s.subject_id, exam_date: examDay, shelf_slot: s.shelf_slot, seedIds: [],
+      }
       exam.seedIds.push(s.id)
-      bySubject.set(s.subject_id, exam)
+      byExam.set(s.exam_id, exam)
     }
-    return [...bySubject.values()].sort((a, b) => a.exam_date.localeCompare(b.exam_date))
+    return [...byExam.values()].sort((a, b) => a.exam_date.localeCompare(b.exam_date))
   })
 
   // 1-8: grows with mastery, wilts every 3 days without a quiz (see lib/plantStage.js)
@@ -83,12 +89,16 @@ export const useGardenStore = defineStore('garden', () => {
     }
   }
 
-  // The server finds/creates the subject, saves the seed and its cards, and returns
-  // the seed with { subject, exam_date, cards, mastery } filled in
-  async function plantSeed({ title, subject, exam_date, tags, cards, col, row, color = 'red', flower = 'tulip' }) {
-    const seed = await apiFetch('/api/seeds', { method: 'POST', body: { title, subject, exam_date, tags, cards, col, row, color, flower } })
-    // the exam date belongs to the subject, so the subject's other seeds get the same one
-    for (const s of seeds.value) if (s.subject === seed.subject) s.exam_date = seed.exam_date
+  // The server finds/creates the subject and the exam (optional), saves the seed and its cards, and returns
+  // the seed with { subject, exam_id, exam_name, exam_date, exam_choice, cards, mastery } filled in
+  async function plantSeed({ title, subject, exam_name, exam_date, tags, cards, col, row, color = 'red', flower = 'tulip' }) {
+    const seed = await apiFetch('/api/seeds', {
+      method: 'POST', body: { title, subject, exam_name, exam_date, tags, cards, col, row, color, flower },
+    })
+    // the date and choice belong to the exam, so the exam's other seeds get the same ones (a new date resets the choice)
+    for (const s of seeds.value) {
+      if (seed.exam_id && s.exam_id === seed.exam_id) Object.assign(s, { exam_date: seed.exam_date, exam_choice: seed.exam_choice })
+    }
     seeds.value.push(seed)
     refreshPriority()
     return seed
@@ -117,18 +127,20 @@ export const useGardenStore = defineStore('garden', () => {
     refreshPriority()
   }
 
-  // "Exam is over": choice is 'garden' (keep the plants) or 'house' (move every seed of the subject to the
-  // flower house). The database checks and applies it in one go.
-  async function chooseExamOutcome(subjectId, choice) {
+  // "Exam is over": choice is 'garden' (keep the plants) or 'house' (move that exam's seeds to the flower house;
+  // the subject's other seeds stay). The database checks and applies it in one go.
+  async function chooseExamOutcome(examId, choice) {
+    const subjectId = seeds.value.find(s => s.exam_id === examId)?.subject_id
     let result
     try {
-      result = check(await supabase.rpc('choose_exam_outcome', { p_subject: subjectId, p_choice: choice }))
+      result = check(await supabase.rpc('choose_exam_outcome', { p_exam: examId, p_choice: choice }))
     } catch (e) {
       throw friendly(e)
     }
     for (const s of seeds.value) {
-      if (s.subject_id !== subjectId) continue
-      Object.assign(s, { exam_choice: result.exam_choice, shelf_slot: result.shelf_slot })
+      if (s.subject_id === subjectId) s.shelf_slot = result.shelf_slot // the shelf slot is the subject's
+      if (s.exam_id !== examId) continue
+      s.exam_choice = result.exam_choice
       if (choice === 'house') s.in_house = true
     }
     refreshPriority()
