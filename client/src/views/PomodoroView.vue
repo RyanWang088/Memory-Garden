@@ -16,47 +16,44 @@ const pomo = usePomodoroStore()
 const garden = useGardenStore()
 const auth = useAuthStore()
 
-// the meadow behind the page follows the session: night falls while you focus, the sun is back on a break
+// the sky follows the session: night while focusing, day on a break
 const mood = computed(() => (pomo.phase === 'running' ? (pomo.mode === 'focus' ? 'night' : 'day') : pomo.phase === 'done' ? 'blush' : moodNow()))
 const narrow = typeof window !== 'undefined' && window.innerWidth < 600
 const flower = computed(() => auth.profile?.onboarding_answers?.flower || 'yellow')
-// a plant grows inside the ring as the focus block runs (seed → sprout → bud → flower)
+// the plant inside the ring grows as the focus block runs (seed → sprout → bud → flower)
 const ringPlant = computed(() => {
   if (pomo.mode === 'break') return { src: foliageUrl(`tulip-${flower.value}-4`), small: false }
   const p = 1 - pomo.progress
   const art = p < 0.25 ? 'seed' : p < 0.5 ? 'sprout' : p < 0.8 ? 'tulip-3' : `tulip-${flower.value}-4`
   return { src: foliageUrl(art), small: art === 'seed' || art === 'sprout', art }
 })
-// one plant per focus block under the ring: done ones bloom, the current one bobs
+// one plant per focus block under the ring: done ones bloom, the current one is a sprout
 const blockArt = (n) => (n < pomo.current.number || (n === pomo.current.number && pomo.mode === 'break')
   ? { src: foliageUrl(`tulip-${flower.value}-4`), cls: 'done' }
   : n === pomo.current.number ? { src: foliageUrl('sprout'), cls: 'now s' } : { src: foliageUrl('seed'), cls: 'todo s' })
 
-/* ---------- before Start ----------
-   No setup steps: the page opens on the timer screen with the ring not started yet. The focus, break and
-   rounds controls sit under the ring until Start is pressed (Start runs the same store checks as before). */
+/* ---------- before Start ---------- */
 const idle = computed(() => pomo.phase === 'setup')
-const showError = ref(false) // the error shows only after Start is pressed
+const showError = ref(false) // the error only shows after Start is pressed
 
-// open straight on Custom, keeping whatever times are already there (25/5 the first time)
+// start on 'custom' (keeps the current times; 25/5 the first time)
 function openOnCustom() {
   if (!pomo.preset) pomo.choosePreset('custom')
 }
-// the garden marks the seeds most worth revising with "!"; offer them as to-do items before each session
-// (seeds come from the Express API through the garden store, like everywhere else)
+// add the garden's "!" seeds (most worth revising) to the to-do list before each session
 async function suggestReviews() {
-  try { await garden.fetchSeeds() } catch { return } // can't load them: the list just has the user's own tasks
+  try { await garden.fetchSeeds() } catch { return } // can't load them: the list just has the other tasks
   const due = garden.seeds.filter(s => s.alert).sort((a, b) => b.priority - a.priority)
   pomo.addReviewTasks(due)
 }
 
 onMounted(() => {
-  pomo.endBy = 'rounds' // sessions are set by rounds only
+  pomo.endBy = 'rounds' // sessions are always set by rounds
   openOnCustom()
   if (idle.value) suggestReviews()
 })
 
-// back to setup (Start another, End early, or the mini player's session ending)
+// back at the settings after a session: hide the error and get fresh review suggestions
 watch(() => pomo.phase, (phase) => {
   if (phase !== 'setup') return
   showError.value = false
@@ -64,7 +61,7 @@ watch(() => pomo.phase, (phase) => {
   suggestReviews()
 })
 
-// typing or nudging a time after picking Classic / Deep work turns it into your own rhythm
+// changing a time after picking Classic / Deep work makes it 'custom'
 watch(() => [pomo.focusSeconds, pomo.breakSeconds], ([focus, rest]) => {
   const p = PRESETS.find(x => x.key === pomo.preset)
   if (p && (p.focus !== focus || p.rest !== rest)) pomo.choosePreset('custom')
@@ -77,8 +74,7 @@ function start() {
   pomo.startSession()
 }
 
-// − / + buttons next to each time box (typing still works: click the time and type digits)
-// focus can go down to 1 minute, a break down to 0 (no breaks: focus blocks run back to back)
+// − / + buttons: focus moves by 5 min (min 1 min), break by 1 min (min 0 = no breaks)
 const FOCUS_STEP = 5 * 60, BREAK_STEP = 60
 const MIN_FOCUS = 60, MIN_BREAK = 0
 function nudge(which, dir) {
@@ -103,21 +99,21 @@ const nextLabel = computed(() => {
   return next.type === 'break' ? `then a break of ${lengthText(next.seconds)}` : `then focus round ${next.number}`
 })
 
-// the ring's text: before Start it describes the session you've set, then it follows the timer
+// ring text: before Start it shows what you've set, then it follows the timer
 const ringCaption = computed(() => (idle.value ? `Ready · ${pomo.rounds} round${pomo.rounds === 1 ? '' : 's'}` : caption.value))
 const ringNext = computed(() => (idle.value
   ? (pomo.breakSeconds ? `breaks of ${lengthText(pomo.breakSeconds)}` : 'no breaks')
   : nextLabel.value))
 
-// one dot per focus block, filled once it has started (break n comes right after focus block n)
+// which focus block has started (for the plants row's screen-reader label)
 const focusStarted = computed(() => pomo.current.number)
 
 /* ---------- finished ---------- */
-// tasks ticked since Start: this session's list, plus planner tasks (ticked here or on the planner page)
+// tasks ticked during the session (this list and the planner), not ones already ticked at Start
 const planner = usePlannerStore()
 const tasksDone = computed(() => [...pomo.tasks, ...planner.tasks]
   .filter(t => t.done && !pomo.doneAtStart.includes(t.id)).length)
-// done screen: total focus time, e.g. "50 min" or "1h 40 min" (only shown after every block is finished)
+// total focus time for the done card, e.g. "50 min"
 const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === 'focus').reduce((sum, b) => sum + b.seconds, 0)))
 </script>
 
@@ -126,12 +122,12 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
     <SceneryBackdrop :mood="mood" :options="{ seed: 31, tulips: narrow ? 3 : 10, butterflies: 2, horizon: 0.64 }" />
 
     <div class="container position-relative py-4 d-flex flex-column align-items-center">
-      <!-- 1 + 2. before Start and while running: tasks | timer | music (stacked on small screens, timer first) -->
+      <!-- before Start and while running: to-do | timer | music + settings (one column on smaller screens) -->
       <div v-if="pomo.phase !== 'done'" class="session w-100">
         <SessionTodo class="sp-card side-card area-tasks" />
 
         <div class="area-timer d-flex flex-column align-items-center">
-          <!-- the timer ring: before Start it shows the chosen focus time, then it counts down -->
+          <!-- timer ring: shows the chosen focus time before Start, then counts down -->
           <div class="ring" :class="[pomo.mode, { paused: !idle && !pomo.running }]">
             <svg viewBox="0 0 300 300" aria-hidden="true">
               <circle class="track" cx="150" cy="150" :r="RADIUS" />
@@ -148,14 +144,14 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
             <img :key="ringPlant.src" class="ring-plant" :class="{ s: ringPlant.small }" :src="ringPlant.src" alt="" />
           </div>
 
-          <!-- before Start: just the Start button here (the timer settings are in the right column) -->
+          <!-- before Start: Start button -->
           <div v-if="idle" class="mt-4">
             <button type="button" class="btn-primary border-0 text-button justify-content-center" data-testid="pomodoro-start" @click="start">
               <SproutIcon glyph="play" :size="16" /> Start
             </button>
           </div>
 
-          <!-- running: one plant per focus block, and the pause / end buttons -->
+          <!-- running: one plant per focus block, then Pause / Resume and End early -->
           <template v-else>
             <div class="blocks mt-3" :aria-label="`Focus round ${focusStarted} of ${pomo.focusTotal}`">
               <img v-for="n in pomo.focusTotal" :key="n" :class="blockArt(n).cls" :src="blockArt(n).src" alt="" />
@@ -172,12 +168,12 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
           </template>
         </div>
 
-        <!-- right column: music -->
+        <!-- music -->
         <div class="area-side d-grid gap-4">
           <GardenRadio class="sp-card side-card" />
         </div>
 
-        <!-- timer settings, only before Start: under Garden Radio on wide screens, right under Start on phones -->
+        <!-- timer settings (only before Start) -->
         <section v-if="idle" class="sp-card side-card area-settings" aria-labelledby="settings-title" data-testid="pomodoro-setup">
           <div id="settings-title" class="text-label-caption sp-card-label mb-3">Timer settings</div>
           <div class="d-flex gap-2 mb-2" role="radiogroup" aria-label="Focus rhythm">
@@ -190,7 +186,7 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
             </button>
           </div>
 
-          <!-- one row each: label on the left, then - value + -->
+          <!-- one row each: label, then − time + -->
           <div class="settings sp-rows">
             <div class="setting d-flex align-items-center justify-content-between gap-2">
               <span class="d-flex align-items-center gap-2"><SproutIcon name="focus" :size="22" /><span class="text-label-caption">Focus</span></span>
@@ -217,22 +213,22 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
               </div>
             </div>
           </div>
-          <!-- shown after Start is pressed with a time that isn't allowed -->
+          <!-- shown only after Start is pressed with times that aren't allowed -->
           <p v-if="showError && pomo.setupError" class="text-body-small text-danger text-center mt-2 mb-0" role="alert" data-testid="pomodoro-error">{{ pomo.setupError }}</p>
           <p class="text-body-small text-center mt-2 mb-0">Tip: click a time to type it</p>
         </section>
       </div>
 
-      <!-- 3. finished -->
+      <!-- finished -->
       <section v-else class="sp-paper panel text-center done-card" data-testid="pomodoro-done">
         <span class="sp-tape is-leaf" aria-hidden="true"></span>
         <div class="bouquet" aria-hidden="true">
-          <img v-for="n in Math.min(pomo.focusTotal, 7)" :key="n" :src="foliageUrl(`tulip-${['pink', 'yellow', 'purple', 'red'][(n - 1) % 5]}-4`)" alt="" :style="{ animationDelay: `${n * 0.12}s` }" />
+          <img v-for="n in Math.min(pomo.focusTotal, 7)" :key="n" :src="foliageUrl(`tulip-${['pink', 'yellow', 'purple', 'red'][(n - 1) % 4]}-4`)" alt="" :style="{ animationDelay: `${n * 0.12}s` }" />
         </div>
         <h2 class="mb-2">Session complete</h2>
         <p class="text-body-small mb-4">
           You focused for {{ focusTime }}.
-          <!-- only celebrate ticked tasks; "0 of 2" would feel like a telling-off -->
+          <!-- only shown if something was ticked -->
           <template v-if="tasksDone">
             <br />You ticked off {{ tasksDone }} task{{ tasksDone === 1 ? '' : 's' }}.
           </template>
@@ -246,10 +242,10 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
 </template>
 
 <style scoped>
-/* page: the meadow scenery sits behind (SceneryBackdrop) */
+/* page (the meadow scenery sits behind) */
 .focus-page { position: relative; min-height: calc(100vh - 92px); overflow-x: clip; padding-bottom: calc(var(--dock-h) + 40px); }
 
-/* the done card: its paper look comes from theme.css .sp-paper */
+/* done card (paper look from theme.css .sp-paper) */
 .panel { width: 100%; max-width: 460px; margin-top: 3vh; padding: 28px; }
 .panel > .sp-tape { top: -12px; left: calc(50% - 46px); transform: rotate(-3deg); }
 @media (max-width: 575.98px) { .panel { padding: 22px 18px 24px; border-radius: 20px; } }
@@ -282,16 +278,16 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
 .quick-chip:hover { border-color: var(--peri-soft); transform: translateY(-1px); }
 .quick-chip.active { border-color: var(--periwinkle); background: var(--peri-soft); }
 
-/* the timer settings card: label and dashed rows come from theme.css (.sp-card-label, .sp-rows) */
+/* timer settings card (label and dashed rows from theme.css) */
 .setting { padding: 8px 0; }
 .time-box { width: 64px; text-align: center; }
-/* a soft paper pill, so the times look clickable (.setting adds weight over the input's own styles) */
+/* soft pill so the times look clickable */
 .setting .time-box { padding: 2px 0; border-radius: var(--r-sm); background: var(--sheet-2); }
-/* while typing, the box shows "00h 25m 00s", so it gets wider to fit it all without scrolling */
+/* wider while typing, to fit "00h 25m 00s" */
 .time-box.editing { width: 124px; }
 .nudge.sm { width: 28px; height: 28px; box-shadow: 0 2px 0 var(--linen); }
 
-/* running layout: one column below 1200px (timer first), three columns on wide screens */
+/* layout: one column below 1200px, three columns from 1200px */
 .session {
   display: grid;
   gap: 24px;
@@ -311,11 +307,10 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
 .area-side { grid-area: side; width: 100%; max-width: 320px; }
 .area-settings { grid-area: settings; }
 
-/* the cards either side of the timer: the paper look is theme.css .sp-card, this only sets their width
-   (scoped styles also reach a child component's root) */
+/* width of the cards beside the timer (paper look from theme.css .sp-card) */
 .side-card { width: 100%; max-width: 320px; }
 
-/* countdown ring (journal look): a night disc with a butter ring while focusing, paper and leaf on a break */
+/* timer ring: night look while focusing, paper and green on a break */
 .ring {
   --disc: rgba(16, 24, 56, .55); --ring-fg: #fdf3d6; --track: rgba(255,255,255,.14); --fill: var(--butter);
   position: relative; width: min(390px, 84vw); aspect-ratio: 1; border-radius: 50%;
@@ -345,7 +340,8 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
 .blocks img.now { animation: nod 1.2s ease-in-out infinite alternate; }
 @keyframes nod { to { translate: 0 -3px; } }
 .bouquet { display: flex; justify-content: center; align-items: flex-end; height: 170px; margin-bottom: 8px; }
-.bouquet img { height: 150px; width: auto; margin: 0 -14px; transform-origin: 50% 100%; animation: bloom .8s var(--spring) both; }
+/* the tulips shrink to share the card's width, so any number of rounds fits */
+.bouquet img { flex: 0 1 auto; min-width: 0; height: 150px; width: auto; object-fit: contain; object-position: 50% 100%; margin: 0 -14px; transform-origin: 50% 100%; animation: bloom .8s var(--spring) both; }
 .bouquet img:nth-child(odd) { height: 128px; }
 @keyframes bloom { from { transform: scale(0) rotate(-10deg); } }
 .done-card { margin-top: 4vh; padding: 30px; }

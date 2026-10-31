@@ -6,17 +6,16 @@ import { useGardenStore } from './garden'
 import { usePlannerStore, isoDay } from './planner'
 import { beep, ting, cancelSounds, unlockAudio, audioReady, unlockOnFirstInteraction } from '@/lib/beep'
 
-const STORAGE_KEY = 'sproutly.pomodoro' // the running session, saved so a page refresh doesn't lose it
+const STORAGE_KEY = 'sproutly.pomodoro' // where the running session is saved (survives a refresh)
 
-// one-click rhythms; 'custom' lets the user type their own focus and break
+// the Classic and Deep work buttons
 export const PRESETS = [
   { key: 'classic', name: 'Classic', focus: 25 * 60, rest: 5 * 60 },
   { key: 'deep', name: 'Deep work', focus: 50 * 60, rest: 10 * 60 },
 ]
 export const MAX_ROUNDS = 12
-export const COUNTDOWN_FROM = 5 // beep each second for the last 5 seconds of every block, then TING
-// Coins for the focus minutes finished in one session: 2 coins for every full 5 minutes,
-// nothing under 20 minutes, at most 48 (reached at 2 hours). 25 min -> 10, 50 min -> 20.
+export const COUNTDOWN_FROM = 5 // beep on 5-4-3-2-1 before each block ends, then TING
+// Coins for one session: 2 per full 5 focus minutes, none under 20 min, max 48 (25 min -> 10, 50 min -> 20)
 export const MIN_COIN_MINUTES = 20
 export const MAX_FOCUS_COINS = 48
 export function coinsFor(minutes) {
@@ -32,22 +31,19 @@ export function formatSeconds(total) {
   return h ? `${h}:${m}:${s}` : `${m}:${s}`
 }
 
-// 6900 -> "1h 55 min", 600 -> "10 min", 90 -> "1 min 30 sec" (short times are allowed, handy for demos)
+// 6900 -> "1h 55 min", 90 -> "1 min 30 sec"
 export function lengthText(total) {
   const h = Math.floor(total / 3600), m = Math.floor(total / 60) % 60, s = total % 60
   return [h && `${h}h`, m && `${m} min`, s && `${s} sec`].filter(Boolean).join(' ')
 }
 
-// Alternates focus/break blocks until `rounds` focus blocks are done, or until `total` seconds
-// (breaks included) are used up, cutting the last block short to fit.
-// A break at the very end has nothing to rest before, so it is dropped and the session ends early.
-//   4 rounds of 25/5 -> focus 1, break 1, focus 2, break 2, focus 3, break 3, focus 4 (1h55m)
-//   2h of 30/10      -> focus 1, break 1, focus 2, break 2, focus 3 (ends at 1h50m)
+// The session's blocks in order, e.g. 4 rounds of 25/5 -> focus, break, focus, break, focus, break, focus
+// (no break at the very end). `total` limits it by time instead; the page only uses rounds.
 function buildBlocks(focus, rest, { rounds = Infinity, total = Infinity }) {
   const blocks = []
   let left = total, focusCount = 0, breakCount = 0
   while (left > 0 && focusCount < rounds) {
-    const type = rest > 0 && blocks.length % 2 ? 'break' : 'focus' // a 0-minute break: focus blocks back to back
+    const type = rest > 0 && blocks.length % 2 ? 'break' : 'focus' // 0-min break: focus blocks back to back
     const seconds = Math.min(type === 'focus' ? focus : rest, left)
     blocks.push({ type, number: type === 'focus' ? ++focusCount : ++breakCount, seconds })
     left -= seconds
@@ -59,24 +55,24 @@ function buildBlocks(focus, rest, { rounds = Infinity, total = Infinity }) {
 export const usePomodoroStore = defineStore('pomodoro', () => {
   const auth = useAuthStore()
 
-  // setup answers
-  const preset = ref(null) // a PRESETS key, 'custom', or null = not picked yet
+  // timer settings
+  const preset = ref(null) // 'classic', 'deep', 'custom', or null
   const focusSeconds = ref(PRESETS[0].focus)
   const breakSeconds = ref(PRESETS[0].rest)
-  const endBy = ref('rounds')   // 'rounds' = stop after N focus blocks, 'time' = stop when the total is used up
+  const endBy = ref('rounds')   // the page always uses 'rounds'
   const rounds = ref(4)
   const totalSeconds = ref(2 * 3600)
 
-  // session
+  // the session
   const phase = ref('setup') // setup -> running -> done
   const blocks = ref([])
   const index = ref(0)
   const remaining = ref(0)   // seconds left in the current block
   const running = ref(false)
-  let endsAt = 0             // clock time the current block ends, so a background tab stays accurate
+  let endsAt = 0             // clock time the current block ends (keeps time right in a background tab)
   let timer = null
 
-  // a preset fills in its times; 'custom' keeps the current ones as a starting point to edit
+  // a preset fills in its times; 'custom' keeps the current ones
   function choosePreset(key) {
     preset.value = key
     const chosen = PRESETS.find(p => p.key === key)
@@ -86,9 +82,9 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     }
   }
 
-  // the problem with each setup step ('' = fine)
+  // error to show under the settings ('' = fine)
   const errors = computed(() => ({
-    // any length can be typed, even a few seconds (handy for demos); the steppers keep their own minimums
+    // any length can be typed (even seconds, for demos); the − / + buttons keep their own minimums
     rhythm: !preset.value ? 'Pick a rhythm to continue.'
       : breakSeconds.value > focusSeconds.value ? "Your break can't be longer than your focus block." : '',
     length: endBy.value === 'time' && focusSeconds.value > totalSeconds.value
@@ -96,7 +92,7 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
   }))
   const setupError = computed(() => Object.values(errors.value).find(Boolean) ?? '')
 
-  // the blocks the current answers would give, so setup can preview them before Start
+  // the blocks the current settings would give
   const plan = computed(() => buildBlocks(focusSeconds.value, breakSeconds.value,
     endBy.value === 'rounds' ? { rounds: rounds.value } : { total: totalSeconds.value }))
 
@@ -112,10 +108,9 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     if (setupError.value) return
     blocks.value = [...plan.value]
     focusDoneSeconds.value = 0
-    // tasks already ticked before Start (planner ones, and reviews done earlier today), so the done screen
-    // only counts the ones ticked during the session (planner ids are text, this list's ids are numbers)
+    // remember what's already ticked, so the done screen only counts tasks ticked during the session
     doneAtStart.value = [...usePlannerStore().tasks, ...tasks.value].filter(t => t.done).map(t => t.id)
-    rebookedBlock = -1 // block 0 of this new session hasn't been re-booked yet
+    rebookedBlock = -1 // the new session's sounds haven't been re-booked yet
     phase.value = 'running'
     beginBlock(0)
     resume()
@@ -128,7 +123,7 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
 
   function resume() {
     if (running.value) return
-    unlockAudio() // Start / Resume are clicks, so the browser lets the sounds play later
+    unlockAudio() // Start / Resume are clicks, which lets the browser play sounds
     endsAt = Date.now() + remaining.value * 1000
     startTicking()
   }
@@ -148,15 +143,14 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     return Math.max(0, Math.ceil((endsAt - Date.now()) / 1000))
   }
 
-  // Books all the remaining countdown beeps and end-of-block TINGs in one go, so they play exactly
-  // on time (even in a background tab). Called on Start / Resume.
+  // books every countdown beep and TING left in the session, so they play on time (even in a background tab)
   async function bookSounds() {
-    await audioReady() // wait for the speakers to wake up, or every sound would come late
+    await audioReady() // wait for the speakers to be ready, or the sounds come late
     if (!running.value) return // paused while waiting
-    cancelSounds() // clear any older booking, so nothing plays twice
-    let end = (endsAt - Date.now()) / 1000 // seconds from now until the current block ends
+    cancelSounds() // clear old bookings so nothing plays twice
+    let end = (endsAt - Date.now()) / 1000 // seconds until the current block ends
     for (let i = index.value; i < blocks.value.length; i++) {
-      // 5, 4, 3, 2, 1: beep the moment the timer shows that number (none longer than the block itself)
+      // beep as the timer shows 5, 4, 3, 2, 1 (never longer than the block)
       for (let s = 1; s <= COUNTDOWN_FROM; s++) {
         if (s < blocks.value[i].seconds && end - s > 0) beep(end - s)
       }
@@ -165,26 +159,26 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     }
   }
 
-  // End early: once a focus block is finished, it ends like a full session (done card, "Nice work!", coins),
-  // keeping only the blocks that were finished; with none finished it goes straight back to setup
+  // End early: with a focus block finished, show the done card (and pay coins) for the finished part;
+  // with none finished, go straight back to the settings
   function endEarly() {
     if (!focusDoneSeconds.value) return endSession()
     pause()
-    blocks.value = blocks.value.slice(0, index.value) // so the done card counts only the finished focus time
+    blocks.value = blocks.value.slice(0, index.value) // keep only the finished blocks
     phase.value = 'done'
     announce()
     awardCoins()
   }
 
-  // back to setup for a fresh session: the rhythm and the to-do list are cleared so each session starts
-  // anew (Custom starts again from the Classic times); the number of rounds is kept
+  // back to the settings for a new session (the number of rounds is kept)
   function endSession() {
     pause()
-    if (phase.value === 'running') awardCoins() // End early still pays for the focus blocks already finished
-    tasks.value = [] // the list can be filled in before Start, so it's cleared here, not when starting
-    reviewsAdded = false // the next session gets fresh recommendations
-    hiddenPlannerIds.value = [] // and shows every planner task for the day again
-    // forget the old blocks too, or the ring keeps the last block's look (e.g. a break) after End early
+    useToastStore().dismiss(roundToast)
+    if (phase.value === 'running') awardCoins() // pays for focus blocks already finished
+    tasks.value = [] // cleared here, not on Start, so tasks added before Start stay
+    reviewsAdded = false // next session gets fresh recommendations
+    hiddenPlannerIds.value = [] // and shows hidden planner tasks again
+    // clear the old blocks so the ring goes back to its focus look
     blocks.value = []
     index.value = 0
     remaining.value = 0
@@ -194,7 +188,7 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     phase.value = 'setup'
   }
 
-  // this session's to-do list (saved with the session below, so it survives a refresh too)
+  // this session's own tasks: the recommended reviews and ones the user types
   const tasks = ref([])
   let nextTaskId = 1
   function addTask(text) {
@@ -208,14 +202,13 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
   function removeTask(id) {
     tasks.value = tasks.value.filter(t => t.id !== id)
   }
-  // planner tasks can't be deleted here, only hidden from this session's list (they stay in the planner)
+  // planner tasks can only be hidden for this session, not deleted
   const hiddenPlannerIds = ref([])
   function hidePlannerTask(id) {
     hiddenPlannerIds.value.push(id)
   }
-  // recommended reviews (the garden's "!" seeds) as normal tasks that remember their seed, so the
-  // list can link to its review. Added once per session, so one the user removed doesn't come back.
-  // A seed already reviewed today comes in ticked, so a finished review stays done until tomorrow.
+  // adds the garden's "!" seeds as "Review: ..." tasks, once per session (a removed one doesn't come back);
+  // a seed already reviewed today comes in ticked
   let reviewsAdded = false
   function addReviewTasks(seeds) {
     if (reviewsAdded) return
@@ -226,8 +219,8 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
       tasks.value.push({ id: nextTaskId++, text: `Review: ${seed.title}`, done: reviewedToday, seedId: seed.id })
     }
   }
-  // finishing a review on any quiz page saves it with garden.saveReview; once that works, tick its task here
-  // (true = keep listening for the whole app, not just while the page that first used this store is open)
+  // when a review is saved on a quiz page, tick its task
+  // (true = keep listening even after the page that first used this store closes)
   useGardenStore().$onAction(({ name, args, after }) => {
     if (name !== 'saveReview') return
     after(() => {
@@ -236,31 +229,38 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     })
   }, true)
 
-  // pop-up on whatever page the user is on, saying what just started (the TING plays at the same time)
+  // pop-up saying what just started
+  let roundToast = null // the last round pop-up ("Break time", "Break's over", "Round N"), closed when the session ends
   function announce() {
     const toast = useToastStore()
+    toast.dismiss(roundToast) // only one round pop-up at a time
     if (phase.value === 'done') {
-      // short: the done card already shows how long you focused, and the coins pop-up comes right after
+      // short, because the done card shows the details
       toast.show({ type: 'success', title: 'Session complete 🌱', message: 'Nice work!' })
     } else if (mode.value === 'break') {
-      toast.show({
+      roundToast = toast.show({
         type: 'success', title: 'Break time ☕', duration: 8000,
         message: `Nice work! Step away and rest for ${lengthText(current.value.seconds)}.`,
       })
+    } else if (blocks.value[index.value - 1]?.type === 'focus') {
+      // 0-min break: focus straight after focus, so there was no break to be over
+      roundToast = toast.show({
+        type: 'success', title: `Round ${current.value.number} 🌱`, duration: 8000,
+        message: `Keep going: focus for ${lengthText(current.value.seconds)}.`,
+      })
     } else {
-      toast.show({
+      roundToast = toast.show({
         type: 'warning', title: "Break's over 🌱", duration: 8000,
         message: `Back to focus for ${lengthText(current.value.seconds)}.`,
       })
     }
   }
 
-  // runs 4x a second; breaks are scheduled, so the timer rolls straight into the next block
+  // runs 4 times a second
   let rebookedBlock = -1
   async function tick() {
     remaining.value = secondsLeft()
-    // A few seconds before each countdown, book the beeps again from the real clock. Over a long block
-    // the computer's sound clock can drift (Bluetooth earbuds especially), which made the beeps late.
+    // a few seconds before each countdown, book the sounds again from the real clock (the sound clock can drift)
     if (remaining.value <= COUNTDOWN_FROM + 3 && rebookedBlock !== index.value) {
       rebookedBlock = index.value
       bookSounds()
@@ -269,17 +269,17 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     const finished = current.value
     if (next.value) {
       beginBlock(index.value + 1)
-      // the next block starts exactly when this one ended (not when tick noticed), matching the booked sounds
+      // the next block starts exactly when this one ended, in time with the booked sounds
       endsAt += current.value.seconds * 1000
       remaining.value = secondsLeft()
     } else {
-      // session over: stop the timer, but not pause(), which would cut off the final TING
+      // session over: stop the timer (not pause(), which would cut off the last TING)
       running.value = false
       clearInterval(timer)
       phase.value = 'done'
     }
     announce()
-    // a finished focus block counts towards the session's coins and the profile's study time
+    // a finished focus block counts for coins and the profile's study time
     if (finished.type === 'focus') {
       focusDoneSeconds.value += finished.seconds
       await auth.addStudyTime(finished.seconds).catch(console.error)
@@ -287,14 +287,12 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     if (phase.value === 'done') awardCoins()
   }
 
-  /* ---------- coins ----------
-     Coins are given once per session, when it ends (finished or End early), for the focus minutes
-     finished, worked out by coinsFor() at the top. */
-  const focusDoneSeconds = ref(0) // focus time finished so far this session
-  const doneAtStart = ref([]) // ids of the tasks that were already ticked when the session started
+  /* ---------- coins: paid once, when the session ends ---------- */
+  const focusDoneSeconds = ref(0) // focus time finished in this session
+  const doneAtStart = ref([]) // tasks already ticked when the session started
   async function awardCoins() {
     const seconds = focusDoneSeconds.value
-    focusDoneSeconds.value = 0 // so the same minutes are never paid twice
+    focusDoneSeconds.value = 0 // so the same minutes aren't paid twice
     const coins = coinsFor(Math.floor(seconds / 60))
     if (!coins) return
     const toast = useToastStore()
@@ -306,9 +304,7 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     }
   }
 
-  /* ---------- keep the session through a page refresh ----------
-     sessionStorage survives a refresh but is wiped when the tab closes, so an old session never comes back.
-     While running we save endsAt (a clock time), so time that passes during the reload still counts. */
+  /* ---------- keep the session through a page refresh (sessionStorage is cleared when the tab closes) ---------- */
   function save() {
     try {
       if (phase.value === 'setup') return sessionStorage.removeItem(STORAGE_KEY)
@@ -318,14 +314,14 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
         focusDoneSeconds: focusDoneSeconds.value, doneAtStart: doneAtStart.value,
         hiddenPlannerIds: hiddenPlannerIds.value,
       }))
-    } catch { /* storage blocked (e.g. private mode): the session just won't survive a refresh */ }
+    } catch { /* storage blocked: the session just won't survive a refresh */ }
   }
-  // remaining isn't watched (it changes every second); endsAt covers a running timer, and pause() changes running
+  // remaining isn't watched (it changes every second); endsAt is saved instead
   watch([phase, index, running, tasks, focusDoneSeconds, hiddenPlannerIds], save, { deep: true })
 
-  // called once when the app starts (App.vue): picks the saved session back up after a refresh
+  // called once when the app starts (App.vue)
   function restore() {
-    if (phase.value !== 'setup') return // already have a session (e.g. App.vue hot-reloaded)
+    if (phase.value !== 'setup') return // a session is already going
     let saved
     try { saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY)) } catch { return }
     if (!saved?.blocks?.length) return
@@ -340,8 +336,8 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     hiddenPlannerIds.value = saved.hiddenPlannerIds ?? []
     if (saved.phase === 'running' && saved.running) {
       endsAt = saved.endsAt
-      startTicking() // no sound yet: the new page hasn't been clicked, so the browser blocks it
-      tick()         // catch up at once (moves on if a block ended during the reload)
+      startTicking() // no sound until the user clicks (browser rule)
+      tick()         // catch up on time that passed during the reload
       unlockOnFirstInteraction(() => { if (running.value) bookSounds() })
     }
   }
@@ -354,7 +350,5 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
   }
 })
 
-// While coding: saving this file reloads the page instead of swapping the store in place. A swap left the old
-// timer ticking in the background, which could finish the session and pay coins again after End early.
-// The reload is safe: a running session comes back from sessionStorage.
+// while coding: saving this file reloads the page (a hot swap left the old timer running and paying coins twice)
 if (import.meta.hot) import.meta.hot.accept(() => window.location.reload())

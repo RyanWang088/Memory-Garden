@@ -5,13 +5,11 @@ import { useRoute } from 'vue-router'
 import { usePomodoroStore } from '@/stores/pomodoro'
 import { useUiStore } from '@/stores/ui'
 
-// Mini timer that floats over every page while a session runs, so users can keep studying elsewhere.
-// Drag it anywhere (except by its buttons); it stays on screen and remembers where it was left.
+// Mini timer that floats over other pages while a session runs. Drag it anywhere; it remembers where.
 const pomo = usePomodoroStore()
 const route = useRoute()
 
-// the Focus page already shows the big ring, so the mini player only appears on the other pages
-// The – button hides it until the user next opens the Focus page; leaving Focus brings it back.
+// shown on every page except Focus; the – button hides it until the user opens Focus again
 const hidden = ref(false)
 watch(() => route.name, (name) => { if (name === 'pomodoro') hidden.value = false })
 const visible = computed(() => pomo.phase === 'running' && route.name !== 'pomodoro' && !hidden.value)
@@ -27,7 +25,7 @@ const STORAGE_KEY = 'sproutly.focusPlayer.pos'
 const box = ref(null)
 const pos = ref(loadPos()) // top-left corner in px; null = default bottom-right corner
 const dragging = ref(false)
-let grab = null // where inside the player the pointer picked it up, so it doesn't jump
+let grab = null // where the pointer grabbed it, so it doesn't jump
 
 function loadPos() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) } catch { return null }
@@ -50,7 +48,7 @@ function onPointerDown(e) {
   const rect = box.value.getBoundingClientRect()
   grab = { dx: e.clientX - rect.left, dy: e.clientY - rect.top }
   dragging.value = true
-  box.value.setPointerCapture(e.pointerId) // keep getting moves even if the pointer outruns the box
+  box.value.setPointerCapture(e.pointerId) // keep following the pointer even if it moves fast
 }
 function onPointerMove(e) {
   if (!grab) return
@@ -63,21 +61,18 @@ function onPointerUp() {
   savePos()
 }
 
-// a smaller window (or a position saved on a bigger screen) could leave it off screen
+// keep it on screen after a resize
 function keepOnScreen() {
   if (pos.value && box.value) pos.value = clamp(pos.value.x, pos.value.y)
 }
 watch(visible, async (shown) => {
   if (!shown) return
-  await nextTick() // wait for the player to exist before measuring it
+  await nextTick() // wait until the player is shown before measuring it
   keepOnScreen()
 })
-/* ---------- let seeds through ----------
-   While a seed is dragged (or tapped and waiting for a spot) the drop goes to whatever is under the
-   pointer. Over the player that was the player, so the garden spot below looked unplantable.
-   pointer-events: none lets the drag reach the garden instead. */
+/* ---------- let seed drags pass through the player, so the garden under it can still be planted ---------- */
 const ui = useUiStore()
-const browserDrag = ref(false) // any HTML drag-and-drop in progress (the seed packet uses it)
+const browserDrag = ref(false) // any drag-and-drop in progress (the seed packet uses it)
 const passThrough = computed(() => browserDrag.value || ui.seedPicked)
 const dragStarted = () => { browserDrag.value = true }
 const dragFinished = () => { browserDrag.value = false }
@@ -171,7 +166,7 @@ onBeforeUnmount(() => {
 .hide { display: grid; place-items: center; padding: 0; border: 0; background: none; }
 .open:hover { color: var(--bark); }
 
-/* progress: peach while focusing, grey on a break (same as the big ring) */
+/* progress bar: butter while focusing, green on a break */
 .bar { height: 6px; margin-top: 8px; border-radius: var(--r-pill); background: var(--peri-soft); overflow: hidden; }
 .bar span { display: block; height: 100%; background: var(--butter-deep); transition: width .25s linear; }
 .focus-player.break .bar span { background: var(--mint-deep); }

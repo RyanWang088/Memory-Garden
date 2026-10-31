@@ -2,8 +2,8 @@
 import { useMusicStore } from '@/stores/music'
 import GardenRadio from '@/components/GardenRadio.vue'
 
-// Music on/off button. Used in the navbar, the mini timer player, and (floating) on pages without a navbar.
-// Hovering it (or tabbing to it) pops up a small Garden Radio: the song, play/pause/skip and volume.
+// Music on/off button (navbar, or floating on pages without a navbar).
+// Hovering it (or tabbing to it) opens a mini Garden Radio.
 defineProps({ floating: { type: Boolean, default: false } })
 const music = useMusicStore()
 </script>
@@ -18,7 +18,7 @@ const music = useMusicStore()
     >
       <span aria-hidden="true">{{ music.playing ? '🎵' : '🔇' }}</span>
     </button>
-    <!-- the padding around it is see-through, so the mouse can move from the icon to it without it vanishing -->
+    <!-- see-through padding lets the mouse move from the icon onto the pop-up -->
     <div class="radio-pop" data-testid="music-pop">
       <GardenRadio compact class="sp-card radio-card" />
     </div>
@@ -44,7 +44,7 @@ const music = useMusicStore()
 .music-toggle.on { background: var(--mint); }
 .music-toggle:focus-visible { outline: 3px solid var(--periwinkle); outline-offset: 2px; }
 
-/* the mini Garden Radio: hidden until you hover or tab to the music icon; pops out below it, lined up on the right */
+/* mini Garden Radio pop-up, below the icon */
 .music-wrap { position: relative; display: inline-flex; flex: none; }
 .radio-pop {
   position: absolute;
@@ -56,13 +56,13 @@ const music = useMusicStore()
   visibility: hidden;
   transition: opacity .15s, visibility .15s;
 }
-/* keyboard focus counts too, but a mouse click doesn't keep it open */
+/* opens on hover or keyboard focus (a mouse click doesn't keep it open) */
 .music-wrap:hover .radio-pop, .music-wrap:has(:focus-visible) .radio-pop { opacity: 1; visibility: visible; }
-/* phones can't hover, so they use the Garden Radio card on the Focus page instead */
+/* phones can't hover: they use the Garden Radio card on the Focus page */
 @media (hover: none) { .radio-pop { display: none; } }
-.radio-card { width: 280px; } /* the paper look is theme.css .sp-card */
+.radio-card { width: 280px; } /* paper look from theme.css .sp-card */
 
-/* floating version: bottom-left corner on pages that have no navbar; the mini radio pops out to the right */
+/* floating version: bottom-left corner; the pop-up opens to the right */
 .music-wrap.floating { position: fixed; left: 16px; bottom: 16px; z-index: 1040; }
 .floating .music-toggle {
   width: 44px;

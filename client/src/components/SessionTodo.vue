@@ -3,17 +3,15 @@ import { ref, computed } from 'vue'
 import { usePomodoroStore, coinsFor, MIN_COIN_MINUTES } from '@/stores/pomodoro'
 import { usePlannerStore, isoDay } from '@/stores/planner'
 
-// Left card on the Focus page (before Start and while running): the to-do list and the coin reward.
-// Two kinds of tasks:
-// - today's planner tasks, read straight from the planner store, so ticking one here ticks it in the planner too
-//   (× only hides one for this session; deleting is done in the planner)
-// - this session's tasks in the pomodoro store: the recommended reviews and the user's own, cleared when a session ends
+// To-do card on the Focus page, with the coin line:
+// - today's planner tasks (ticking one here ticks it in the planner; × only hides it for this session)
+// - this session's tasks: recommended reviews and the user's own (cleared when the session ends)
 const pomo = usePomodoroStore()
 const planner = usePlannerStore()
 planner.load()
 const draft = ref('')
 
-// planner tasks first, then this session's; ticked ones drop to the bottom
+// planner tasks first, then this session's; ticked ones at the bottom
 const list = computed(() => {
   const today = isoDay(Date.now())
   const all = [
@@ -24,7 +22,7 @@ const list = computed(() => {
   return [...all.filter(t => !t.done), ...all.filter(t => t.done)]
 })
 const doneCount = computed(() => list.value.filter(t => t.done).length)
-// the first unticked task is the one you're on, so it gets highlighted
+// highlight the first unticked task
 const currentKey = computed(() => list.value.find(t => !t.done)?.key)
 
 function toggle(task) {
@@ -42,9 +40,9 @@ function add() {
 }
 
 const coinIcon = new URL('../assets/ui/coin.svg', import.meta.url).href
-// coins for this session's own plan, e.g. "+8 coins so far · +18 when you finish"
+// coin line, e.g. "+10 coins so far · +20 when you finish"
 const reward = computed(() => {
-  const blocks = pomo.phase === 'setup' ? pomo.plan : pomo.blocks // before Start: the times being picked
+  const blocks = pomo.phase === 'setup' ? pomo.plan : pomo.blocks // before Start: use the times being set
   const plannedSeconds = blocks.filter(b => b.type === 'focus').reduce((sum, b) => sum + b.seconds, 0)
   const planned = coinsFor(Math.floor(plannedSeconds / 60))  // if every focus block is finished
   const earned = coinsFor(Math.floor(pomo.focusDoneSeconds / 60)) // for the blocks finished so far
@@ -56,7 +54,7 @@ const reward = computed(() => {
 
 <template>
   <section aria-labelledby="todo-title" data-testid="session-todo">
-    <!-- same header as the Timer settings and Garden Radio cards: label on the left, count on the right -->
+    <!-- header: label on the left, count on the right -->
     <div class="d-flex justify-content-between align-items-baseline gap-2 mb-2">
       <span id="todo-title" class="text-label-caption sp-card-label" data-testid="todo-heading">To-do list</span>
       <span v-if="list.length" class="text-body-small" data-testid="todo-count">{{ doneCount }} / {{ list.length }} done</span>
@@ -84,7 +82,7 @@ const reward = computed(() => {
       </li>
     </ul>
 
-    <!-- Enter adds the task (phones show a "done" key) -->
+    <!-- press Enter to add -->
     <form @submit.prevent="add">
       <input
         v-model="draft" type="text" maxlength="80" enterkeyhint="done" class="add-input"
@@ -100,7 +98,7 @@ const reward = computed(() => {
 </template>
 
 <style scoped>
-/* label and dashed rows come from theme.css (.sp-card-label, .sp-rows); the task you're on gets a soft butter highlight */
+/* the current task gets a soft butter highlight (label and dashed rows from theme.css) */
 .task { padding: 8px; border-radius: var(--r-sm); }
 .task.current { background: var(--butter-soft); }
 .task label { cursor: pointer; overflow-wrap: anywhere; font-family: var(--f-body); color: var(--ink); }
@@ -110,13 +108,13 @@ const reward = computed(() => {
 .form-check-input:checked { background-color: var(--leaf); border-color: var(--leaf); }
 .form-check-input:focus { box-shadow: 0 0 0 .2rem var(--leaf-soft); }
 
-/* the × only shows on hover (always on touch screens, which can't hover) */
+/* × shows on hover (always on touch screens) */
 .remove { border: 0; background: none; color: var(--ink-faint); font-size: 20px; line-height: 1; padding: 0 2px; opacity: 0; }
 .task:hover .remove, .remove:focus-visible { opacity: 1; }
 .remove:hover { color: var(--berry-ink); }
 @media (hover: none) { .remove { opacity: 1; } }
 
-/* the ↗ on a recommended review: opens that seed's review */
+/* ↗ opens the seed's review */
 .review-link { color: var(--ink-soft); text-decoration: none; font-weight: 700; }
 .review-link:hover, .review-link:focus-visible { color: var(--leaf); }
 

@@ -3,12 +3,12 @@ import { computed } from 'vue'
 import { useMusicStore, MOODS } from '@/stores/music'
 import SproutIcon from '@/components/SproutIcon.vue'
 
-// Figma weather stickers for the mood chips (the store keeps its emoji for other uses)
+// weather stickers for the mood buttons
 const MOOD_STICKERS = { auto: 'sparkle', sunny: 'sun', cloudy: 'cloud', rainy: 'rain', stormy: 'storm', snowy: 'snow' }
 import { formatSeconds } from '@/stores/pomodoro'
 
-// Garden Radio card on the Focus page: what's playing, play/pause/skip, and the mood picker.
-// `compact` (the pop-up on the music icon) leaves out the header and the mood picker.
+// Garden Radio card: what's playing, play/pause/skip, volume and mood.
+// compact = the hover pop-up on the music icon (no header or mood buttons)
 defineProps({ compact: { type: Boolean, default: false } })
 const music = useMusicStore()
 
@@ -65,7 +65,7 @@ const progress = computed(() => (music.duration ? (music.position / music.durati
 </template>
 
 <style scoped>
-/* the card label comes from theme.css (.sp-card-label); the spin animation is theme.css's too */
+/* card label and spin animation come from theme.css */
 .bar { height: 6px; border-radius: var(--r-pill); background: var(--linen); overflow: hidden; }
 .bar span { display: block; height: 100%; background: var(--leaf); transition: width .25s linear; }
 
@@ -104,7 +104,7 @@ const progress = computed(() => (music.duration ? (music.position / music.durati
 .mood:hover { transform: translateY(-1px); }
 .mood.active { border-color: var(--leaf); background: var(--leaf-soft); }
 .mood:focus-visible, .ctrl:focus-visible { outline: 3px solid var(--periwinkle); outline-offset: 2px; }
-/* a record: the grooves are drawn with fixed dark colours */
+/* record with fixed dark groove colours */
 .vinyl { width: 50px; height: 50px; border-radius: 50%; flex: none; background: radial-gradient(circle, var(--berry) 0 17%, #2a201c 18% 30%, #3a2e29 31% 33%, #2a201c 34% 50%, #3a2e29 51% 53%, #2a201c 54%); box-shadow: var(--shadow-1); }
 .vinyl.spinning { animation: spin 3s linear infinite; }
 h3 { font-size: 1.05rem; line-height: 1.3; }
