@@ -98,6 +98,40 @@ export const SeedModel = {
     return getOne(userId, seed.id)
   },
 
+  // Edits a seed's details and cards. details: { title, subject, exam?: { name, exam_date? }, tags,
+  // cards: [{ id?, question, answer, wrong_options }] }. A card with the id of one of this seed's cards is updated
+  // in place (its card_mastery and next_review are kept); any other card is added; the seed's cards left out are
+  // deleted. Returns null if the seed doesn't exist for this user.
+  async edit(userId, seedId, { title, subject, exam, tags, cards }) {
+    const found = check(await supabase.from('seeds').select('id').eq('id', seedId).eq('user_id', userId).maybeSingle())
+    if (!found) return null
+
+    const subject_id = await subjectIdFor(userId, subject)
+    const exam_id = exam ? await examIdFor(userId, subject_id, exam) : null
+    // subject_id and exam_id change together: the exam must belong to the seed's subject
+    check(await supabase.from('seeds').update({ title, tags, subject_id, exam_id }).eq('id', seedId).eq('user_id', userId))
+
+    const existing = new Set(check(await supabase.from('cards').select('id').eq('seed_id', seedId).eq('user_id', userId)).map(c => c.id))
+    const kept = cards.filter(c => c.id && existing.has(c.id))
+    const added = cards.filter(c => !c.id || !existing.has(c.id))
+    const removed = [...existing].filter(id => !kept.some(c => c.id === id))
+
+    // added first and removed last, so a failure part-way never leaves the seed with no cards
+    if (added.length) {
+      check(await supabase.from('cards').insert(added.map(c => ({
+        user_id: userId, seed_id: seedId, question: c.question, answer: c.answer, wrong_options: c.wrong_options,
+      }))))
+    }
+    for (const c of kept) {
+      check(await supabase.from('cards').update({ question: c.question, answer: c.answer, wrong_options: c.wrong_options })
+        .eq('id', c.id).eq('seed_id', seedId).eq('user_id', userId))
+    }
+    if (removed.length) {
+      check(await supabase.from('cards').delete().in('id', removed).eq('seed_id', seedId).eq('user_id', userId))
+    }
+    return getOne(userId, seedId)
+  },
+
   // patch: { mastery?, last_reviewed? }. Mastery is stored per card, so it is written to every card
   // of the seed (placeholder until real spaced-repetition scheduling per card).
   async update(userId, seedId, { mastery, last_reviewed }) {

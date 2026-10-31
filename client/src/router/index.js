@@ -12,6 +12,7 @@ const routes = [
     meta: { requiresAuth: true, showNav: true },
     children: [
       { path: 'seeds/new/:col/:row', name: 'seed-create', component: () => import('@/views/SeedCreateView.vue'), meta: { showNav: false } },
+      { path: 'seeds/:id/edit', name: 'seed-edit', component: () => import('@/views/SeedEditView.vue'), meta: { showNav: false } },
       { path: 'seeds/:id', name: 'seed-review', component: () => import('@/views/SeedReviewView.vue'), meta: { showNav: false } },
     ],
   },

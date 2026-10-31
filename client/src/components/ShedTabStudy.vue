@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { useGardenStore } from '@/stores/garden' // garden.gardenSeeds = seeds still in the garden
 import SeedCard from './SeedCard.vue'
 
-const emit = defineEmits(['close', 'select'])
+const emit = defineEmits(['close', 'select', 'edit'])
 const garden = useGardenStore()
 const route = useRoute()
 
@@ -71,7 +71,7 @@ function setLibraryView(view) {
 
     <TransitionGroup v-if="results.length" tag="div" name="seed" class="seed-list">
       <div v-for="(seed, n) in results" :key="seed.id" class="seed-item">
-        <SeedCard class="sp-reveal" :style="{ '--i': Math.min(n, 6) }" :seed="seed" @select="emit('select', $event)" />
+        <SeedCard class="sp-reveal" :style="{ '--i': Math.min(n, 6) }" :seed="seed" @select="emit('select', $event)" @edit="emit('edit', $event)" />
       </div>
     </TransitionGroup>
     <p v-else class="text-danger border-0 text-body-small ms-1">

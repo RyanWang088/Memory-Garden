@@ -104,6 +104,22 @@ export const useGardenStore = defineStore('garden', () => {
     return seed
   }
 
+  // Edits a planted seed's details and cards. Cards sent with their id keep their review progress; cards without
+  // one are new; the seed's cards left out are deleted. The plant stays in its spot with its flower and colour.
+  async function editSeed(seedId, { title, subject, exam_name, exam_date, tags, cards }) {
+    const updated = await apiFetch(`/api/seeds/${encodeURIComponent(seedId)}`, {
+      method: 'PUT', body: { title, subject, exam_name, exam_date, tags, cards },
+    })
+    // same as planting: the exam's other seeds share its date and choice
+    for (const s of seeds.value) {
+      if (updated.exam_id && s.exam_id === updated.exam_id) Object.assign(s, { exam_date: updated.exam_date, exam_choice: updated.exam_choice })
+    }
+    const seed = seeds.value.find(s => s.id === seedId)
+    if (seed) Object.assign(seed, updated)
+    refreshPriority()
+    return updated
+  }
+
   // Short Structured Mode: the server has AI mark one typed answer. Saves nothing.
   // Returns { score, rating: 'short_correct' | 'short_partial' | 'short_wrong', feedback }
   async function gradeAnswer(seedId, cardId, response, signal) {
@@ -164,6 +180,6 @@ export const useGardenStore = defineStore('garden', () => {
 
   return {
     seeds, loaded, gardenSeeds, hasPlants, housedSubjects, shelfSlots, freeShelfSlots, examsOver,
-    stageOf, isWilted, fetchSeeds, plantSeed, gradeAnswer, saveReview, deleteSeed, chooseExamOutcome, unlockShelf, readiness,
+    stageOf, isWilted, fetchSeeds, plantSeed, editSeed, gradeAnswer, saveReview, deleteSeed, chooseExamOutcome, unlockShelf, readiness,
   }
 })

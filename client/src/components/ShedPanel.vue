@@ -44,6 +44,11 @@ function onSeedSelect(seed) {
   ui.selectGardenSeed(seed.id)
   router.push({ name: 'garden', query: { scrollTo: seed.id } })
 }
+
+function onSeedEdit(seed) {
+  ui.shedOpen = false
+  router.push({ name: 'seed-edit', params: { id: seed.id } })
+}
 </script>
 
 <template>
@@ -69,7 +74,7 @@ function onSeedSelect(seed) {
     <main class="shed-notebook-page" role="tabpanel">
       <span class="sp-tape is-leaf shed-tape" aria-hidden="true"></span>
       <ShedTabSeeds v-if="ui.shedTab === 'seeds'" />
-      <ShedTabStudy v-else @select="onSeedSelect" />
+      <ShedTabStudy v-else @select="onSeedSelect" @edit="onSeedEdit" />
     </main>
   </aside>
 </template>

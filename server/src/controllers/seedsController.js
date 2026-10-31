@@ -35,19 +35,21 @@ const SEED_COLORS = ['red', 'purple', 'yellow', 'pink']
 const isUpcomingDate = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v))
   && new Date(v).toISOString().slice(0, 10) === v && v >= new Date(Date.now() - 86_400_000).toISOString().slice(0, 10)
 
-// Keeps only the fields a new seed may set. Returns an error message string if the body is invalid.
-function cleanSeed(body = {}) {
+// The fields both planting and editing set: title, subject, exam, tags and cards.
+// Editing keeps each existing card's id, so its review progress survives the edit.
+// Returns an error message string if the body is invalid.
+function cleanDetails(body, { keepCardIds = false } = {}) {
   const title = text(body.title, 80)
   const subject = text(body.subject, 60)
-  const color = text(body.color || 'red', 20)
-  const flower = text(body.flower || 'tulip', 40)
   // the exam is optional: a date with no name is called 'Exam'; neither = the seed has no exam
   const exam_name = text(body.exam_name, 40)
   const exam_date = text(body.exam_date, 10)
   const cards = (Array.isArray(body.cards) ? body.cards : [])
     .map(c => {
       const answer = text(c?.answer, 500)
-      return { question: text(c?.question, 500), answer, wrong_options: cleanTraps(c?.wrong_options, answer) }
+      const card = { question: text(c?.question, 500), answer, wrong_options: cleanTraps(c?.wrong_options, answer) }
+      if (keepCardIds && isUuid(c?.id)) card.id = c.id
+      return card
     })
     .filter(c => c.question && c.answer)
   const tags = (Array.isArray(body.tags) ? body.tags : []).slice(0, 8)
@@ -56,15 +58,24 @@ function cleanSeed(body = {}) {
 
   if (!title) return 'Give your study set a name.'
   if (!subject) return 'Pick a subject.'
-  if (!SEED_COLORS.includes(color)) return 'Choose a valid plant color.'
-  if (!/^[a-z0-9-]+$/.test(flower)) return 'Choose a valid plant type.'
   if (exam_date && !isUpcomingDate(exam_date)) return 'Pick an exam date from today onwards.'
   if (!cards.length) return 'Add at least one flashcard.'
   if (cards.length > 200) return 'A study set can have at most 200 cards.'
-  if (!isCell(body.col) || !isCell(body.row)) return 'Pick a spot in the garden.'
 
   const exam = exam_name || exam_date ? { name: exam_name || 'Exam', exam_date: exam_date || undefined } : undefined
-  return { title, subject, exam, tags, cards, col: body.col, row: body.row, flower, color }
+  return { title, subject, exam, tags, cards }
+}
+
+// Keeps only the fields a new seed may set. Returns an error message string if the body is invalid.
+function cleanSeed(body = {}) {
+  const details = cleanDetails(body)
+  if (typeof details === 'string') return details
+  const color = text(body.color || 'red', 20)
+  const flower = text(body.flower || 'tulip', 40)
+  if (!SEED_COLORS.includes(color)) return 'Choose a valid plant color.'
+  if (!/^[a-z0-9-]+$/.test(flower)) return 'Choose a valid plant type.'
+  if (!isCell(body.col) || !isCell(body.row)) return 'Pick a spot in the garden.'
+  return { ...details, col: body.col, row: body.row, flower, color }
 }
 
 export const seedsController = {
@@ -114,6 +125,20 @@ export const seedsController = {
     } catch (err) {
       if (!abort.signal.aborted) next(err)
     }
+  },
+
+  // PUT /api/seeds/:id  body: { title, subject, exam_name?, exam_date?, tags, cards: [{ id?, question, answer, wrong_options? }] }
+  // Edits a planted seed. Cards sent with their id are updated and keep their review progress; cards without an id
+  // are new; the seed's cards that aren't sent are deleted. The plant's spot, flower and colour don't change.
+  async edit(req, res, next) {
+    if (!isUuid(req.params.id)) return res.status(404).json({ error: 'Study set not found.' })
+    try {
+      const details = cleanDetails(req.body ?? {}, { keepCardIds: true })
+      if (typeof details === 'string') return res.status(400).json({ error: details })
+      const seed = await SeedModel.edit(req.user.id, req.params.id, details)
+      if (!seed) return res.status(404).json({ error: 'Study set not found.' })
+      res.json(seed)
+    } catch (err) { next(err) }
   },
 
   // PATCH /api/seeds/:id  body: { mastery?, last_reviewed? }
