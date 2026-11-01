@@ -238,6 +238,20 @@ function turn(dir, target) {
   state.turn = dir > 0 ? 'next' : 'prev'
   state.view = target || new Date(state.view.getFullYear(), state.view.getMonth() + dir, 1)
 }
+/* The turning leaf's back face shows the to-do page, so once the leaf crosses the spine it lands
+   on the left looking like the list (not a mirrored calendar). It's a static, inert copy of the
+   live left page, taken just as the turn starts. */
+function dressLeaf(el) {
+  const back = el.querySelector('.leaf-back')
+  const src = listEl.value?.closest('.page-inner')
+  if (!back || !src) return
+  const copy = src.cloneNode(true)
+  copy.querySelectorAll('[id]').forEach((n) => n.removeAttribute('id'))
+  back.replaceChildren(copy)
+  const lined = copy.querySelector('.lined')
+  if (lined) lined.scrollTop = listEl.value.scrollTop
+}
+function undressLeaf(el) { el.querySelector('.leaf-back')?.replaceChildren() }
 function onDayKey(e, cell) {
   const move = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key]
   if (move) {
@@ -366,8 +380,9 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
         <section class="page page-right" :class="{ 'flip-out': flip === 'out' && state.side === 'right', 'flip-in': flip === 'in' && state.side === 'right' }" aria-label="Calendar">
           <span class="sp-tape is-leaf t2" aria-hidden="true"></span>
           <div class="leaf-stage">
-            <Transition :name="`leaf-${state.turn}`">
-              <div :key="monthKey" class="page-inner cal-page">
+            <Transition :name="`leaf-${state.turn}`" @before-enter="dressLeaf" @before-leave="dressLeaf" @after-enter="undressLeaf">
+              <div :key="monthKey" class="leaf">
+              <div class="page-inner cal-page leaf-front">
                 <div class="cal-head">
                   <h2 class="cal-title">{{ monthName }}<span>{{ state.view.getFullYear() }} · little plans</span></h2>
                   <div class="cal-nav">
@@ -415,6 +430,8 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
                     </span>
                   </div>
                 </div>
+              </div>
+              <div class="leaf-back" aria-hidden="true" inert></div>
               </div>
             </Transition>
           </div>
@@ -645,8 +662,19 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 .curl span { position: absolute; right: 8px; bottom: 6px; font-family: var(--f-hand); font-size: 1rem; color: var(--ink-soft); opacity: 0; transition: opacity .2s; }
 .curl:hover span, .curl:focus-visible span { opacity: 1; }
 
+/* the leaf has two faces: the month on the front, a copy of the to-do page on the back */
+.leaf { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; transform-style: preserve-3d; }
+.leaf-front { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.leaf-back {
+  position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden;
+  transform: rotateY(180deg); backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  border-radius: 10px 3px 3px 10px; background-color: var(--sheet);
+  background-image: linear-gradient(90deg, rgba(255,255,255,.5) 0, transparent 4%, transparent 86%, rgba(110, 80, 50, .07) 95%, rgba(110, 80, 50, .2) 100%);
+}
+.page-right .leaf-back > .page-inner { padding-left: clamp(18px, 3.4cqi, 42px); padding-right: clamp(26px, 4cqi, 52px); }
+
 /* page turn: the old month swings over the spine (next), or the previous month swings back in (prev) */
-.leaf-next-leave-active, .leaf-prev-enter-active { position: absolute; inset: 0; z-index: 15; transform-origin: left center; backface-visibility: visible;  box-shadow: -10px 0 30px -12px rgba(60, 40, 20, .35); }
+.leaf-next-leave-active, .leaf-prev-enter-active { position: absolute; inset: 0; z-index: 15; transform-origin: left center; box-shadow: -10px 0 30px -12px rgba(60, 40, 20, .35); }
 .leaf-next-leave-active { animation: turn-next .9s cubic-bezier(.45, .05, .3, 1) forwards; }
 .leaf-prev-enter-active { animation: turn-prev .9s cubic-bezier(.45, .05, .3, 1) both; }
 .leaf-next-enter-active, .leaf-prev-leave-active { transition: none; }
