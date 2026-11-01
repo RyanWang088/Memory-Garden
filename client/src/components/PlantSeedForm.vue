@@ -126,8 +126,10 @@ function trapNote(list, i, correct) {
   return ''
 }
 // the tiles shown under the Preview: the new card while typing, otherwise the card on screen
-// editing a seed: the open card's traps are typed into its edit copy, so changing one lights up Save
-const tileTraps = computed(() => (showDraft.value ? traps.value : isEdit && editing.value ? editing.value.traps : current.value?.traps))
+// an added card's traps are only typed into its edit copy (after Edit), so Cancel drops them and Save keeps them
+const tileTraps = computed(() => (showDraft.value ? traps.value : editing.value ? editing.value.traps : current.value?.traps))
+// trap tiles are text boxes only for the new card being typed or a card opened with Edit; otherwise read-only
+const trapsEditable = computed(() => showDraft.value || !!editing.value)
 const tileAnswer = computed(() => (showDraft.value ? answer.value : editing.value ? editing.value.answer : current.value?.answer ?? ''))
 const trapCount = computed(() => (tileTraps.value ? cleanTraps(tileTraps.value, tileAnswer.value).length : 0))
 
@@ -255,7 +257,7 @@ watch(drafting, (d) => {
 })
 
 // Edit / delete the pair on screen
-const editing = ref(null) // { question, answer } while editing the current pair (its trap tiles are always editable)
+const editing = ref(null) // { question, answer, traps } while editing the current pair
 const canSaveEdit = computed(() => editing.value?.question.trim() && editing.value?.answer.trim())
 function startEdit() {
   editing.value = { question: current.value.question, answer: current.value.answer, traps: [...current.value.traps] }
@@ -267,7 +269,7 @@ function saveEdit() {
   if (!canSaveEdit.value) return
   current.value.question = editing.value.question.trim()
   current.value.answer = editing.value.answer.trim()
-  if (isEdit) current.value.traps = editing.value.traps.map((t) => t.trim())
+  current.value.traps = editing.value.traps.map((t) => t.trim())
   stopEditing()
   if (isEdit) startEdit() // editing a seed: the card stays open, ready for more changes
 }
@@ -531,11 +533,12 @@ function save() {
               <span class="tile-text" :class="{ empty: !tileAnswer.trim() }" data-testid="tile-correct">{{ tileAnswer.trim() || 'Your answer shows here' }}</span>
               <span class="tile-check" aria-label="Correct answer">✓</span>
             </div>
-            <label v-for="(t, i) in tileTraps" :key="i" class="tile">
+            <component :is="trapsEditable ? 'label' : 'div'" v-for="(t, i) in tileTraps" :key="i" class="tile">
               <span class="tile-shape" aria-hidden="true">{{ SHAPES[i + 1] }}</span>
-              <input v-model="tileTraps[i]" maxlength="500" :placeholder="`Trap answer ${i + 1}`" :aria-label="`Trap answer ${i + 1}`" :data-testid="`card-trap-${i}`" />
+              <input v-if="trapsEditable" v-model="tileTraps[i]" maxlength="500" :placeholder="`Trap answer ${i + 1}`" :aria-label="`Trap answer ${i + 1}`" :data-testid="`card-trap-${i}`" />
+              <span v-else class="tile-text trap" :class="{ empty: !t.trim() }" :data-testid="`card-trap-${i}`">{{ t.trim() || 'No trap answer' }}</span>
               <span v-if="trapNote(tileTraps, i, tileAnswer)" class="tile-note">{{ trapNote(tileTraps, i, tileAnswer) }}</span>
-            </label>
+            </component>
           </div>
         </details>
         <p v-else class="help">
@@ -674,6 +677,7 @@ button.tag-pill { cursor: pointer; }
 .tile input { flex: 1; min-width: 0; padding: 6px 8px; border-width: 1px; border-color: transparent; background: var(--paper); font-size: 14px; }
 .tile input:focus { border-color: var(--periwinkle); }
 .tile-text { flex: 1; min-width: 0; font-weight: 700; font-size: 14px; overflow-wrap: anywhere; }
+.tile-text.trap { font-weight: 400; padding: 6px 0; }
 .tile-text.empty { font-weight: 400; color: var(--bark-muted); }
 .tile-check {
   flex: none; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
