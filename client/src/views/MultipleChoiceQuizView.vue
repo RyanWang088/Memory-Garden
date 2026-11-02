@@ -167,6 +167,8 @@ async function claim() {
       await auth.updateProfile({ coins: auth.profile.coins + reward.value })
       coinsClaimed.value = true
     }
+    console.log('[growth] 1 view saving', seed.value.id)
+
     // each card: correct +5 / wrong -5 mastery; also waters the plant
     await garden.saveReview(seed.value.id, results)
     toast.show({

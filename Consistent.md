@@ -109,7 +109,7 @@ The fonts are **Fredoka** (headings, labels, numbers) and **Nunito** (body text)
 - `.segmented-tab.is-active` uses `box-shadow: var(--shadow-card)`, but that token is a colour, so the shadow doesn't show. It needs offsets, e.g. `0 2px 6px var(--shadow-card)`.
 - `.btn-primary` has a fixed `width: 193px` and Figma leftovers (`order: 4`, `flex: none`). It also replaces Bootstrap's `.btn-primary`.
 - These components still contain hard-coded hex colours: `Skybox.vue` (10), `FlowerShelf.vue` (4), `PlantSeedForm.vue` (4), `FocusPlayer.vue`, `SessionTodo.vue`, `PomodoroView.vue`. Skybox's sky gradients may need their own tokens.
-- `client/src/lib/seedColors.js` is empty. `SEED_COLORS` lives in `tagColors.js`.
+- `SEED_COLORS` lives in `tagColors.js`.
 
 ---
 

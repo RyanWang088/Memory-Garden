@@ -41,7 +41,7 @@ function setLibraryView(view) {
 <template>
   <section class="shed-study" data-testid="shed-study">
     <header class="d-grid gap-2 pb-3 border-bottom">
-      <span class="sp-eyebrow">Library</span>
+      <span class="sp-eyebrow">Greenhouse</span>
       <h3 class="m-0 fs-3">Water your <em>seeds</em></h3>
       <p class="small text-body-secondary m-0">
         {{ libraryView === 'recommended' ? 'These seeds are the thirstiest.' : 'Every seed you’ve planted so far.' }} Tap one to review it!
@@ -93,6 +93,6 @@ function setLibraryView(view) {
 
 .seed-list { position: relative; display: flex; flex-direction: column; gap: 14px; padding-bottom: var(--s-4); }
 .seed-move { transition: transform .45s var(--ease); }
-.seed-leave-active { position: absolute; left: 0; right: 0; transition: opacity .2s, transform .3s var(--ease); }
+.seed-leave-active { position: absolute; left: 0; right: 0; transition: opacity .2s, transform .5s var(--ease); }
 .seed-leave-to { opacity: 0; transform: translateX(-22px); }
 </style>

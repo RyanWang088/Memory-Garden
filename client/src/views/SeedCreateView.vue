@@ -49,14 +49,14 @@ async function save(details) {
   saving.value = true
   error.value = ''
   try {
-    await garden.plantSeed({
+    const seed = await garden.plantSeed({
       ...details,
       col: col.value,
       row: row.value,
       color: selectedColor.value,
       flower: selectedFlower.value,
     })
-    await router.push({ name: 'garden' })
+    await router.push({ name: 'garden', query: { planted: seed.id, scrollTo: seed.id } })
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e)
   } finally {

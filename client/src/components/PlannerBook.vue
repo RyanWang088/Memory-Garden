@@ -238,6 +238,17 @@ function turn(dir, target) {
   state.turn = dir > 0 ? 'next' : 'prev'
   state.view = target || new Date(state.view.getFullYear(), state.view.getMonth() + dir, 1)
 }
+// user-initiated page turns (curls, chevrons, PageUp/PageDown) wait for the leaf in flight to land
+// turning back: the old month is removed first, THEN the incoming leaf drops its absolute positioning
+// (it must never share the flow with the old leaf, or the two split the page height 50/50)
+const FLIP_MS = 900
+let flipLock = 0
+function flip(dir) {
+  const now = performance.now()
+  if (now < flipLock) return
+  flipLock = now + FLIP_MS + 100
+  turn(dir)
+}
 /* The turning leaf's back face shows the to-do page, so once the leaf crosses the spine it lands
    on the left looking like the list (not a mirrored calendar). It's a static, inert copy of the
    live left page, taken just as the turn starts. */
@@ -252,6 +263,10 @@ function dressLeaf(el) {
   if (lined) lined.scrollTop = listEl.value.scrollTop
 }
 function undressLeaf(el) { el.querySelector('.leaf-back')?.replaceChildren() }
+// only the leaf that actually swings needs the to-do copy on its back:
+// the outgoing month when turning forward, the incoming (previous) month when turning back
+const onBeforeEnter = (el) => { if (state.turn === 'prev') dressLeaf(el) }
+const onBeforeLeave = (el) => { if (state.turn === 'next') dressLeaf(el) }
 function onDayKey(e, cell) {
   const move = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key]
   if (move) {
@@ -259,8 +274,8 @@ function onDayKey(e, cell) {
     select(isoDay(parse(cell.k).getTime() + move * DAY + 2 * 3600e3)) // +2h guards against DST
     nextTick(() => document.querySelector('.day.is-selected')?.focus({ preventScroll: true }))
   }
-  if (e.key === 'PageUp') { e.preventDefault(); turn(-1) }
-  if (e.key === 'PageDown') { e.preventDefault(); turn(1) }
+  if (e.key === 'PageUp') { e.preventDefault(); flip(-1) }
+  if (e.key === 'PageDown') { e.preventDefault(); flip(1) }
 }
 const addInput = ref(null)
 function onDayDblClick() { state.side = 'left'; nextTick(() => addInput.value?.focus()) }
@@ -271,7 +286,6 @@ function focusOnThis() {
 }
 
 /* ---------- single-page mode tabs (narrow screens) ---------- */
-const flip = ref('')
 function setSide(side) {
   if (state.side === side) return
   flip.value = 'out'
@@ -380,15 +394,18 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
         <section class="page page-right" :class="{ 'flip-out': flip === 'out' && state.side === 'right', 'flip-in': flip === 'in' && state.side === 'right' }" aria-label="Calendar">
           <span class="sp-tape is-leaf t2" aria-hidden="true"></span>
           <div class="leaf-stage">
-            <Transition :name="`leaf-${state.turn}`" @before-enter="dressLeaf" @before-leave="dressLeaf" @after-enter="undressLeaf">
+            <Transition
+              :name="`leaf-${state.turn}`" :duration="state.turn === 'prev' ? { enter: FLIP_MS + 80, leave: FLIP_MS + 20 } : undefined"
+              @before-enter="onBeforeEnter" @before-leave="onBeforeLeave" @after-enter="undressLeaf"
+            >
               <div :key="monthKey" class="leaf">
               <div class="page-inner cal-page leaf-front">
                 <div class="cal-head">
-                  <h2 class="cal-title">{{ monthName }}<span>{{ state.view.getFullYear() }} · little plans</span></h2>
-                  <div class="cal-nav">
+                  <h2 class="cal-title mb-0">{{ monthName }}<span>{{ state.view.getFullYear() }} · little plans</span></h2>
+                  <div class="cal-nav d-flex align-items-center ms-auto w-50">
                     <button class="sp-chip" type="button" @click="select(todayIso)">Today</button>
-                    <button class="sp-icon-btn" type="button" aria-label="Previous month" @click="turn(-1)"><SproutIcon glyph="chevron-left" :size="18" /></button>
-                    <button class="sp-icon-btn" type="button" aria-label="Next month" data-testid="planner-next-month" @click="turn(1)"><SproutIcon glyph="chevron-right" :size="18" /></button>
+                    <button class="sp-icon-btn sp-icon-btn-sm" type="button" aria-label="Previous month" @click="flip(-1)"><SproutIcon glyph="chevron-left" :size="16" /></button>
+                    <button class="sp-icon-btn sp-icon-btn-sm" type="button" aria-label="Next month" data-testid="planner-next-month" @click="flip(1)"><SproutIcon glyph="chevron-right" :size="16" /></button>
                   </div>
                 </div>
                 <div class="cal-grid" role="grid" :aria-label="fmt(state.view, { month: 'long', year: 'numeric' })">
@@ -435,7 +452,7 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
               </div>
             </Transition>
           </div>
-          <button class="curl" type="button" aria-label="Turn to next month" @click="turn(1)"><span>next</span></button>
+          <button class="curl" type="button" aria-label="Turn to next month" @click="flip(1)"><span>next</span></button>
         </section>
       </div>
       <span class="ribbon" aria-hidden="true"></span>
@@ -618,10 +635,11 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 /* right page: calendar */
 .leaf-stage { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; perspective: 2200px; }
 .cal-page { background: var(--sheet); border-radius: 3px 10px 10px 3px; }
-.cal-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; }
+.cal-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px; }
 .cal-title { font-style: italic; font-weight: 600; font-size: clamp(2.1rem, 4.6cqi, 3rem); line-height: .95; margin: 0; }
 .cal-title span { display: block; font-family: var(--f-body); font-style: normal; font-size: .72rem; font-weight: 800; letter-spacing: .3em; color: var(--ink-soft); margin-top: 6px; }
-.cal-nav { display: flex; gap: 6px; align-items: center; }
+.cal-nav { display: flex; flex: 0 0 auto; justify-content: flex-end; gap: 4px; align-items: center; }
+.sp-icon-btn-sm { width: 32px; height: 32px; }
 .cal-grid { flex: 1; min-height: 0; display: grid; grid-template-rows: auto repeat(6, 1fr); margin-top: 14px; border-top: 1.5px solid var(--ink); }
 .cal-row { display: grid; grid-template-columns: repeat(7, 1fr); }
 .cal-row.wk { padding: 6px 0; border-bottom: 1px solid var(--line); }
@@ -661,7 +679,6 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 .curl:hover, .curl:focus-visible { width: 74px; height: 74px; }
 .curl span { position: absolute; right: 8px; bottom: 6px; font-family: var(--f-hand); font-size: 1rem; color: var(--ink-soft); opacity: 0; transition: opacity .2s; }
 .curl:hover span, .curl:focus-visible span { opacity: 1; }
-
 /* the leaf has two faces: the month on the front, a copy of the to-do page on the back */
 .leaf { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; transform-style: preserve-3d; }
 .leaf-front { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
@@ -706,13 +723,20 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
   .add-task input[type="date"].sp-input { grid-row: 2; grid-column: 2 / 4; width: 100%; }
   .lined { max-height: 52vh; min-height: 260px; }
   .cal-grid { min-height: 380px; }
-  .book-tabs { display: flex; gap: 6px; position: absolute; z-index: 9; top: -30px; right: 22px; }
+  .cal-title { flex-basis: 100%; }
+  .cal-nav { width: 50%; }
+  .cal-nav .sp-chip { padding: .2em .5em; font-size: .72rem; }
+  .sp-icon-btn-sm { width: 30px; height: 30px; }
+  .book-tabs { display: flex; gap: 6px; position: absolute; z-index: 9; top: -28px; right: 22px; }
   .book-tabs button { border: 0; padding: 8px 14px 14px; border-radius: 10px 10px 0 0; font-weight: 800; font-size: .78rem; letter-spacing: .06em; background: var(--sheet-3); color: var(--ink-soft); transform: translateY(6px); transition: transform .25s var(--spring), background .2s; }
-  .book-tabs button[aria-selected="true"] { background: var(--berry); color: #fff; transform: translateY(0); }
+  .book-tabs button[aria-selected="true"] { background: var(--berry); color: var(--paper); transform: translateY(0); }
   .page.flip-out { animation: flip-out .28s ease-in forwards; transform-origin: left center; }
   .page.flip-in { animation: flip-in .38s var(--ease); transform-origin: left center; }
   .curl { display: none; }
   .cal-foot { flex-direction: column; }
+}
+@container book (min-width: 761px) {
+  .cal-nav { width: auto !important; }
 }
 @container book (max-width: 420px) {
   .day .n { font-size: .9rem; }

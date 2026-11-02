@@ -250,7 +250,7 @@ onMounted(() => flower.load())
 
 /* locked packet */
 .is-locked .sp-packet-art img { filter: grayscale(.85) brightness(0.1); opacity: .5; }
-.sp-lock { position: absolute; z-index: 2; top: 6%; right: 6%; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: var(--sheet); box-shadow: 0 3px 0 #2c201b; }
+.sp-lock { position: absolute; z-index: 2; top: 6%; right: 6%; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: var(--berry); color: var(--sheet); box-shadow: 0 3px 0 var(--berry-deep); }
 .is-locked:hover .sp-lock { animation: lock-shake .5s ease; }
 @keyframes lock-shake { 20% { transform: rotate(-14deg); } 40% { transform: rotate(12deg); } 60% { transform: rotate(-8deg); } 80% { transform: rotate(5deg); } }
 </style>

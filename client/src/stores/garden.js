@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { apiFetch } from '@/lib/http'
 import { supabase, check } from '@/lib/supabase'
 import { plantStage, isWilting } from '@/lib/plantStage'
+import { BLOOM_STAGE } from '@/lib/plantSprites'
 import { useAuthStore } from './auth'
 
 export const SHELF_SLOTS = 12          // rows 1-2 of the flower house shelf
@@ -29,6 +30,7 @@ const reviewedAt = (seed) => new Date(seed.last_reviewed ?? 0).getTime()
 export const useGardenStore = defineStore('garden', () => {
   const auth = useAuthStore()
   const seeds = ref([]) // every seed, including ones moved to the flower house
+  const growthRecords = ref({})
   const loaded = ref(false)
 
   // Seeds of an exam moved to the flower house leave the garden (they stay in the database)
@@ -69,6 +71,37 @@ export const useGardenStore = defineStore('garden', () => {
   // 1-8: grows with mastery, wilts every 3 days without a quiz (see lib/plantStage.js)
   const stageOf = (seed) => plantStage(seed)
   const isWilted = (seed) => isWilting(seed)
+
+  const isCelebrated = (from, to) => to <= BLOOM_STAGE && (to > from || from > BLOOM_STAGE)
+
+  function recordGrowth(seedId, from, to) {
+    const start = growthRecords.value[seedId]?.from ?? from
+    if (isCelebrated(start, to)) growthRecords.value[seedId] = { from: start, to, phase: 'held' }
+  }
+
+  function releaseGrowth(seedId) {
+    const record = growthRecords.value[seedId]
+    if (record?.phase === 'held') record.phase = 'playing'
+  }
+
+  function finishGrowth(seedId) {
+    delete growthRecords.value[seedId]
+  }
+
+  function keepOnlyGrowth(seedId) {
+    for (const id of Object.keys(growthRecords.value)) if (id !== seedId) delete growthRecords.value[id]
+  }
+
+  const clearGrowth = () => { growthRecords.value = {} }
+
+  // Applies the server's answer to a seed. If the plant moved up a stage, the garden plays its celebration once
+  // the plant is on screen.
+  function applyReview(seed, updated) {
+    const before = stageOf(seed)
+    Object.assign(seed, updated)
+    console.log('[growth] applyReview', seed.id, before, '->', stageOf(seed), JSON.stringify(growthRecords.value))
+    recordGrowth(seed.id, before, stageOf(seed))
+  }
 
   async function fetchSeeds() {
     seeds.value = await apiFetch('/api/seeds')
@@ -120,6 +153,18 @@ export const useGardenStore = defineStore('garden', () => {
     return updated
   }
 
+  // rating: 'forgot' | 'hard' | 'easy'. Replace with real spaced-repetition scheduling later.
+  async function rateReview(seedId, rating) {
+    const delta = { forgot: -5, hard: 5, easy: 12 }[rating]
+    const seed = seeds.value.find(s => s.id === seedId)
+    if (!seed) throw new Error('Seed not found. Refresh the garden and try again.')
+    if (delta === undefined) throw new Error('Choose a valid review rating.')
+    const mastery = Math.max(0, Math.min(100, seed.mastery + delta))
+    const updated = await apiFetch(`/api/seeds/${seedId}`, { method: 'PATCH', body: { mastery, last_reviewed: new Date().toISOString() } })
+    applyReview(seed, updated)
+    refreshPriority()
+  }
+
   // Short Structured Mode: the server has AI mark one typed answer. Saves nothing.
   // Returns { score, rating: 'short_correct' | 'short_partial' | 'short_wrong', feedback }
   async function gradeAnswer(seedId, cardId, response, signal) {
@@ -131,15 +176,17 @@ export const useGardenStore = defineStore('garden', () => {
   // or short_correct | short_partial | short_wrong (Short Structured)
   async function saveReview(seedId, ratings) {
     const seed = seeds.value.find(s => s.id === seedId)
+    console.log('[growth] 2 saveReview called')
     if (!seed) throw new Error('Seed not found. Refresh the garden and try again.')
     const updated = await apiFetch(`/api/seeds/${encodeURIComponent(seedId)}/reviews`, { method: 'POST', body: { ratings } })
-    Object.assign(seed, updated)
+    applyReview(seed, updated)
     refreshPriority()
   }
 
   async function deleteSeed(seedId) {
     await apiFetch(`/api/seeds/${encodeURIComponent(seedId)}`, { method: 'DELETE' })
     seeds.value = seeds.value.filter(seed => seed.id !== seedId)
+    finishGrowth(seedId)
     refreshPriority()
   }
 
@@ -179,7 +226,8 @@ export const useGardenStore = defineStore('garden', () => {
   }
 
   return {
-    seeds, loaded, gardenSeeds, hasPlants, housedSubjects, shelfSlots, freeShelfSlots, examsOver,
-    stageOf, isWilted, fetchSeeds, plantSeed, editSeed, gradeAnswer, saveReview, deleteSeed, chooseExamOutcome, unlockShelf, readiness,
+    seeds, growthRecords, loaded, gardenSeeds, hasPlants, housedSubjects, shelfSlots, freeShelfSlots, examsOver,
+    stageOf, isWilted, recordGrowth, releaseGrowth, finishGrowth, keepOnlyGrowth, clearGrowth,
+    fetchSeeds, plantSeed, editSeed, gradeAnswer, saveReview, deleteSeed, chooseExamOutcome, unlockShelf, readiness,
   }
 })

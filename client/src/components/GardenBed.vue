@@ -20,11 +20,16 @@ const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 
+// Opening the garden: only the plant we are scrolling to keeps a pending stage-up. Runs before the first render,
+// so plants never flash their new stage early.
+garden.keepOnlyGrowth(route.query.scrollTo)
+console.log('[growth] garden opened', route.query.scrollTo, JSON.stringify(garden.growthRecords))
 const cam = createGardenCamera()
 const { camera, measure: measureCamera, updateScroll: updateCameraScroll, worldToScreen, screenToCell, screenPoint } = cam
 
 const scrollerEl = ref(null), stageEl = ref(null), canvasEl = ref(null), ghostRef = ref(null)
 const ghostBlocked = ref(false)
+const plantingSeedId = ref(null)
 const plantElements = new Map()
 const plantInfoElements = new Map()
 let renderQueued = false, resizeObserver, scrollIdleTimer
@@ -144,6 +149,46 @@ function leftFor(seed, top) {
   return Math.max(0, Math.min(camera.contentWidth - camera.viewWidth, left))
 }
 
+function scrollSettled(el, { idleMs = 500, maxMs = 2000 } = {}) {
+  return new Promise((resolve) => {
+    let idleTimer, capTimer
+
+    const done = () => {
+      clearTimeout(idleTimer)
+      clearTimeout(capTimer)
+      el.removeEventListener('scroll', waitForIdle)
+      resolve()
+    }
+    const waitForIdle = () => {
+      clearTimeout(idleTimer)
+      idleTimer = setTimeout(done, idleMs)
+    }
+
+    el.addEventListener('scroll', waitForIdle, { passive: true })
+    capTimer = setTimeout(done, maxMs)
+    waitForIdle()
+  })
+}
+
+// Plays the plant's stage-up once the camera has stopped, so the celebration happens in front of the user
+async function revealGrowth(seedId) {
+  await scrollSettled(scrollerEl.value)
+  garden.releaseGrowth(seedId)
+}
+
+async function revealPlanting(seedId) {
+  await scrollSettled(scrollerEl.value)
+  if (route.query.planted === seedId) plantingSeedId.value = seedId
+}
+
+function finishPlanting(seedId) {
+  if (plantingSeedId.value !== seedId) return
+  plantingSeedId.value = null
+  const query = { ...route.query }
+  delete query.planted
+  router.replace({ name: 'garden', query })
+}
+
 function scrollToSeed() {
   const seedId = route.query.scrollTo
   if (typeof seedId !== 'string') return
@@ -159,6 +204,8 @@ function scrollToSeed() {
   const top = SCROLL_RANGE - targetScrollPos
   scrollerEl.value.scrollTo({ top, left: leftFor(seed, top), behavior: 'smooth' })
   ui.selectGardenSeed(seedId)
+  revealGrowth(seedId)
+  if (route.query.planted === seedId) revealPlanting(seedId)
   const query = { ...route.query }
   delete query.scrollTo
   router.replace({ name: 'garden', query })
@@ -249,6 +296,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()
   clearTimeout(scrollIdleTimer)
+  garden.clearGrowth()
 })
 </script>
 
@@ -274,10 +322,14 @@ onBeforeUnmount(() => {
           :color="seed.color"
           :wilting="garden.isWilted(seed)"
           :alert="seed.alert"
+          :growth="garden.growthRecords[seed.id]"
+          :planting="plantingSeedId === seed.id"
           :class="{ 'is-highlighted': ui.selectedGardenSeedId === seed.id }"
           role="button" tabindex="0" :aria-label="`Open ${seed.title}`"
           @pointerenter="onPlantPointerEnter(seed.id, $event)"
           @pointerleave="onPlantPointerLeave(seed.id)"
+          @grown="garden.finishGrowth(seed.id)"
+          @planted="finishPlanting(seed.id)"
           @click="onPlantClick(seed, $event)"
           @keydown.enter.space.prevent="onPlantClick(seed)"
         />

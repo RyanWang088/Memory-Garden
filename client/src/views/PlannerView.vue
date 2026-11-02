@@ -16,7 +16,7 @@ onMounted(() => { if (!garden.loaded) garden.fetchSeeds().catch(() => {}) })
 </script>
 
 <template>
-  <main class="planner-main" data-testid="planner">
+  <main class="container py-3 mt-3" data-testid="planner">
     <SceneryBackdrop
       mood="blush"
       :options="{ seed: 11, horizon: 0.56, tulips: narrow ? 2 : 8, butterflies: 2, veil: 'linear-gradient(180deg, rgba(252,246,236,0) 30%, rgba(252,246,236,.25) 100%)' }"
@@ -24,11 +24,3 @@ onMounted(() => { if (!garden.loaded) garden.fetchSeeds().catch(() => {}) })
     <PlannerBook cover :auto-open="seen ? 60 : 900" />
   </main>
 </template>
-
-<style scoped>
-.planner-main {
-  padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(var(--dock-h) + 28px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
-  max-width: 1260px; margin: 0 auto;
-}
-@media (min-width: 768px) { .planner-main { padding-bottom: 40px; } }
-</style>

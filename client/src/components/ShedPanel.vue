@@ -127,10 +127,10 @@ function onSeedEdit(seed) {
 
 /* phones: a sheet running down behind the dock, open tabs on its top edge */
 @media (max-width: 767.98px) {
-  .shed-panel { top: auto; left: 8px; right: 8px; bottom: 8px; height: calc(min(56vh, 520px) + var(--dock-h) + 14px); flex-direction: column; align-items: stretch; }
+  .shed-panel { top: auto; left: 0; right: 0; bottom: 0; height: calc(min(56vh, 520px) + var(--dock-h) + 14px); flex-direction: column; align-items: stretch; }
   .shed-panel:not(.is-collapsed) .shed-tabs { flex-direction: row; align-items: flex-end; justify-content: center; padding: 0 8px; }
   .shed-panel:not(.is-collapsed) .shed-tab { border-radius: 14px 14px 0 0; transform: translate(0, var(--t)); }
-  .shed-notebook-page { flex: 1; width: auto; padding: 18px 14px calc(var(--dock-h) + 14px); }
+  .shed-notebook-page { flex: 1; width: auto; padding: 18px 14px calc(var(--dock-h) + 14px);border-radius: 22px 22px 0 0; }
   .shed-panel.is-collapsed { left: auto; right: 0; top: 84px; bottom: auto; height: auto; transform: none; }
   .shed-panel.is-collapsed .shed-notebook-page { display: none; }
 }
