@@ -172,7 +172,7 @@ function backToGarden() {
 </script>
 
 <template>
-  <main class="review-page">
+  <main class="review-page phone-card">
     <SceneryBackdrop :mood="mood" :options="{ seed: 31, tulips: narrow ? 3 : 10, butterflies: 2, horizon: 0.64 }" />
     <!-- flashcards: the card is the whole box -->
     <div v-if="!loading && totalCards && !finished" class="review-container" data-testid="deck-session">
@@ -478,7 +478,8 @@ function backToGarden() {
 }
 
 @media (max-width: 480px) {
-  .deck-card { --mx: 44px; min-height: calc(100vh - 48px); }
+  /* same size as the quiz cards (.phone-card in style.css), centred on the meadow */
+  .deck-card { --mx: 44px; min-height: min(620px, calc(100dvh - 48px)); }
   .deck-face { padding: 20px 16px 24px calc(var(--mx) + 14px); }
   .deck-top { height: calc(110px - 2 * 20px); }
 }

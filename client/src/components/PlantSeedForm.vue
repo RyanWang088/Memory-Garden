@@ -11,6 +11,7 @@ import { tagColors, tagStyle } from '@/lib/tagColors'
 import { VueDatePicker } from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import tulipSvg from '@/assets/foliage/tulip-pink-4.svg'
+import SuggestInput from './SuggestInput.vue'
 
 const props = defineProps({
   busy: { type: Boolean, default: false }, // true while the parent is saving
@@ -358,20 +359,17 @@ function save() {
         <span class="text-label-field">Study set name</span>
         <input v-model="title" maxlength="80" placeholder="e.g. WAD2 Lab Test 1 Revision" data-testid="seed-title" />
       </label>
-      <label class="field">
-        <span class="text-label-field">Subject</span>
-        <input v-model="subject" maxlength="60" list="seed-subjects" placeholder="e.g. WAD2" data-testid="seed-subject" />
-        <datalist id="seed-subjects">
-          <option v-for="s in knownSubjects" :key="s" :value="s" />
-        </datalist>
-      </label>
-      <label class="field">
-        <span class="text-label-field">Exam</span>
-        <input v-model="examName" maxlength="40" list="seed-exams" placeholder="e.g. Midterm" data-testid="seed-exam-name" />
-        <datalist id="seed-exams">
-          <option v-for="e in knownExams" :key="e" :value="e" />
-        </datalist>
-      </label>
+      <!-- SuggestInput, not <datalist>: Chrome's datalist popup lands in the wrong place in DevTools' phone view -->
+      <div class="field">
+        <label class="text-label-field" for="seed-subject">Subject</label>
+        <SuggestInput id="seed-subject" v-model="subject" :suggestions="knownSubjects" maxlength="60"
+          placeholder="e.g. WAD2" data-testid="seed-subject" />
+      </div>
+      <div class="field">
+        <label class="text-label-field" for="seed-exam-name">Exam</label>
+        <SuggestInput id="seed-exam-name" v-model="examName" :suggestions="knownExams" maxlength="40"
+          placeholder="e.g. Midterm" data-testid="seed-exam-name" />
+      </div>
       <div class="field">
         <label class="text-label-field" for="seed-exam-date">Exam date</label>
         <VueDatePicker
@@ -603,7 +601,7 @@ h4 { margin: 0; font-family: var(--f-display); font-weight: 500; font-size: 18px
 
 .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; margin: 0; }
 .help { margin: 0; font-size: 13px; line-height: 18px; color: var(--bark-muted); }
-input, textarea {
+input, textarea, :deep(.suggest-field) { /* .suggest-field: SuggestInput's input */
   width: 100%;
   padding: 10px 12px;
   border: 2px solid var(--linen);
@@ -613,7 +611,7 @@ input, textarea {
   color: var(--bark);
   resize: vertical;
 }
-input:focus, textarea:focus { border-color: var(--periwinkle); outline: none; }
+input:focus, textarea:focus, :deep(.suggest-field:focus) { border-color: var(--periwinkle); outline: none; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .colours { display: flex; flex-wrap: wrap; gap: 8px; }

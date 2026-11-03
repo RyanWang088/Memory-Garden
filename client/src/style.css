@@ -515,6 +515,28 @@ button.product-card.is-picked {
   .review-sheet { --margin-x: 26px; padding: 20px 14px 28px calc(var(--margin-x) + 14px); }
   .review-results { min-height: calc(100vh - 80px - 48px); }
 }
+/* quiz and flashcard pages (main.review-page.phone-card): on phones the sheet is a fixed-size card centred on the meadow,
+   the same size for every question and the results; only a very long question makes it grow.
+   dvh = the height iPhone Safari really shows. The page puts its after-answer bits in .quiz-end. */
+@media (max-width: 480px) {
+  .phone-card.review-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100dvh;
+    padding: 24px 16px;
+  }
+  .phone-card .review-container { width: 100%; }
+  .phone-card .review-sheet {
+    --lh: 40px;
+    display: flex;
+    flex-direction: column;
+    min-height: min(620px, calc(100dvh - 48px));
+  }
+  .phone-card .quiz { flex: 1; }
+  .phone-card .quiz-end { margin-top: auto; } /* pinned to the card's bottom, in space kept free for it */
+  .phone-card .review-results { flex: 1; min-height: 0; padding: 16px 0 8px; }
+}
 .score-pill {
   padding: 2px 14px;
   border-radius: 999px;

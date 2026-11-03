@@ -481,7 +481,9 @@ footer { padding-block: 60px 40px; }
 @media (max-width: 720px) {
   .notes { grid-template-columns: 1fr; }
   .note:nth-child(2) { transform: rotate(1deg); }
-  .stage-card { grid-template-columns: 1fr; padding: 22px; min-height: 0; }
+  /* minmax(0, 1fr), not 1fr: a plain 1fr column grows to its widest picture (the 340px planner book), which
+     made the thumbnails wrap 5 + 1 on the Planner tab and 4 + 2 on the rest */
+  .stage-card { grid-template-columns: minmax(0, 1fr); padding: 22px; min-height: 0; }
   .viz { min-height: 280px; transform: scale(.85); }
   .how { grid-template-columns: 1fr; gap: 40px; }
   .vine { display: none; }

@@ -167,7 +167,7 @@ function backToGarden() {
 </script>
 
 <template>
-  <main class="review-page" @keydown="onKeydown">
+  <main class="review-page phone-card" @keydown="onKeydown">
     <SceneryBackdrop :mood="mood" :options="{ seed: 31, tulips: narrow ? 3 : 10, butterflies: 2, horizon: 0.64 }" />
     <div class="review-container review-sheet">
       <p v-if="loading" role="status">Getting your questions ready…</p>
@@ -201,10 +201,13 @@ function backToGarden() {
 
         <p v-if="markError" class="text-danger mb-0" role="alert">{{ markError }}</p>
 
-        <button v-if="!mark" type="button" class="btn-primary border-0 text-button w-auto align-self-end"
-          :disabled="marking" data-testid="short-check" @click="check">
-          {{ marking ? 'Marking…' : markError ? 'Try again' : 'Check answer' }}
-        </button>
+        <!-- on phones the button sits at the bottom of the card (.quiz-end) -->
+        <div v-if="!mark" class="quiz-end d-flex flex-column">
+          <button type="button" class="btn-primary border-0 text-button w-auto align-self-end"
+            :disabled="marking" data-testid="short-check" @click="check">
+            {{ marking ? 'Marking…' : markError ? 'Try again' : 'Check answer' }}
+          </button>
+        </div>
 
         <!-- marked -->
         <template v-else>
@@ -219,9 +222,11 @@ function backToGarden() {
             <span class="text-label-caption bark-muted">Model answer</span>
             <p class="hand m-0">{{ current.answer }}</p>
           </div>
-          <button type="button" class="btn-primary border-0 text-button w-auto align-self-end" data-testid="short-next" @click="next">
-            {{ isLast ? 'See results' : 'Next question' }}
-          </button>
+          <div class="quiz-end d-flex flex-column">
+            <button type="button" class="btn-primary border-0 text-button w-auto align-self-end" data-testid="short-next" @click="next">
+              {{ isLast ? 'See results' : 'Next question' }}
+            </button>
+          </div>
         </template>
       </section>
 
@@ -336,6 +341,9 @@ function backToGarden() {
 
 @media (max-width: 480px) {
   .quiz-head { height: calc(2 * var(--lh) - 20px); }
+  /* the card itself is .phone-card in style.css; the button is pinned to its bottom, still 24px from the rest */
+  .quiz > .quiz-end { margin-top: auto; padding-top: 24px; }
+  .answer-box::placeholder { font-size: 1.3rem; } /* matches the MCQ answers on phones */
 }
 
 .model-answer {

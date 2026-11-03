@@ -191,7 +191,7 @@ function backToGarden() {
 </script>
 
 <template>
-  <main class="review-page">
+  <main class="review-page phone-card">
     <SceneryBackdrop :mood="mood" :options="{ seed: 31, tulips: narrow ? 3 : 10, butterflies: 2, horizon: 0.64 }" />
     <div class="review-container review-sheet">
       <p v-if="loading" role="status">Getting your questions ready…</p>
@@ -230,18 +230,21 @@ function backToGarden() {
           </button>
         </div>
 
-        <p v-if="chosen !== null && streak >= MIN_STREAK" :key="streak" class="streak text-stat m-0" data-testid="quiz-streak">
-          <SproutIcon name="flame" :size="32" /> {{ streak }} in a row!
-        </p>
-
-        <footer v-if="chosen !== null" class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
-          <p class="text-body-strong m-0" role="status">
-            {{ current.options[chosen] === current.answer ? '🌸 Correct!' : '🥀 Not quite. The right answer is ticked.' }}
+        <!-- shown after answering; on phones it sits at the bottom of the card, in space kept free for it -->
+        <div class="quiz-end d-flex flex-column">
+          <p v-if="chosen !== null && streak >= MIN_STREAK" :key="streak" class="streak text-stat m-0" data-testid="quiz-streak">
+            <SproutIcon name="flame" :size="32" /> {{ streak }} in a row!
           </p>
-          <button type="button" class="btn-primary border-0 text-button w-auto" data-testid="quiz-next" @click="next">
-            {{ isLast ? 'See results' : 'Next question' }}
-          </button>
-        </footer>
+
+          <footer v-if="chosen !== null" class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+            <p class="text-body-strong m-0" role="status">
+              {{ current.options[chosen] === current.answer ? '🌸 Correct!' : '🥀 Not quite. The right answer is ticked.' }}
+            </p>
+            <button type="button" class="btn-primary border-0 text-button w-auto" data-testid="quiz-next" @click="next">
+              {{ isLast ? 'See results' : 'Next question' }}
+            </button>
+          </footer>
+        </div>
       </section>
 
       <!-- results -->
@@ -302,8 +305,8 @@ function backToGarden() {
   letter-spacing: -.01em;
 }
 
-.quiz > .streak,
-.quiz > footer {
+.quiz-end > .streak,
+.quiz-end > footer {
   margin-top: 24px;
 }
 
@@ -394,5 +397,10 @@ function backToGarden() {
   .stats {
     gap: 8px !important;
   }
+}
+
+/* phones: the card itself is .phone-card in style.css */
+@media (max-width: 480px) {
+  .option-text { font-size: 1.3rem; }
 }
 </style>
