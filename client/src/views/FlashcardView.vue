@@ -275,7 +275,6 @@ function backToGarden() {
   position: relative;
   display: flex;
   min-height: calc(100vh - 80px);
-  border: 2px solid #3e3553;
   border-radius: 20px;
   background-color: #ffffff;
   background-image:
@@ -284,7 +283,7 @@ function backToGarden() {
   background-position: 0 0, 0 110px;
   background-size: 100% 100%, 100% calc(100% - 110px);
   background-repeat: no-repeat;
-  box-shadow: 0 12px 32px rgba(62, 53, 83, 0.16), 3px 4px 0 #3e3553;
+  box-shadow: 0 12px 32px rgba(62, 53, 83, 0.16);
 }
 
 .deck-card.is-back {
@@ -394,10 +393,10 @@ function backToGarden() {
   min-width: 0;
   min-height: 84px;
   padding: 14px 8px;
-  border: 2px solid #3e3553;
+  border: 0;
   border-radius: 16px;
   background: #ffffff;
-  box-shadow: 3px 3px 0 #3e3553;
+  box-shadow: 0 4px 12px rgba(62, 53, 83, 0.12);
   transition: background-color 0.15s, transform 0.15s var(--spring), box-shadow 0.15s;
 }
 
@@ -406,8 +405,8 @@ function backToGarden() {
 .rate-easy:hover { background: #fce2a6; }
 
 .rate-btn:active {
-  transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0 #3e3553;
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(62, 53, 83, 0.12);
 }
 
 .rate-btn:focus-visible {

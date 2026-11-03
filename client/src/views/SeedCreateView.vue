@@ -78,7 +78,7 @@ function cancel() {
         <button type="button" class="btn btn-outline-secondary" @click="cancel">Back to garden</button>
       </template>
       <p v-else-if="error && !garden.loaded" class="text-berry-deep" role="alert">{{ error }}</p>
-      <PlantSeedForm v-else :busy="saving" :error="error" @save="save" @cancel="cancel" />
+      <PlantSeedForm v-else :busy="saving" :error="error" :flower="selectedFlower" @save="save" @cancel="cancel" />
     </section>
   </main>
 </template>

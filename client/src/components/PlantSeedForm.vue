@@ -6,6 +6,7 @@
 // Editing: each saved card keeps its id in the 'save' cards, so the server keeps that card's review progress.
 import { computed, markRaw, onBeforeUnmount, ref, watch } from 'vue'
 import { useGardenStore, examLabel } from '@/stores/garden'
+import { useFlowerStore } from '@/stores/flower'
 import { apiFetch } from '@/lib/http'
 import { tagColors, tagStyle } from '@/lib/tagColors'
 import { VueDatePicker } from '@vuepic/vue-datepicker'
@@ -17,11 +18,20 @@ const props = defineProps({
   busy: { type: Boolean, default: false }, // true while the parent is saving
   error: { type: String, default: '' },
   seed: { type: Object, default: null }, // a planted seed to edit; null = planting a new one
+  flower: { type: String, default: 'tulip' }, // flower id of the packet being planted (new seeds only)
 })
 const emit = defineEmits(['save', 'cancel'])
 
 const garden = useGardenStore()
 const isEdit = !!props.seed
+
+// "a tulip" / "an orchid": the flower's shop name, or its id until the shop catalog has loaded
+const flowerStore = useFlowerStore()
+if (!isEdit) flowerStore.load()
+const flowerName = computed(() => {
+  const name = (flowerStore.catalog.find((f) => f.id === props.flower)?.name ?? props.flower.replaceAll('-', ' ')).toLowerCase()
+  return `${/^[aeiou]/.test(name) ? 'an' : 'a'} ${name}`
+})
 
 // Card limits: up to 50 AI pairs per uploaded file, 200 cards per seed (the server checks 200 too)
 const MAX_CARDS = 200
@@ -299,6 +309,17 @@ if (isEdit) {
 const hasDetails = computed(() => title.value.trim() && subject.value.trim())
 const hasCards = computed(() => totalCards.value > 0 || canAddCard.value)
 const addingCards = ref(false)
+
+// Card source carousel: the builder and the upload panel take turns in one slot
+const SOURCES = [{ id: 'builder', label: 'Flashcard builder' }, { id: 'upload', label: 'Upload a file' }]
+const source = ref('builder')
+const sourceIndex = computed(() => SOURCES.findIndex((s) => s.id === source.value))
+const slideDir = ref('left')
+function showSource(i) {
+  if (i === sourceIndex.value) return
+  slideDir.value = i > sourceIndex.value ? 'left' : 'right'
+  source.value = SOURCES[i].id
+}
 const step = computed(() => {
   if (hasDetails.value && hasCards.value) return 3
   if (addingCards.value) return 2
@@ -337,7 +358,7 @@ function save() {
       </div>
       <div v-else>
         <h3>Plant a new seed</h3>
-        <p class="text-body-small sub">It will grow into a tulip as you revise.</p>
+        <p class="text-body-small sub">It will grow into {{ flowerName }} as you revise.</p>
       </div>
     </header>
     <!-- Progress (planting only: an edited seed already has everything) -->
@@ -405,10 +426,19 @@ function save() {
       </ul>
     </section>
 
-    <!-- Flashcard Builder and Upload a file, side by side so the Preview stays close -->
-    <div class="row g-3">
-    <div class="col-sm-6 d-flex">
-    <section class="card-box w-100" @pointerdown="addingCards = true" @focusin="addingCards = true">
+    <!-- Flashcard Builder and Upload a file: a two-slide carousel, one shown at a time -->
+    <div class="source-carousel">
+    <div class="source-tabs" role="tablist" aria-label="How to add cards">
+      <button
+        v-for="(s, i) in SOURCES" :key="s.id" type="button" role="tab" class="source-tab"
+        :class="{ active: source === s.id }" :aria-selected="source === s.id" :data-testid="`source-${s.id}`"
+        @click="showSource(i)"
+      >{{ s.label }}</button>
+      <span class="source-thumb" :style="{ transform: `translateX(${sourceIndex * 100}%)` }" aria-hidden="true" />
+    </div>
+    <div class="source-stage">
+    <Transition :name="`slide-${slideDir}`" mode="out-in">
+    <section v-if="source === 'builder'" key="builder" class="card-box w-100" role="tabpanel" @pointerdown="addingCards = true" @focusin="addingCards = true">
       <div class="card-head">
         <h4>Flashcard builder</h4>
         <button type="button" class="plus" :disabled="!canAddCard" aria-label="Add card" data-testid="card-add" @click="addCard">+</button>
@@ -430,11 +460,9 @@ function save() {
         </span>
       </p>
     </section>
-    </div>
 
     <!-- Upload a file -->
-    <div class="col-sm-6 d-flex">
-    <section class="card-box w-100" @pointerdown="addingCards = true" @focusin="addingCards = true">
+    <section v-else key="upload" class="card-box w-100" role="tabpanel" @pointerdown="addingCards = true" @focusin="addingCards = true">
       <div>
         <h4>Upload a file</h4>
         <p class="help">Select and upload your notes or slides.</p>
@@ -478,6 +506,10 @@ function save() {
         </li>
       </ul>
     </section>
+    </Transition>
+    </div>
+    <div class="source-dots" aria-hidden="true">
+      <button v-for="(s, i) in SOURCES" :key="s.id" type="button" tabindex="-1" class="dot" :class="{ active: source === s.id }" @click="showSource(i)" />
     </div>
     </div>
 
@@ -592,10 +624,27 @@ h4 { margin: 0; font-family: var(--f-display); font-weight: 500; font-size: 18px
   flex-direction: column;
   gap: 12px;
   padding: 16px;
-  border: 2px solid var(--linen);
+  border: 2px solid var(--line);
   border-radius: 16px;
   background: var(--paper);
   box-shadow: 0 4px 12px rgba(107, 74, 58, 0.06);
+}
+/* card source carousel */
+.source-carousel { display: flex; flex-direction: column; gap: 10px; }
+.source-tabs { position: relative; display: grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: 999px; background: var(--line); }
+.source-tab { position: relative; z-index: 1; min-height: 40px; padding: 6px 12px; border: 0; border-radius: 999px; background: none; font-weight: 800; font-size: 14px; color: var(--bark-muted); transition: color .25s; }
+.source-tab.active { color: var(--bark); }
+.source-tab:focus-visible { outline: 3px solid var(--periwinkle); outline-offset: 2px; }
+.source-thumb { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: 999px; background: var(--paper); box-shadow: 0 2px 6px rgba(107, 74, 58, .15); transition: transform .35s var(--spring, ease); }
+.source-stage { overflow: hidden; }
+.source-dots { display: flex; justify-content: center; gap: 8px; }
+.dot { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 999px; background: var(--line); transition: width .25s, background .25s; }
+.dot.active { width: 22px; background: var(--mint-deep); }
+.slide-left-enter-active, .slide-left-leave-active, .slide-right-enter-active, .slide-right-leave-active { transition: transform .22s ease, opacity .22s ease; }
+.slide-left-enter-from, .slide-right-leave-to { transform: translateX(40px); opacity: 0; }
+.slide-left-leave-to, .slide-right-enter-from { transform: translateX(-40px); opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .source-thumb, .slide-left-enter-active, .slide-left-leave-active, .slide-right-enter-active, .slide-right-leave-active { transition: none; }
 }
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
@@ -604,7 +653,7 @@ h4 { margin: 0; font-family: var(--f-display); font-weight: 500; font-size: 18px
 input, textarea, :deep(.suggest-field) { /* .suggest-field: SuggestInput's input */
   width: 100%;
   padding: 10px 12px;
-  border: 2px solid var(--linen);
+  border: 2px solid var(--line);
   border-radius: 10px;
   background: var(--paper);
   font-size: 15px;
@@ -666,7 +715,7 @@ button.sp-chip { cursor: pointer; }
   min-height: 52px;
   margin: 0;
   padding: 8px 10px;
-  border: 2px solid var(--linen);
+  border: 2px solid var(--line);
   border-radius: 12px;
   background: var(--sheet);
 }
@@ -690,7 +739,7 @@ button.sp-chip { cursor: pointer; }
 .mini-btn {
   flex: none;
   padding: 4px 12px;
-  border: 2px solid var(--linen);
+  border: 2px solid var(--line);
   border-radius: 999px;
   background: var(--paper);
   font-weight: 700;
@@ -699,7 +748,7 @@ button.sp-chip { cursor: pointer; }
   color: var(--bark);
   cursor: pointer;
 }
-.mini-btn:hover:not(:disabled) { background: var(--linen); }
+.mini-btn:hover:not(:disabled) { background: var(--line); }
 .mini-btn:disabled { opacity: 0.5; cursor: default; }
 .mini-btn.primary { border-color: var(--leaf); background: var(--mint); }
 .mini-btn.danger { border-color: var(--berry); color: var(--berry-deep); }
@@ -712,7 +761,7 @@ button.sp-chip { cursor: pointer; }
   gap: 6px;
   margin-block: auto; /* centred in the spare height next to the taller builder */
   padding: 24px 16px;
-  border: 2px dashed var(--linen);
+  border: 2px dashed var(--line);
   border-radius: 16px;
   text-align: center;
   transition: border-color 0.15s ease, background 0.15s ease;
@@ -728,7 +777,7 @@ button.sp-chip { cursor: pointer; }
   flex: none;
   padding: 2px 6px;
   border-radius: 6px;
-  background: var(--linen);
+  background: var(--line);
   font-weight: 700;
   font-size: 11px;
   color: var(--bark);
@@ -759,7 +808,7 @@ button.sp-chip { cursor: pointer; }
 .arrow {
   width: 32px;
   height: 32px;
-  border: 2px solid var(--linen);
+  border: 2px solid var(--line);
   border-radius: 50%;
   background: var(--paper);
   font-family: var(--f-display);
@@ -810,7 +859,7 @@ button.sp-chip { cursor: pointer; }
   gap: 8px;
   min-height: 160px;
   padding: 12px;
-  border: 2px solid var(--linen);
+  border: 2px solid var(--line);
   border-radius: 24px;
   background: var(--paper);
   text-align: center;
@@ -827,21 +876,21 @@ button.sp-chip { cursor: pointer; }
 
 .progress-head { display: flex; justify-content: space-between; font-size: 14px; }
 .progress-head span { color: var(--bark-muted); }
-.track { height: 10px; border-radius: 999px; background: var(--linen); overflow: hidden; }
+.track { height: 10px; border-radius: 999px; background: var(--line); overflow: hidden; }
 .bar { height: 100%; border-radius: inherit; background: var(--mint); transition: width 0.3s ease; }
 .plant-form > .sticky-top {
   top: 0;
   z-index: 10;
   margin-inline: -24px;
   padding: 12px 24px;
-  border-bottom: 1px solid var(--linen);
+  border-bottom: 1px solid var(--line);
   background: var(--sheet);
 }
 .plant-form > .sticky-top .progress {
   height: 6px;
   margin: 8px 0;
   border-radius: 999px;
-  background: var(--linen);
+  background: var(--line);
 }
 .plant-form > .sticky-top .progress-fill {
   border-radius: inherit;
@@ -864,8 +913,8 @@ button.sp-chip { cursor: pointer; }
 .plant-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 var(--berry); }
 .plant-btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 var(--berry); }
 .plant-btn:disabled { opacity: 0.5; cursor: default; }
-.ghost-btn { background: transparent; border: 2px solid var(--linen); }
-.ghost-btn:hover { background: var(--linen); }
+.ghost-btn { background: transparent; border: 2px solid var(--line); }
+.ghost-btn:hover { background: var(--line); }
 
 @media (max-width: 575.98px) {
   .flash, .tiles { grid-template-columns: 1fr; }
@@ -881,10 +930,10 @@ button.sp-chip { cursor: pointer; }
   --dp-input-padding: 10px 30px 10px 12px;
   --dp-background-color: var(--paper);
   --dp-text-color: var(--bark);
-  --dp-border-color: var(--linen);
-  --dp-border-color-hover: var(--linen);
+  --dp-border-color: var(--line);
+  --dp-border-color-hover: var(--line);
   --dp-border-color-focus: var(--leaf);
-  --dp-menu-border-color: var(--linen);
+  --dp-menu-border-color: var(--line);
   --dp-primary-color: var(--leaf);
   --dp-icon-color: var(--bark-muted);
 }

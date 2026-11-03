@@ -117,18 +117,17 @@ function backToGarden() {
   gap: 16px;
   width: 100%;
   padding: 16px 20px;
-  border: 2px solid var(--line);
+  border: 1.5px solid var(--line);
   border-radius: 16px;
-  background: var(--paper);
+  background: #fff;
   color: var(--ink);
-  box-shadow: 0 4px 0 var(--line);
-  transition: transform 0.18s var(--spring), box-shadow 0.18s ease, border-color 0.18s ease;
+  transition: transform 0.25s var(--spring), border-color 0.25s ease;
 }
 
+/* same feel as the .sp-menu-btn side menu: thin border that darkens, a small nudge right */
 .goal-option:hover:not(:disabled) {
-  border-color: var(--peach);
-  box-shadow: 0 6px 0 var(--peach);
-  transform: translateY(-2px);
+  border-color: var(--ink-faint);
+  transform: translateX(3px);
 }
 
 .goal-option:focus-visible {
@@ -146,8 +145,8 @@ function backToGarden() {
   place-items: center;
   flex: 0 0 48px;
   height: 48px;
-  border-radius: 12px;
-  background: var(--sheet);
+  border-radius: 50%;
+  background: var(--sheet-2);
   font-size: 24px;
 }
 </style>

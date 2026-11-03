@@ -254,7 +254,7 @@ body[data-sky="night"] .sp-greet small, body[data-sky="dusk"] .sp-greet small, b
 /* vertical pill menu (cake reference: red active pill) */
 .sp-menu { display: grid; gap: var(--s-2); align-content: start; }
 .sp-menu-btn {
-  display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border: 1.5px solid var(--line); border-radius: 12px;
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border: 2px solid var(--line); border-radius: 12px;
   background: #fff; text-align: left; font-weight: 800; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft);
   transition: transform .25s var(--spring), background .25s, color .25s, border-color .25s, box-shadow .25s;
 }
