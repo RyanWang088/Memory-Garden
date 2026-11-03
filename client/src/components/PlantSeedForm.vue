@@ -4,9 +4,10 @@
 // Shown after the seed packet is dropped on the garden, and again (filled in) to edit a planted seed.
 // Emits 'save' with { title, subject, exam_name, exam_date, tags, cards } and 'cancel'.
 // Editing: each saved card keeps its id in the 'save' cards, so the server keeps that card's review progress.
-import { computed, markRaw, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, markRaw, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useGardenStore, examLabel } from '@/stores/garden'
 import { useFlowerStore } from '@/stores/flower'
+import { plantSpriteUrl, BLOOM_STAGE } from '@/lib/plantSprites'
 import { apiFetch } from '@/lib/http'
 import { tagColors, tagStyle } from '@/lib/tagColors'
 import { VueDatePicker } from '@vuepic/vue-datepicker'
@@ -19,6 +20,7 @@ const props = defineProps({
   error: { type: String, default: '' },
   seed: { type: Object, default: null }, // a planted seed to edit; null = planting a new one
   flower: { type: String, default: 'tulip' }, // flower id of the packet being planted (new seeds only)
+  color: { type: String, default: 'pink' }, // petal colour picked in the shed (new seeds only)
 })
 const emit = defineEmits(['save', 'cancel'])
 
@@ -326,6 +328,37 @@ const step = computed(() => {
   return 1
 })
 const stepText = ['Name your study set and subject.', 'Add at least one flashcard or upload a study document.', 'Review your cards, then plant it.']
+// header picture follows the progress: step 1 seed, step 2 sprout, step 3 the chosen flower in bloom
+const topArt = computed(() => (isEdit ? tulipSvg : plantSpriteUrl([1, 2, BLOOM_STAGE][step.value - 1], props.flower, props.color)))
+// seed and sprout are drawn small at the bottom of their 256px canvas (room left for the grown flower), so they get scaled up
+const smallArt = computed(() => !isEdit && step.value < 3)
+// once the progress bar sticks to the top of the scrolling panel, the header picture has scrolled out of view,
+// so a small copy shows beside "Step x of 3"
+const headerEl = ref(null)
+const stickyEl = ref(null)
+const headerHidden = ref(false)
+function scrollerTop(el) {
+  for (let p = el.parentElement; p; p = p.parentElement) {
+    if (/(auto|scroll)/.test(getComputedStyle(p).overflowY)) return p.getBoundingClientRect().top + p.clientTop // inside its border
+  }
+  return 0 // the window scrolls
+}
+function checkHeader() {
+  if (!headerEl.value || !stickyEl.value) return
+  const bar = stickyEl.value.getBoundingClientRect()
+  headerHidden.value = bar.top <= scrollerTop(stickyEl.value) + 1 && headerEl.value.getBoundingClientRect().bottom <= bar.top + 1
+}
+// capture: true also hears scrolls of the panel the form sits in, not just the window
+onMounted(() => {
+  if (isEdit) return
+  window.addEventListener('scroll', checkHeader, { capture: true, passive: true })
+  window.addEventListener('resize', checkHeader, { passive: true })
+  checkHeader()
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', checkHeader, { capture: true })
+  window.removeEventListener('resize', checkHeader)
+})
 
 const plantNote = computed(() => {
   if (examPast.value) return { error: true, text: 'Pick an exam date from today onwards, or leave it blank.' }
@@ -351,7 +384,7 @@ function save() {
 <template>
   <form class="plant-form" data-testid="plant-seed-form" @submit.prevent="save">
     <header class="top mt-4">
-      <img class="top-art" :src="tulipSvg" alt="" />
+      <img ref="headerEl" class="top-art" :class="{ small: smallArt }" :src="topArt" alt="" />
       <div v-if="isEdit">
         <h3>Edit seed</h3>
         <p class="text-body-small sub">Cards you keep stay as grown as they are.</p>
@@ -362,9 +395,12 @@ function save() {
       </div>
     </header>
     <!-- Progress (planting only: an edited seed already has everything) -->
-    <section v-if="!isEdit" class="sticky-top" data-testid="seed-progress">
+    <section v-if="!isEdit" ref="stickyEl" class="sticky-top" data-testid="seed-progress">
       <div class="progress-head">
-        <strong>Step {{ step }} of 3</strong>
+        <strong class="step-label">
+          Step {{ step }} of 3
+          <Transition name="mini-art"><img v-if="headerHidden" class="mini-art" :class="{ small: smallArt }" :src="topArt" alt="" /></Transition>
+        </strong>
         <span>{{ Math.round((step / 3) * 100) }}%</span>
       </div>
       <div class="progress" role="progressbar">
@@ -616,6 +652,7 @@ function save() {
 .top { display: flex; align-items: center; gap: 12px; }
 .top h3 { margin: 0; }
 .top-art { width: 48px; height: 56px; flex: none; }
+.top-art.small, .mini-art.small { transform: scale(2.2); transform-origin: 50% 98%; }
 .sub { margin: 0; color: var(--bark-muted); }
 h4 { margin: 0; font-family: var(--f-display); font-weight: 500; font-size: 18px; line-height: 24px; }
 
@@ -874,7 +911,11 @@ button.sp-chip { cursor: pointer; }
 .pair-count { font-weight: 700; font-size: 14px; color: var(--bark-muted); font-variant-numeric: tabular-nums; }
 .pair-actions { display: flex; gap: 8px; }
 
-.progress-head { display: flex; justify-content: space-between; font-size: 14px; }
+.progress-head { display: flex; align-items: center; justify-content: space-between; font-size: 14px; }
+.step-label { display: flex; align-items: center; gap: 8px; }
+.mini-art { width: 32px; height: 32px; margin: -6px 0; flex: none; object-fit: contain; }
+.mini-art-enter-active, .mini-art-leave-active { transition: opacity .2s ease, transform .2s ease; }
+.mini-art-enter-from, .mini-art-leave-to { opacity: 0; transform: scale(.6); }
 .progress-head span { color: var(--bark-muted); }
 .track { height: 10px; border-radius: 999px; background: var(--line); overflow: hidden; }
 .bar { height: 100%; border-radius: inherit; background: var(--mint); transition: width 0.3s ease; }
