@@ -255,28 +255,28 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
   display: grid; place-items: center;
   width: 36px; height: 36px; padding: 0;
   border: 0; border-radius: 50%;
-  background: var(--paper); color: var(--bark);
-  box-shadow: 0 3px 0 var(--linen);
+  background: var(--paper); color: var(--ink);
+  box-shadow: 0 3px 0 var(--line);
   transition: transform .15s, box-shadow .15s;
 }
-.nudge:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 0 var(--linen); }
-.nudge:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--linen); }
+.nudge:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 0 var(--line); }
+.nudge:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--line); }
 .nudge:disabled { opacity: .4; }
-.nudge:focus-visible, .quick-chip:focus-visible { outline: 3px solid var(--periwinkle); outline-offset: 2px; }
+.nudge:focus-visible, .quick-chip:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
 
 
 /* Classic / Deep work chips */
 .quick-chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 14px;
-  border: 2px solid var(--linen); border-radius: var(--r-pill);
-  background: var(--paper); color: var(--bark);
+  border: 2px solid var(--line); border-radius: var(--r-pill);
+  background: var(--paper); color: var(--ink);
   font-size: 14px;
   transition: border-color .15s, background .15s, transform .2s var(--spring);
 }
-.quick-chip span { color: var(--bark-muted); }
-.quick-chip:hover { border-color: var(--peri-soft); transform: translateY(-1px); }
-.quick-chip.active { border-color: var(--periwinkle); background: var(--peri-soft); }
+.quick-chip span { color: var(--ink-soft); }
+.quick-chip:hover { border-color: var(--leaf-soft); transform: translateY(-1px); }
+.quick-chip.active { border-color: var(--leaf); background: var(--leaf-soft); }
 
 /* timer settings card (label and dashed rows from theme.css) */
 .setting { padding: 8px 0; }
@@ -285,7 +285,7 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
 .setting .time-box { padding: 2px 0; border-radius: var(--r-sm); background: var(--sheet-2); }
 /* wider while typing, to fit "00h 25m 00s" */
 .time-box.editing { width: 124px; }
-.nudge.sm { width: 28px; height: 28px; box-shadow: 0 2px 0 var(--linen); }
+.nudge.sm { width: 28px; height: 28px; box-shadow: 0 2px 0 var(--line); }
 
 /* layout: one column below 1200px, three columns from 1200px */
 .session {

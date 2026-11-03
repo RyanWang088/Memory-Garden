@@ -9,7 +9,7 @@
    Sproutly design system — "garden journal"
    Layout concept: illustrated meadow scenery behind paper surfaces; one
    persistent top bar + a bottom dock (adapted from the cake-shop reference),
-   content sits on cream paper with washi tape, ink and highlighter details.
+   content sits on sheet paper with washi tape, ink and highlighter details.
    ========================================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700;800;900&display=swap');
 
@@ -36,7 +36,10 @@
   /* journal paper */
   --rule: #D7E3EA;
   --margin: #F0A9AE;
+  --paper: #FFFDF8;
   --line: #E7D6BF;
+  --peach: #F3A3AE;
+
 
   --f-display: 'Fraunces', 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
   --f-hand: 'Caveat', 'Segoe Print', 'Bradley Hand', cursive;
@@ -62,23 +65,6 @@
   --r-pill: 999px;
 
   /* shared app tokens */
-  --bark: var(--ink);
-  --bs-body-color: var(--ink);
-  --bark-muted: var(--ink-soft);
-  --paper: #FFFDF8;
-  --cream: var(--sheet);
-  --linen: var(--line);
-  --peach: #F3A3AE;
-  --mint: var(--leaf-soft);
-  --mint-deep: var(--leaf);
-  --periwinkle: var(--leaf);
-  --peri-soft: var(--leaf-soft);
-  --berry-ink: var(--berry-deep);
-  --shadow: rgba(46, 34, 28, .42);
-  --shadow-card: rgba(74, 54, 46, .18);
-  --font-heading: var(--f-display);
-  --font-body: var(--f-body);
-  --radius-pill: 12px;
   color-scheme: light;
 }
 
@@ -336,11 +322,11 @@ body[data-sky="night"] .sp-greet small, body[data-sky="dusk"] .sp-greet small, b
 .sp-score-pill {
   padding: 2px 14px;
   border-radius: 999px;
-  background: var(--mint);
-  color: var(--bark);
+  background: var(--leaf-soft);
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
-.sp-review-progress-fill { background: var(--mint-deep); transition: width .35s var(--spring); }
+.sp-review-progress-fill { background: var(--leaf); transition: width .35s var(--spring); }
 .sp-review-stat {
   display: flex;
   flex: 1 1 0;
@@ -349,10 +335,10 @@ body[data-sky="night"] .sp-greet small, body[data-sky="dusk"] .sp-greet small, b
   gap: 4px;
   max-width: 180px;
   padding: 14px 8px;
-  border: 2px solid var(--linen);
+  border: 2px solid var(--line);
   border-radius: 16px;
   background: var(--paper);
-  color: var(--bark-muted);
+  color: var(--ink-soft);
 }
 .sp-review-stat .text-stat { color: var(--ink); }
 .sp-claim-btn { justify-content: center; width: 100%; max-width: 420px; margin-top: 8px; }
@@ -362,14 +348,14 @@ body[data-sky="night"] .sp-greet small, body[data-sky="dusk"] .sp-greet small, b
   padding: 2px 8px;
   border-radius: 999px;
   background: var(--butter);
-  color: var(--bark);
+  color: var(--ink);
   font-family: var(--f-body);
   font-size: .75rem;
   font-weight: 800;
   letter-spacing: .04em;
   text-transform: uppercase;
 }
-.sp-empty-state { border: 1px dashed var(--linen); border-radius: 16px; background: var(--paper); } /*style empty state ltr and add to other error msg panels*/
+.sp-empty-state { border: 1px dashed var(--line); border-radius: 16px; background: var(--paper); } /*style empty state ltr and add to other error msg panels*/
 @media (max-width: 480px) {
   .sp-review-page { padding: 16px 8px 32px; }
   .sp-review-page.phone-card {

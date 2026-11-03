@@ -34,7 +34,7 @@ NEW   client/src/styles/theme.css
       - Meadow "scenery" moods.
       - Classes that would clash with Bootstrap or style.css have an "sp-" prefix.
       - The paper colour is --sheet. --paper stays the white card colour.
-      - The existing team tokens (--bark, --cream, --linen, --peach, --mint, --periwinkle, --berry-ink ...)
+      - The existing team tokens (--ink, --sheet, --line, --peach, --leaf-soft, --leaf, --berry-deep ...)
         are re-pointed at the new palette, so existing components follow it.
       - Defines --font-heading and --font-body, which were used but missing.
       - Honours "reduce motion".

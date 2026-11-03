@@ -4,7 +4,7 @@ import { onUnmounted, ref } from 'vue'
 // Confetti that falls over the whole page for a few seconds. The parent calls rain() through a template ref,
 // e.g. a review session scoring 75% or more. Hidden for users who prefer reduced motion.
 const CONFETTI_MS = 3000
-const CONFETTI_COLORS = ['var(--peach)', 'var(--mint-deep)', 'var(--berry)', 'var(--periwinkle)', 'var(--butter)', 'var(--lilac)']
+const CONFETTI_COLORS = ['var(--peach)', 'var(--leaf)', 'var(--berry)', 'var(--leaf)', 'var(--butter)', 'var(--lilac)']
 
 const pieces = ref([])
 let timer

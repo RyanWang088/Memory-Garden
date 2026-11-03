@@ -183,7 +183,7 @@ function backToGarden() {
         <header class="quiz-head d-flex flex-column gap-2">
           <div class="d-flex align-items-center gap-3">
             <button type="button" class="btn-close" aria-label="Quit and go back to garden" @click="backToGarden" />
-            <span class="sp-field flex-grow-1 bark-muted">Question {{ index + 1 }} of {{ total }}</span>
+            <span class="sp-field flex-grow-1 ink-soft">Question {{ index + 1 }} of {{ total }}</span>
             <span :key="correctCount" class="sp-score-pill text-button" :class="{ pop: correctCount }" :aria-label="`${correctCount} correct`">✓ {{ correctCount }}</span>
           </div>
           <div class="progress" role="progressbar" :aria-valuenow="scores.length" aria-valuemin="0" :aria-valuemax="total">
@@ -219,7 +219,7 @@ function backToGarden() {
             </span>
           </div>
           <div class="model-answer d-flex flex-column gap-1">
-            <span class="text-label-caption bark-muted">Model answer</span>
+            <span class="text-label-caption ink-soft">Model answer</span>
             <p class="sp-hand m-0">{{ current.answer }}</p>
           </div>
           <div class="quiz-end d-flex flex-column">
@@ -235,7 +235,7 @@ function backToGarden() {
         <ScoreRing :percent="accuracy" :tier="tier" />
         <div>
           <h1 class="m-0">{{ heading }}</h1>
-          <p class="bark-muted m-0">{{ correctCount }} of {{ total }} fully correct</p>
+          <p class="ink-soft m-0">{{ correctCount }} of {{ total }} fully correct</p>
         </div>
 
         <div class="d-flex gap-3 w-100 justify-content-center">
@@ -268,17 +268,17 @@ function backToGarden() {
 </template>
 
 <style scoped>
-.bark-muted {
-  color: var(--bark-muted);
+.ink-soft {
+  color: var(--ink-soft);
 }
 
 .answer-box {
   width: 100%;
   padding: 14px 16px;
-  border: 2px solid var(--linen);
+  border: 2px solid var(--line);
   border-radius: 16px;
   background: var(--paper);
-  color: var(--bark);
+  color: var(--ink);
   resize: vertical;
 }
 
@@ -291,11 +291,11 @@ function backToGarden() {
 
 .answer-box:focus {
   outline: none;
-  border-color: var(--periwinkle);
+  border-color: var(--leaf);
 }
 
 .answer-box:disabled {
-  background: var(--cream);
+  background: var(--sheet);
 }
 
 .verdict {
@@ -306,8 +306,8 @@ function backToGarden() {
 }
 
 .verdict.is-correct {
-  border-color: var(--mint-deep);
-  background: var(--mint);
+  border-color: var(--leaf);
+  background: var(--leaf-soft);
 }
 
 .verdict.is-partial {
@@ -348,7 +348,7 @@ function backToGarden() {
 
 .model-answer {
   padding: 16px 20px;
-  border: 2px dashed var(--linen);
+  border: 2px dashed var(--line);
   border-radius: 16px;
   background: var(--paper);
 }

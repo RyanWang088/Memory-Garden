@@ -89,7 +89,7 @@ function onKeydown(e) {
   margin: 0;
   padding: 4px;
   list-style: none;
-  border: 2px solid var(--linen);
+  border: 2px solid var(--line);
   border-radius: 10px;
   background: var(--paper);
   box-shadow: 0 8px 20px rgba(107, 74, 58, 0.14);
@@ -99,10 +99,10 @@ function onKeydown(e) {
   padding: 8px 10px;
   border-radius: 6px;
   font-size: 15px;
-  color: var(--bark);
+  color: var(--ink);
   cursor: pointer;
   overflow-wrap: anywhere;
 }
 
-.suggest-option.active { background: var(--peri-soft); }
+.suggest-option.active { background: var(--leaf-soft); }
 </style>

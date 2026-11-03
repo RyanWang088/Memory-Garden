@@ -369,7 +369,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .plant-info { position: absolute; top: 0; left: 0; pointer-events: none; }
 .plant-info-details {
   position: absolute; top: 0; left: 50%; width: max-content; max-width: 200px;
-  padding: 6px 12px; border-radius: 999px; background: var(--cream);
+  padding: 6px 12px; border-radius: 999px; background: var(--sheet);
   opacity: 0; visibility: hidden; transform: translate(-50%, -6px);
   transition: opacity .2s ease, transform .35s var(--spring), visibility 0s linear .35s;
 }
@@ -379,7 +379,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 }
 .plant-info-details::after {
   position: absolute; top: -7px; left: 50%; width: 0; height: 0;
-  border-bottom: 8px solid var(--cream);
+  border-bottom: 8px solid var(--sheet);
   border-right: 8px solid transparent; border-left: 8px solid transparent;
   content: ''; transform: translateX(-50%);
 }

@@ -117,11 +117,11 @@ function backToGarden() {
   gap: 16px;
   width: 100%;
   padding: 16px 20px;
-  border: 2px solid var(--linen);
+  border: 2px solid var(--line);
   border-radius: 16px;
   background: var(--paper);
-  color: var(--bark);
-  box-shadow: 0 4px 0 var(--linen);
+  color: var(--ink);
+  box-shadow: 0 4px 0 var(--line);
   transition: transform 0.18s var(--spring), box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
@@ -132,7 +132,7 @@ function backToGarden() {
 }
 
 .goal-option:focus-visible {
-  outline: 3px solid var(--periwinkle);
+  outline: 3px solid var(--leaf);
   outline-offset: 3px;
 }
 
@@ -147,7 +147,7 @@ function backToGarden() {
   flex: 0 0 48px;
   height: 48px;
   border-radius: 12px;
-  background: var(--cream);
+  background: var(--sheet);
   font-size: 24px;
 }
 </style>

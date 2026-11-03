@@ -611,7 +611,7 @@ input, textarea, :deep(.suggest-field) { /* .suggest-field: SuggestInput's input
   color: var(--bark);
   resize: vertical;
 }
-input:focus, textarea:focus, :deep(.suggest-field:focus) { border-color: var(--periwinkle); outline: none; }
+input:focus, textarea:focus, :deep(.suggest-field:focus) { border-color: var(--leaf); outline: none; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .colours { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -668,20 +668,20 @@ button.sp-chip { cursor: pointer; }
   padding: 8px 10px;
   border: 2px solid var(--linen);
   border-radius: 12px;
-  background: var(--cream);
+  background: var(--sheet);
 }
-.tile.correct { border-color: var(--mint-deep); background: var(--mint); }
+.tile.correct { border-color: var(--leaf); background: var(--mint); }
 .tile-shape { flex: none; width: 18px; text-align: center; color: var(--bark-muted); font-size: 16px; line-height: 1; }
 .tile input { flex: 1; min-width: 0; padding: 6px 8px; border-width: 1px; border-color: transparent; background: var(--paper); font-size: 14px; }
-.tile input:focus { border-color: var(--periwinkle); }
+.tile input:focus { border-color: var(--leaf); }
 .tile-text { flex: 1; min-width: 0; font-weight: 700; font-size: 14px; overflow-wrap: anywhere; }
 .tile-text.trap { font-weight: 400; padding: 6px 0; }
 .tile-text.empty { font-weight: 400; color: var(--bark-muted); }
 .tile-check {
   flex: none; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
-  background: var(--mint-deep); color: var(--paper); font-weight: 800; font-size: 13px;
+  background: var(--leaf); color: var(--paper); font-weight: 800; font-size: 13px;
 }
-.tile-note { width: 100%; font-size: 12px; line-height: 16px; color: var(--berry-ink); }
+.tile-note { width: 100%; font-size: 12px; line-height: 16px; color: var(--berry-deep); }
 .count { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13px; line-height: 18px; color: var(--bark-muted); font-variant-numeric: tabular-nums; }
 .count.near { color: var(--butter-deep); font-weight: 700; }
 .count.over { color: var(--berry); font-weight: 700; }
@@ -701,8 +701,8 @@ button.sp-chip { cursor: pointer; }
 }
 .mini-btn:hover:not(:disabled) { background: var(--linen); }
 .mini-btn:disabled { opacity: 0.5; cursor: default; }
-.mini-btn.primary { border-color: var(--mint-deep); background: var(--mint); }
-.mini-btn.danger { border-color: var(--berry); color: var(--berry-ink); }
+.mini-btn.primary { border-color: var(--leaf); background: var(--mint); }
+.mini-btn.danger { border-color: var(--berry); color: var(--berry-deep); }
 .mini-btn.danger:hover { background: var(--berry); color: var(--paper); }
 
 .dropzone {
@@ -717,13 +717,13 @@ button.sp-chip { cursor: pointer; }
   text-align: center;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
-.dropzone.dragging { border-color: var(--periwinkle); background: var(--peri-soft); }
-.dropzone.full { background: var(--cream); color: var(--bark-muted); }
+.dropzone.dragging { border-color: var(--leaf); background: var(--leaf-soft); }
+.dropzone.full { background: var(--sheet); color: var(--bark-muted); }
 .drop-title { margin: 0; font-weight: 700; font-size: 15px; }
 .dropzone .ghost-btn { margin-top: 8px; }
 .dropzone .ghost-btn:disabled { opacity: 0.5; cursor: default; }
 .file-list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.file-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 10px 8px 10px 12px; border-radius: 10px; background: var(--cream); }
+.file-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 10px 8px 10px 12px; border-radius: 10px; background: var(--sheet); }
 .file-type {
   flex: none;
   padding: 2px 6px;
@@ -735,10 +735,10 @@ button.sp-chip { cursor: pointer; }
 }
 .file-type.type-pdf { background: var(--berry); color: var(--paper); }
 .file-type.type-ppt { background: var(--butter-deep); color: var(--paper); }
-.file-type.type-doc { background: var(--periwinkle); color: var(--paper); }
+.file-type.type-doc { background: var(--leaf); color: var(--paper); }
 .file-meta { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 14px; }
-.file-meta .failed { color: var(--berry-ink); }
+.file-meta .failed { color: var(--berry-deep); }
 .confirm {
   display: flex;
   flex-wrap: wrap;
@@ -769,7 +769,7 @@ button.sp-chip { cursor: pointer; }
   color: var(--bark);
   cursor: pointer;
 }
-.arrow:hover:not(:disabled) { border-color: var(--periwinkle); }
+.arrow:hover:not(:disabled) { border-color: var(--leaf); }
 .arrow:disabled { opacity: 0.4; cursor: default; }
 
 .loading {
@@ -819,7 +819,7 @@ button.sp-chip { cursor: pointer; }
 .face p { margin: 0; font-size: 15px; line-height: 22px; overflow-wrap: anywhere; }
 .face .big { font-family: var(--f-display); font-weight: 500; font-size: 18px; line-height: 24px; }
 .face textarea { flex: 1; text-align: left; }
-.subject-tag { align-self: flex-start; padding: 2px 10px; border-radius: 999px; background: var(--cream); font-weight: 700; font-size: 12px; }
+.subject-tag { align-self: flex-start; padding: 2px 10px; border-radius: 999px; background: var(--sheet); font-weight: 700; font-size: 12px; }
 .caption { color: var(--bark-muted); }
 .pair-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .pair-count { font-weight: 700; font-size: 14px; color: var(--bark-muted); font-variant-numeric: tabular-nums; }
@@ -835,7 +835,7 @@ button.sp-chip { cursor: pointer; }
   margin-inline: -24px;
   padding: 12px 24px;
   border-bottom: 1px solid var(--linen);
-  background: var(--cream);
+  background: var(--sheet);
 }
 .plant-form > .sticky-top .progress {
   height: 6px;
@@ -883,9 +883,9 @@ button.sp-chip { cursor: pointer; }
   --dp-text-color: var(--bark);
   --dp-border-color: var(--linen);
   --dp-border-color-hover: var(--linen);
-  --dp-border-color-focus: var(--periwinkle);
+  --dp-border-color-focus: var(--leaf);
   --dp-menu-border-color: var(--linen);
-  --dp-primary-color: var(--periwinkle);
+  --dp-primary-color: var(--leaf);
   --dp-icon-color: var(--bark-muted);
 }
 .dp--input.exam-input { border-width: 2px; }

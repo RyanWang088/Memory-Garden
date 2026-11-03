@@ -230,7 +230,7 @@ function backToGarden() {
       <!-- results -->
       <section v-else class="sp-review-results d-flex flex-column align-items-center text-center gap-3" data-testid="deck-results">        <div>
           <h1 class="m-0">🌱 Deck Complete!</h1>
-          <p class="bark-muted m-0">You went through {{ totalCards }} cards.</p>
+          <p class="ink-soft m-0">You went through {{ totalCards }} cards.</p>
         </div>
 
         <div class="stats d-flex flex-wrap gap-3 w-100 justify-content-center">
@@ -264,12 +264,12 @@ function backToGarden() {
 </template>
 
 <style scoped>
-.bark-muted {
-  color: var(--bark-muted);
+.ink-soft {
+  color: var(--ink-soft);
 }
 
 /* the session card fills the box the notebook sheet used to (the sheet stays for loading and results);
-   ruled like the Figma Flashcard: coral margin at x=56, periwinkle rules every 40px from y=110 */
+   ruled like the Figma Flashcard: coral margin at x=56, leaf rules every 40px from y=110 */
 .deck-card {
   --mx: 56px;
   position: relative;
@@ -451,10 +451,10 @@ function backToGarden() {
   flex: 1 1 120px;
   max-width: 160px;
   padding: 14px 8px;
-  border: 2px solid var(--linen);
+  border: 2px solid var(--line);
   border-radius: 16px;
   background: var(--paper);
-  color: var(--bark-muted);
+  color: var(--ink-soft);
 }
 
 .stat .text-stat { color: var(--ink); }

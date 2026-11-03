@@ -207,7 +207,7 @@ function backToGarden() {
         <header class="quiz-head d-flex flex-column gap-2">
           <div class="d-flex align-items-center gap-3">
             <button type="button" class="btn-close" aria-label="Quit and go back to garden" @click="backToGarden" />
-            <span class="sp-field flex-grow-1 bark-muted">Question {{ index + 1 }} of {{ total }}</span>
+            <span class="sp-field flex-grow-1 ink-soft">Question {{ index + 1 }} of {{ total }}</span>
             <span class="sp-score-pill text-button" data-testid="quiz-correct" :aria-label="`${correctCount} correct`">✓ {{ correctCount }}</span>
           </div>
           <div class="progress" role="progressbar" :aria-valuenow="answered" aria-valuemin="0" :aria-valuemax="total">
@@ -253,7 +253,7 @@ function backToGarden() {
 
         <div>
           <h1 class="m-0">{{ heading }}</h1>
-          <p class="bark-muted m-0">Your Score: {{ correctCount }}/{{ total }}</p>
+          <p class="ink-soft m-0">Your Score: {{ correctCount }}/{{ total }}</p>
         </div>
 
         <div class="stats d-flex gap-3 w-100 justify-content-center">
@@ -286,8 +286,8 @@ function backToGarden() {
 </template>
 
 <style scoped>
-.bark-muted {
-  color: var(--bark-muted);
+.ink-soft {
+  color: var(--ink-soft);
 }
 
 /* header, question and answers all snap to the sheet's 44px rules: the header fills down to the
@@ -335,7 +335,7 @@ function backToGarden() {
 }
 
 .option:focus-visible {
-  outline: 3px solid var(--periwinkle);
+  outline: 3px solid var(--leaf);
   outline-offset: 2px;
   border-radius: 8px;
 }

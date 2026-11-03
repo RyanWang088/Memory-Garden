@@ -460,9 +460,9 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
 .goal-title { margin: 0; text-align: center; font-family: var(--f-display); font-weight: 600; font-size: 1.75rem; line-height: 1.3; letter-spacing: -.01em; }
 .goal-sub { margin: 0; font-size: 14px; line-height: 22px; color: var(--ink-soft); }
 .goal-dialog > .goal-sub { margin-top: -12px; text-align: center; }
-.goal-option { display: flex; align-items: center; gap: 16px; padding: 16px 20px; border: 2px solid var(--linen); border-radius: 16px; background: var(--paper); color: var(--bark); box-shadow: 0 4px 0 var(--linen); }
+.goal-option { display: flex; align-items: center; gap: 16px; padding: 16px 20px; border: 2px solid var(--line); border-radius: 16px; background: var(--paper); color: var(--ink); box-shadow: 0 4px 0 var(--line); }
 .goal-option.pick { animation: goal-pick 5s ease infinite; }
-.goal-icon { display: grid; place-items: center; flex: 0 0 48px; height: 48px; border-radius: 12px; background: var(--cream); font-size: 24px; }
+.goal-icon { display: grid; place-items: center; flex: 0 0 48px; height: 48px; border-radius: 12px; background: var(--sheet); font-size: 24px; }
 .goal-text { display: flex; flex-direction: column; }
 .goal-name { font-family: var(--f-body); font-weight: 600; font-size: 1.05rem; line-height: 1.4; }
 @keyframes goal-open { 0%, 24% { opacity: 0; transform: translateY(24px) scale(.94); } 30%, 88% { opacity: 1; transform: none; } 94%, 100% { opacity: 0; transform: translateY(10px); } }

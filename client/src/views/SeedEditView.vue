@@ -64,8 +64,8 @@ function cancel() {
   max-height: calc(100vh - 48px);
   overflow-y: auto;
   padding: 24px;
-  background: var(--cream);
-  border: 2px solid var(--bark);
-  border-radius: var(--radius-pill);
+  background: var(--sheet);
+  border: 2px solid var(--ink);
+  border-radius: 10px;
 }
 </style>

@@ -182,11 +182,11 @@ async function deleteAccount() {
 
 <style scoped>
 .profile-page { max-width: 1400px; padding: 24px 16px calc(var(--dock-h) + 48px); }
-.eyebrow { color: var(--bark-muted); }
+.eyebrow { color: var(--ink-soft); }
 .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .stat {
   display: flex; flex-direction: column; gap: 2px; padding: 14px 16px;
-  background: var(--paper); border: 2px solid var(--linen); border-radius: 14px; box-shadow: 0 4px 0 var(--bark);
+  background: var(--paper); border: 2px solid var(--line); border-radius: 14px; box-shadow: 0 4px 0 var(--ink);
 }
 /* account & settings */
 .settings { display: grid; gap: 10px; padding: 18px; border-radius: 22px; background: var(--sheet); box-shadow: var(--shadow-2); }

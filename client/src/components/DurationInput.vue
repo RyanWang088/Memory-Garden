@@ -87,6 +87,6 @@ function cancel(e) {
   cursor: pointer;
 }
 .duration-input:focus { outline: none; }
-.duration-input.editing { text-decoration: underline 3px var(--periwinkle); text-underline-offset: 10px; cursor: text; }
-.duration-input.empty { color: var(--bark-muted); }
+.duration-input.editing { text-decoration: underline 3px var(--leaf); text-underline-offset: 10px; cursor: text; }
+.duration-input.empty { color: var(--ink-soft); }
 </style>

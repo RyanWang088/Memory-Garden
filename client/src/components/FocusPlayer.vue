@@ -130,13 +130,13 @@ onBeforeUnmount(() => {
   border: 0;
   border-radius: 20px;
   background: var(--sheet);
-  box-shadow: 0 10px 30px -8px var(--shadow-card);
+  box-shadow: 0 10px 30px -8px var(--shadow-2);
   cursor: grab;
   touch-action: none; /* on phones, dragging moves the player instead of scrolling the page */
   user-select: none;
 }
 .focus-player[style] { right: auto; bottom: auto; }
-.focus-player.dragging { cursor: grabbing; box-shadow: 0 16px 36px -8px var(--shadow); }
+.focus-player.dragging { cursor: grabbing; box-shadow: 0 16px 36px -8px var(--shadow-1); }
 /* a seed is being planted: fade and let the pointer reach the garden underneath */
 .focus-player.pass-through { pointer-events: none; opacity: .4; transition: opacity .15s; }
 
@@ -162,12 +162,12 @@ onBeforeUnmount(() => {
   transition: transform .1s;
 }
 .toggle:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--berry); }
-.open { color: var(--bark-muted); text-decoration: none; font-size: 18px; }
+.open { color: var(--ink-soft); text-decoration: none; font-size: 18px; }
 .hide { display: grid; place-items: center; padding: 0; border: 0; background: none; }
-.open:hover { color: var(--bark); }
+.open:hover { color: var(--ink); }
 
 /* progress bar: butter while focusing, green on a break */
-.bar { height: 6px; margin-top: 8px; border-radius: var(--r-pill); background: var(--peri-soft); overflow: hidden; }
+.bar { height: 6px; margin-top: 8px; border-radius: var(--r-pill); background: var(--leaf-soft); overflow: hidden; }
 .bar span { display: block; height: 100%; background: var(--butter-deep); transition: width .25s linear; }
-.focus-player.break .bar span { background: var(--mint-deep); }
+.focus-player.break .bar span { background: var(--leaf); }
 </style>

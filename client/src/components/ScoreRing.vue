@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 // The score ring at the top of a review session's results (Multiple Choice Quiz, Short Structured Mode).
-// tier: 'high' | 'mid' | 'low' colours it mint / butter / berry.
+// tier: 'high' | 'mid' | 'low' colours it leaf-soft / butter / berry.
 const props = defineProps({
   percent: { type: Number, required: true },
   tier: { type: String, required: true },
@@ -44,7 +44,7 @@ const ringOffset = computed(() => RING_LENGTH * (1 - props.percent / 100))
 }
 
 .ring-track {
-  stroke: var(--linen);
+  stroke: var(--line);
 }
 
 .ring-fill {
@@ -62,10 +62,10 @@ const ringOffset = computed(() => RING_LENGTH * (1 - props.percent / 100))
   letter-spacing: -.02em;
 }
 
-.tier-high .ring-fill { stroke: var(--mint-deep); }
-.tier-high .ring-label { color: var(--mint-deep); }
+.tier-high .ring-fill { stroke: var(--leaf); }
+.tier-high .ring-label { color: var(--leaf); }
 .tier-mid .ring-fill { stroke: var(--butter-deep); }
 .tier-mid .ring-label { color: var(--butter-deep); }
 .tier-low .ring-fill { stroke: var(--berry); }
-.tier-low .ring-label { color: var(--berry-ink); }
+.tier-low .ring-label { color: var(--berry-deep); }
 </style>

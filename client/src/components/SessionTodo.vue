@@ -117,7 +117,7 @@ const reward = computed(() => {
 /* × shows on hover (always on touch screens) */
 .remove { border: 0; background: none; color: var(--ink-faint); font-size: 20px; line-height: 1; padding: 0 2px; opacity: 0; }
 .task:hover .remove, .remove:focus-visible { opacity: 1; }
-.remove:hover { color: var(--berry-ink); }
+.remove:hover { color: var(--berry-deep); }
 @media (hover: none) { .remove { opacity: 1; } }
 
 /* ↗ opens the seed's review */

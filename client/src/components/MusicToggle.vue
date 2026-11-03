@@ -50,7 +50,7 @@ const music = useMusicStore()
   transition: transform .15s;
 }
 .music-toggle:hover { transform: scale(1.08); }
-.music-toggle:focus-visible { outline: 3px solid var(--periwinkle); outline-offset: 2px; }
+.music-toggle:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
 .music-toggle img { width: 20px; height: 32px; object-fit: contain; transition: opacity .2s; }
 .music-slash { pointer-events: none; }
 

@@ -17,7 +17,7 @@ const props = defineProps({
 const emit = defineEmits(['unlock'])
 
 const ROWS = 3, PER_ROW = 6
-const VASE_COLORS = ['var(--peach)', 'var(--peri-soft)', 'var(--lilac)', 'var(--cream)', 'var(--butter)', 'var(--mint)']
+const VASE_COLORS = ['var(--peach)', 'var(--leaf-soft)', 'var(--lilac)', 'var(--sheet)', 'var(--butter)', 'var(--leaf-soft)']
 
 const rows = computed(() => {
   const bySlot = new Map(props.subjects.map(s => [s.shelf_slot, s]))
@@ -65,8 +65,8 @@ const canAfford = computed(() => props.coins >= SHELF_UNLOCK_PRICE)
   --stripe: #F6E6DA;
   display: flex; flex-direction: column; gap: 4px;
   padding: 24px 24px 20px;
-  border: 3px solid var(--linen); border-radius: 28px;
-  background: repeating-linear-gradient(90deg, var(--stripe) 0 40px, var(--linen) 40px 80px);
+  border: 3px solid var(--line); border-radius: 28px;
+  background: repeating-linear-gradient(90deg, var(--stripe) 0 40px, var(--line) 40px 80px);
 }
 .shelf-row { position: relative; }
 .slots {
@@ -81,18 +81,18 @@ const canAfford = computed(() => props.coins >= SHELF_UNLOCK_PRICE)
 .keepsake { position: relative; width: 100%; max-width: 110px; height: 100%; outline: none; }
 .bloom { position: absolute; left: 50%; bottom: 30px; width: 100%; height: auto; max-height: 140px; transform: translateX(-50%); object-fit: contain; object-position: bottom; }
 .vase { position: absolute; left: 50%; bottom: 0; width: 46px; height: 54px; transform: translateX(-50%); }
-.vase path { fill: var(--vase); stroke: var(--bark); stroke-width: 2.5; stroke-linejoin: round; }
+.vase path { fill: var(--vase); stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
 .vase-rim { fill: var(--paper); opacity: .6; }
 
 /* subject name on hover / keyboard focus */
 .label {
   position: absolute; left: 50%; top: 0; z-index: 2; max-width: 160px; padding: 4px 10px;
-  border-radius: 999px; background: var(--paper); box-shadow: 0 2px 6px var(--shadow-card);
+  border-radius: 999px; background: var(--paper); box-shadow: 0 2px 6px var(--shadow-2);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   opacity: 0; transform: translate(-50%, 4px); transition: opacity .2s, transform .25s var(--spring); pointer-events: none;
 }
 .keepsake:hover .label, .keepsake:focus-visible .label { opacity: 1; transform: translate(-50%, 0); }
-.keepsake:focus-visible .vase path { stroke: var(--periwinkle); }
+.keepsake:focus-visible .vase path { stroke: var(--leaf); }
 
 /* a subject just moved here pops into its slot */
 .is-new { animation: keepsakeIn .8s var(--spring) .3s both; transform-origin: 50% 100%; }
@@ -117,10 +117,10 @@ const canAfford = computed(() => props.coins >= SHELF_UNLOCK_PRICE)
 .locked .plank { opacity: .7; }
 .unlock-pill {
   padding: 10px 24px; border: 0; border-radius: 999px;
-  background: var(--cream); color: var(--bark); box-shadow: 0 2px 6px var(--shadow-card);
+  background: var(--sheet); color: var(--ink); box-shadow: 0 2px 6px var(--shadow-2);
   transition: transform .15s ease, box-shadow .15s ease;
 }
-.unlock-pill:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 10px var(--shadow-card); }
+.unlock-pill:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 10px var(--shadow-2); }
 .unlock-pill:disabled { opacity: .6; cursor: not-allowed; }
 
 @media (max-width: 575.98px) {

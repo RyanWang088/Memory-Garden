@@ -66,7 +66,7 @@ const progress = computed(() => (music.duration ? (music.position / music.durati
 
 <style scoped>
 /* card label and spin animation come from theme.css */
-.bar { height: 6px; border-radius: var(--r-pill); background: var(--linen); overflow: hidden; }
+.bar { height: 6px; border-radius: var(--r-pill); background: var(--line); overflow: hidden; }
 .bar span { display: block; height: 100%; background: var(--leaf); transition: width .25s linear; }
 
 .ctrl {
@@ -79,14 +79,14 @@ const progress = computed(() => (music.duration ? (music.position / music.durati
   border: 1.5px solid var(--line);
   border-radius: 50%;
   background: var(--paper);
-  color: var(--bark);
+  color: var(--ink);
   font-family: var(--f-display);
   font-size: 18px;
   line-height: 1;
 }
 .ctrl.main { background: var(--leaf); border-color: var(--leaf); color: #fff; font-size: 13px; }
 .ctrl:disabled { opacity: .4; }
-.ctrl:not(:disabled):hover { background: var(--cream); }
+.ctrl:not(:disabled):hover { background: var(--sheet); }
 
 .volume { accent-color: var(--leaf); min-width: 60px; }
 
@@ -95,15 +95,15 @@ const progress = computed(() => (music.duration ? (music.position / music.durati
   align-items: center;
   padding: 3px 8px;
   transition: transform .2s var(--spring), border-color .15s;
-  border: 1px solid var(--linen);
+  border: 1px solid var(--line);
   border-radius: var(--r-pill);
-  background: var(--cream);
+  background: var(--sheet);
   font-size: 13px;
   line-height: 18px;
 }
 .mood:hover { transform: translateY(-1px); }
 .mood.active { border-color: var(--leaf); background: var(--leaf-soft); }
-.mood:focus-visible, .ctrl:focus-visible { outline: 3px solid var(--periwinkle); outline-offset: 2px; }
+.mood:focus-visible, .ctrl:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
 /* record with fixed dark groove colours */
 .vinyl { width: 50px; height: 50px; border-radius: 50%; flex: none; background: radial-gradient(circle, var(--berry) 0 17%, #2a201c 18% 30%, #3a2e29 31% 33%, #2a201c 34% 50%, #3a2e29 51% 53%, #2a201c 54%); box-shadow: var(--shadow-1); }
 .vinyl.spinning { animation: spin 3s linear infinite; }
