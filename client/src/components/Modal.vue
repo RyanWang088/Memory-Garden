@@ -1,29 +1,46 @@
 <script setup>
 import { nextTick, ref, watch } from 'vue'
-import { vBurst } from '@/lib/burst'
+import sproutArt from '@/assets/ui/sprout.svg'
 
+// One modal for the whole app: confirm dialogs, forms, choice prompts.
+//   default slot  -> body content between the message and the buttons (inputs, summaries…)
+//   #actions slot -> replaces the Cancel/Confirm footer ({ cancel, busy } are passed in)
+//   #icon slot    -> replaces the sprout picture
+// Enter inside an input submits the form, which emits 'confirm'.
 const props = defineProps({
   open: { type: Boolean, default: false },
   title: { type: String, required: true },
-  message: { type: String, required: true },
+  message: { type: String, default: '' },
+  variant: { type: String, default: 'default' }, // 'default' (leaf green) | 'danger' (berry red)
   confirmText: { type: String, default: 'Confirm' },
+  cancelText: { type: String, default: 'Cancel' },
   busyText: { type: String, default: 'Working…' },
   busy: { type: Boolean, default: false },
+  confirmDisabled: { type: Boolean, default: false },
   error: { type: String, default: '' },
+  sprout: { type: Boolean, default: false }, // show the sprout picture above the title
+  testid: { type: String, default: 'confirm-modal' },
+  confirmTestid: { type: String, default: 'confirm-action' },
 })
 const emit = defineEmits(['confirm', 'cancel'])
 
+const uid = `modal-${Math.random().toString(36).slice(2, 8)}`
 const backdrop = ref(null)
+const sheet = ref(null)
 
+// on open: focus the first field if there is one, otherwise the backdrop (so Esc works)
 watch(() => props.open, async (open) => {
-  if (open) {
-    await nextTick()
-    backdrop.value?.focus()
-  }
+  if (!open) return
+  await nextTick()
+  const first = sheet.value?.querySelector('input, textarea, select')
+  ;(first ?? backdrop.value)?.focus()
 })
 
 function cancel() {
   if (!props.busy) emit('cancel')
+}
+function submit() {
+  if (!props.busy && !props.confirmDisabled) emit('confirm')
 }
 </script>
 
@@ -32,66 +49,67 @@ function cancel() {
     <div
       v-if="open"
       ref="backdrop"
-      class="sp-modal"
-      data-testid="confirm-modal"
+      class="sp-modal modal-host"
+      :data-testid="testid"
       tabindex="-1"
       @click.self="cancel"
       @keydown.esc.stop.prevent="cancel"
     >
-      <section
-        class="sp-modal-sheet confirm-sheet px-3 px-sm-4"
-        role="alertdialog"
+      <form
+        ref="sheet"
+        class="sp-modal-sheet sheet"
+        :role="variant === 'danger' ? 'alertdialog' : 'dialog'"
         aria-modal="true"
-        aria-labelledby="confirmation-modal-title"
-        aria-describedby="confirmation-modal-message"
+        :aria-labelledby="`${uid}-title`"
+        :aria-describedby="message ? `${uid}-message` : undefined"
+        novalidate
+        @submit.prevent="submit"
       >
-        <span class="sp-tape overflow-visible" aria-hidden="true"></span>
-        <button
-          type="button"
-          class="sp-icon-btn sp-modal-close"
-          aria-label="Close confirmation"
-          :disabled="busy"
-          @click="cancel"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-        </button>
+        <span class="sp-tape" aria-hidden="true"></span>
+        <button type="button" class="btn-close sp-modal-close" aria-label="Close" :disabled="busy" @click="cancel" />
 
-        <img class="sprout" src="../assets/ui/sprout.svg" width="88" height="88" alt="" />
-        <h3 id="confirmation-modal-title" class="text-display m-0">{{ title }}</h3>
-        <p id="confirmation-modal-message" class="sp-lede message">{{ message }}</p>
+        <header class="text-center d-grid gap-2 justify-items-center">
+          <slot name="icon">
+            <img v-if="sprout" :src="sproutArt" alt="" class="mx-auto sprout" />
+          </slot>
+          <h3 :id="`${uid}-title`" class="text-display m-0">{{ title }}</h3>
+          <p v-if="message" :id="`${uid}-message`" class="text-body-small m-0">{{ message }}</p>
+        </header>
 
-        <slot />
+        <div v-if="$slots.default" class="d-grid gap-3">
+          <slot />
+        </div>
 
-        <p v-if="error" class="status-err m-0" role="alert">{{ error }}</p>
+        <p v-if="error" class="sp-field-msg m-0" role="alert">{{ error }}</p>
 
-        <footer class="actions d-flex flex-column-reverse flex-sm-row flex-wrap justify-content-center gap-3 w-100 mt-2">
-          <button type="button" class="sp-btn sp-btn-ghost w-100 w-sm-auto" :disabled="busy" @click="cancel">
-            Cancel
-          </button>
-          <button
-            v-burst
-            type="button"
-            class="sp-btn w-100 w-sm-auto"
-            data-testid="confirm-action"
-            :disabled="busy"
-            @click="emit('confirm')"
-          >
-            {{ busy ? busyText : confirmText }}
-          </button>
+        <footer class="d-flex flex-column-reverse flex-sm-row justify-content-sm-end flex-wrap gap-2">
+          <slot name="actions" :cancel="cancel" :busy="busy">
+            <button type="button" class="sp-btn sp-btn-ghost" :disabled="busy" @click="cancel">
+              {{ cancelText }}
+            </button>
+            <button
+              type="submit"
+              class="sp-btn"
+              :class="{ 'sp-btn-leaf': variant !== 'danger' }"
+              :disabled="busy || confirmDisabled"
+              :data-testid="confirmTestid"
+            >
+              {{ busy ? busyText : confirmText }}
+            </button>
+          </slot>
         </footer>
-      </section>
+      </form>
     </div>
   </Teleport>
 </template>
 
 <style scoped>
-.confirm-sheet {
-  width: min(440px, 100%);
-  display: flex; flex-direction: column; align-items: center; gap: var(--s-3);
-  text-align: center;
+/* theme.css gives .sp-modal / .sp-modal-sheet / .sp-tape / .sp-modal-close; these only fix what clashes */
+.modal-host { z-index: 1080; overflow-y: auto; place-items: safe center; } /* above the nav & dock; tall sheets scroll instead of clipping */
+.sheet {
+  display: grid; gap: var(--s-4);
+  width: min(460px, 100%); max-height: none;
+  overflow: visible; /* theme sets overflow:auto, which clipped the tape */
 }
-.sprout { animation: bob 2.4s ease-in-out infinite alternate; transform-origin: 50% 100%; }
-.message { margin: 0; }
-.status-err { color: var(--berry-deep); font-weight: 700; font-size: var(--fs-sm); }
-.sp-modal-close[disabled] { opacity: .5; pointer-events: none; }
+.sprout { width: 88px; height: 88px; }
 </style>

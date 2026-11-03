@@ -13,9 +13,9 @@ const toast = useToastStore()
 const router = useRouter()
 
 const tabs = [
-  { id: 'seeds', label: 'Seeds', img: 'seed' },
-  { id: 'study', label: 'Study', img: 'wateringCanIcon' },
-  { id: 'weed', label: 'Weed', img: 'shovel', action: true },
+  { id: 'seeds', label: 'Plant', img: 'seed',help:'Create study materials' },
+  { id: 'study', label: 'Grow', img: 'wateringCanIcon',help:'Revise study materials' },
+  { id: 'weed', label: 'Weed', img: 'shovel',help:'Delete study materials', action: true },
 ]
 
 function selectTab(tabId) {
@@ -25,7 +25,7 @@ function selectTab(tabId) {
     toast.show({
       type: 'success',
       title: 'Shovel Equipped',
-      message: 'Hover over or tap a plant to delete the flashcards.',
+      message: 'Tap a plant to delete the flashcards.',
     })
     return
   }
@@ -57,7 +57,7 @@ function onSeedEdit(seed) {
   <aside class="shed-panel" :class="{ 'is-collapsed': !ui.shedOpen }" data-testid="shed">
     <nav class="shed-tabs" role="tablist" aria-label="Garden shed">
       <button
-        v-for="t in tabs" :key="t.id" type="button" class="shed-tab"
+        v-for="t in tabs" :key="t.id" type="button" class="shed-tab" :title="t.help"
         :class="{ 'is-active': ui.shedOpen && (t.action ? ui.activeTool === 'shovel' : ui.shedTab === t.id), 'is-tool': t.action }"
         :role="t.action ? 'button' : 'tab'"
         :aria-selected="t.action ? undefined : ui.shedTab === t.id"

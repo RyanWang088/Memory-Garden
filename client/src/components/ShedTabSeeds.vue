@@ -29,8 +29,6 @@ const activeId = computed(() => (owned.value.some((s) => s.id === chosenId.value
 
 // the active packet previews the petal colour you pick
 const art = (seed) => foliageUrl(`${seed.id}-${seed.id === activeId.value ? ui.selectedSeedColor : 'pink'}-4`)
-const short = (seed) => Math.max(0, seed.price - flower.coins)
-const pct = (seed) => (seed.price > 0 ? Math.min(100, Math.round((flower.coins / seed.price) * 100)) : 100)
 const isPicked = (seed) => ui.seedPicked && ui.selectedSeedFlower === seed.id
 
 function pick(seed) {
@@ -45,34 +43,55 @@ watch(() => ui.shedOpen, (open) => { if (!open) chosenId.value = null })
 // before that cancels the press so the shed scrolls normally. A mouse is armed immediately.
 let press = null
 
+// Once armed, the whole touch must not become a scroll, even after the shed has closed or unmounted.
+// A document-level non-passive listener outlives the packet element.
+function blockScroll(e) { if (e.cancelable) e.preventDefault() }
+function unlockTouch() {
+  document.removeEventListener('touchmove', blockScroll)
+  window.removeEventListener('pointerup', unlockTouch)
+  window.removeEventListener('pointercancel', unlockTouch)
+}
+function lockTouch() {
+  document.addEventListener('touchmove', blockScroll, { passive: false })
+  window.addEventListener('pointerup', unlockTouch)
+  window.addEventListener('pointercancel', unlockTouch)
+}
+
 function onPressStart(e, seed) {
   if (seed.id !== activeId.value) return
   if (e.pointerType === 'mouse' && e.button !== 0) return
-  press = { seed, x: e.clientX, y: e.clientY, armed: e.pointerType === 'mouse', timer: null }
+  press = {
+    seed, x: e.clientX, y: e.clientY, armed: e.pointerType === 'mouse', timer: null,
+    el: e.currentTarget, pointerId: e.pointerId,
+  }
   if (!press.armed) press.timer = setTimeout(armPress, HOLD_MS)
-  e.currentTarget.setPointerCapture(e.pointerId) // keep receiving moves even if the pointer leaves the flower
+  e.currentTarget.setPointerCapture(e.pointerId)
 }
 
 function armPress() {
   if (!press) return
   press.armed = true
   armedId.value = press.seed.id
-  navigator.vibrate?.(15) // small buzz where supported
+  lockTouch() // from now on this touch can no longer scroll the page
+  navigator.vibrate?.(15)
 }
 
 function onPressMove(e) {
   if (!press) return
   if (Math.hypot(e.clientX - press.x, e.clientY - press.y) < DRAG_THRESHOLD) return
-  if (!press.armed) return endPress() // moved before the hold finished: the user is scrolling
-  const { seed } = press
-  endPress()
+  if (!press.armed) return endPress()
+  const { seed, el, pointerId } = press
+  endPress({ keepLock: true })
+  // hand the pointer over: stop routing events to the (about to close) shed
+  try { el.releasePointerCapture(pointerId) } catch { /* already released */ }
   startDrag(seed, e.pointerId)
 }
 
-function endPress() {
+function endPress({ keepLock = false } = {}) {
   clearTimeout(press?.timer)
   press = null
   armedId.value = null
+  if (!keepLock) unlockTouch() // a cancelled hold (or released finger) must not leave scrolling blocked
 }
 
 // once armed, stop the browser from turning the same touch into a scroll
@@ -146,7 +165,7 @@ onMounted(() => flower.load())
     <p v-if="flower.error && !flower.catalog.length" class="alert alert-danger py-2 mb-3" role="alert">
       {{ flower.error }}
     </p>
-    <div v-if="!flower.loading && !flower.flowers.length && !flower.error" class="product-empty text-center p-4">
+    <div v-if="!flower.loading && !flower.flowers.length && !flower.error" class="sp-empty-state text-center p-4">
       <span class="d-block mb-2" aria-hidden="true">🌱</span>
       <p class="text-body-small m-0">No seeds are available right now. Please check back soon.</p>
     </div>
@@ -203,12 +222,9 @@ onMounted(() => flower.load())
             </span>
           </div>
           <span class="sp-packet-name">{{ seed.name }} seed</span>
-          <div v-if="seed.status === 'too-expensive'" class="sp-short">
-            <div class="sp-meter-bar" role="progressbar" :aria-valuenow="flower.coins" aria-valuemin="0" :aria-valuemax="seed.price" :aria-label="`${seed.name} savings`"><i :style="{ width: `${pct(seed)}%` }"></i></div>
-            <small>{{ short(seed) }} more coin{{ short(seed) === 1 ? '' : 's' }}</small>
-          </div>
           <button
-            class="sp-btn sp-btn-sm buy-btn" :class="seed.status === 'too-expensive' ? 'sp-btn-ghost' : 'sp-btn-butter'" type="button"
+            title="Buy seed"
+            class="sp-btn sp-btn-sm mb-1" :class="seed.status === 'too-expensive' ? 'sp-btn-ghost' : 'sp-btn-butter'" type="button"
             :disabled="flower.buying !== null" :aria-label="`Buy ${seed.name} for ${seed.price} coins`"
             :data-testid="`buy-${seed.id}`" @click="buy(seed)"
           >

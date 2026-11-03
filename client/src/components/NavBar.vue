@@ -1,6 +1,6 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import MusicToggle from '@/components/MusicToggle.vue'
 import potArt from '@/assets/ui/pot.svg'
@@ -9,7 +9,6 @@ import potArt from '@/assets/ui/pot.svg'
 // The bottom dock (AppDock) repeats the places as big icons, and is the main nav on phones.
 const auth = useAuthStore()
 const route = useRoute()
-const router = useRouter()
 
 const NAV_ITEMS = [
   { to: 'planner', label: 'Planner', art: 'journal' },
@@ -17,22 +16,6 @@ const NAV_ITEMS = [
   { to: 'pomodoro', label: 'Focus', art: 'focus' },
 ]
 const current = computed(() => NAV_ITEMS.findIndex((i) => route.matched.some((r) => r.name === i.to)))
-
-// L / R keys cycle through the places (same shortcut as before)
-function step(dir) {
-  const n = NAV_ITEMS.length
-  const next = current.value === -1 ? 0 : (current.value + dir + n) % n
-  router.push({ name: NAV_ITEMS[next].to })
-}
-function onKeydown(event) {
-  if (event.target instanceof HTMLElement && (['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) || event.target.isContentEditable)) return
-  if (event.metaKey || event.ctrlKey || event.altKey) return
-  const key = event.key.toLowerCase()
-  if (key === 'l') step(-1)
-  if (key === 'r') step(1)
-}
-onMounted(() => window.addEventListener('keydown', onKeydown))
-onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
@@ -47,17 +30,18 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         <li v-for="(item, i) in NAV_ITEMS" :key="item.to">
           <RouterLink
             :to="{ name: item.to }" :aria-current="i === current ? 'page' : undefined"
-            :data-testid="`nav-${item.to}`" :title="`${item.label} (L / R to switch)`"
+            :data-testid="`nav-${item.to}`"
           >{{ item.label }}</RouterLink>
         </li>
       </ul>
 
       <div class="bar-right ms-auto ms-md-0">
         <span class="counter" data-testid="nav-streak" :title="`${auth.profile?.streak ?? 0} day streak`">
-          🔥 {{ auth.profile?.streak ?? 0 }}
+          <img src="../assets/ui/streak.svg" width="20"> {{ auth.profile?.streak ?? 0 }}
         </span>
-        <span class="counter" data-testid="nav-coins" title="Coins">
-          <img src="../assets/ui/coin.svg" alt="" width="22" height="22" /> {{ auth.profile?.coins ?? 0 }}
+        <span class="counter" data-testid="nav-coins" :title="`Coins: ${auth.profile?.coins ?? 0}`">
+          <img src="../assets/ui/coin.svg" alt="" width="22" height="22" />
+          <span class="coin-value">{{ auth.profile?.coins ?? 0 }}</span>
         </span>
         <MusicToggle />
         <RouterLink
@@ -109,6 +93,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   border-radius: 999px; background: var(--sheet-2); border: 1px solid var(--line);
   font-weight: 800; font-size: .85rem; font-variant-numeric: tabular-nums;
 }
+.coin-value { width: 7ch; overflow: hidden; text-align: right; white-space: nowrap; }
 .avatar {
   width: 38px; height: 38px; border-radius: 50%; place-items: center;
   background: var(--leaf-soft); border: 2px solid #fff; box-shadow: var(--shadow-1);
@@ -116,9 +101,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 }
 .avatar:hover { transform: rotate(-8deg) scale(1.06); }
 .avatar[aria-current="page"] { box-shadow: 0 0 0 3px var(--berry); }
-.topbar :deep(.music-toggle) { width: 34px; height: 34px; background: var(--sheet-2); border: 1px solid var(--line); box-shadow: none; }
-.topbar :deep(.music-toggle.on) { background: var(--leaf-soft); }
-
 @media (max-width: 767.98px) { .topbar-inner { gap: 10px; } }
 @media (max-width: 420px) {
   .counter { padding: 0 8px 0 4px; font-size: .78rem; gap: 3px; }

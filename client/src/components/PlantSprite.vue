@@ -75,7 +75,7 @@ const src = computed(() => props.ghost ? plantSpriteUrl(1) : plantSpriteUrl(show
 :global(.is-scrolling) .sprite { animation-play-state: paused; }
 
 .art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; transform-origin: 50% 96%; }
-.is-highlighted .art { filter: brightness(1.05) drop-shadow(0 0 8px var(--butter-soft)) drop-shadow(0 0 20px var(--butter-deep)); }
+.is-highlighted .art { filter: brightness(1.05) drop-shadow(0 0 20px var(--glow)) drop-shadow(0 0 10px var(--sun)); }
 /* ---- stage change: the new picture fades + springs in ON TOP of the old one, then the old one is removed.
         (old stays opaque until the new one has arrived, so you never see two stems at half opacity) ---- */
 .stage-enter-active { transition: opacity .5s ease, transform .7s cubic-bezier(.34, 1.56, .64, 1); }
@@ -142,24 +142,20 @@ const src = computed(() => props.ghost ? plantSpriteUrl(1) : plantSpriteUrl(show
   border-radius: 50%;
   animation: alertBob 1.6s ease-in-out infinite;
 }
-.plant[data-stage="1"] .alert-mark { 
+.plant[data-stage="1"] .alert-mark,
+.plant[data-stage="8"] .alert-mark { 
   bottom: 40px; 
 }
 .plant[data-stage="2"] .alert-mark,
-.plant[data-stage="8"] .alert-mark { 
+.plant[data-stage="7"] .alert-mark { 
   bottom: 65px; 
 }
 .plant[data-stage="3"] .alert-mark,
-.plant[data-stage="7"] .alert-mark { 
-  bottom: 95px; 
-}
 .plant[data-stage="6"] .alert-mark { 
-  bottom: 80px; 
+  bottom: 110px; 
 }
+.plant[data-stage="4"] .alert-mark,
 .plant[data-stage="5"] .alert-mark { 
-  bottom: 130px; 
-}
-.plant[data-stage="4"] .alert-mark { 
   bottom: 170px; /* Full bloom height */
 }
 @keyframes alertBob {

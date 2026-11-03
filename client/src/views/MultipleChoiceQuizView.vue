@@ -191,15 +191,15 @@ function backToGarden() {
 </script>
 
 <template>
-  <main class="review-page">
+  <main class="sp-review-page">
     <SceneryBackdrop :mood="mood" :options="{ seed: 31, tulips: narrow ? 3 : 10, butterflies: 2, horizon: 0.64 }" />
-    <div class="review-container review-sheet">
+    <div class="sp-review-container sp-review-sheet">
       <p v-if="loading" role="status">Getting your questions ready…</p>
 
       <section v-else-if="!questions.length" class="text-center d-flex flex-column align-items-center gap-3 pt-5">
         <img src="../assets/ui/sprout.svg" width="96" height="96" alt="">
-        <p class="text-danger" role="alert">{{ error }}</p>
-        <button type="button" class="btn-secondary text-button" @click="backToGarden">Back to garden</button>
+        <p class="text-berry-deep" role="alert">{{ error }}</p>
+        <button type="button" class="sp-btn sp-btn-butter text-button" @click="backToGarden">Back to garden</button>
       </section>
 
       <!-- quiz -->
@@ -207,11 +207,11 @@ function backToGarden() {
         <header class="quiz-head d-flex flex-column gap-2">
           <div class="d-flex align-items-center gap-3">
             <button type="button" class="btn-close" aria-label="Quit and go back to garden" @click="backToGarden" />
-            <span class="text-label-field flex-grow-1 bark-muted">Question {{ index + 1 }} of {{ total }}</span>
-            <span class="score-pill text-button" data-testid="quiz-correct" :aria-label="`${correctCount} correct`">✓ {{ correctCount }}</span>
+            <span class="sp-field flex-grow-1 bark-muted">Question {{ index + 1 }} of {{ total }}</span>
+            <span class="sp-score-pill text-button" data-testid="quiz-correct" :aria-label="`${correctCount} correct`">✓ {{ correctCount }}</span>
           </div>
           <div class="progress" role="progressbar" :aria-valuenow="answered" aria-valuemin="0" :aria-valuemax="total">
-            <div class="progress-fill review-progress-fill" :style="{ width: `${(answered / total) * 100}%` }" />
+            <div class="progress-fill sp-review-progress-fill" :style="{ width: `${(answered / total) * 100}%` }" />
           </div>
         </header>
 
@@ -226,7 +226,7 @@ function backToGarden() {
               :class="{ 'is-ticked': optionState(i) === 'is-correct', 'is-crossed': optionState(i) === 'is-wrong' }">
               <svg viewBox="0 0 30 30"><circle class="sp-check-ring" cx="15" cy="15" r="12" /><path class="sp-check-ink" d="M15 3.2C22 3 27.2 8.4 26.8 15.3 26.4 22 21 27 14.6 26.8 8 26.6 3 21.4 3.3 14.8 3.6 8.2 9 3.4 16 3.6" /><path class="sp-check-tick" d="M9.5 15.5l3.8 3.8 7.4-8.3" /><path class="sp-check-cross" d="M10.5 10.5l9 9" /><path class="sp-check-cross" d="M19.5 10.5l-9 9" /></svg>
             </span>
-            <span class="option-main"><span class="option-text">{{ option }}</span></span>
+            <span class="option-main"><span class="option-text sp-task-label" :class="{ 'is-struck': optionState(i) === 'is-wrong' }">{{ option }}</span></span>
           </button>
         </div>
 
@@ -235,17 +235,17 @@ function backToGarden() {
         </p>
 
         <footer v-if="chosen !== null" class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
-          <p class="text-body-strong m-0" role="status">
+          <p class=" m-0" role="status">
             {{ current.options[chosen] === current.answer ? '🌸 Correct!' : '🥀 Not quite. The right answer is ticked.' }}
           </p>
-          <button type="button" class="btn-primary border-0 text-button w-auto" data-testid="quiz-next" @click="next">
+          <button type="button" class="sp-btn border-0 text-button w-auto" data-testid="quiz-next" @click="next">
             {{ isLast ? 'See results' : 'Next question' }}
           </button>
         </footer>
       </section>
 
       <!-- results -->
-      <section v-else class="review-results d-flex flex-column align-items-center text-center gap-3" data-testid="quiz-results">
+      <section v-else class="sp-review-results d-flex flex-column align-items-center text-center gap-3" data-testid="quiz-results">
         <ScoreRing :percent="accuracy" :tier="tier" />
 
         <div>
@@ -254,24 +254,24 @@ function backToGarden() {
         </div>
 
         <div class="stats d-flex gap-3 w-100 justify-content-center">
-          <div class="review-stat">
-            <span class="text-label-field">Coins</span>
+          <div class="sp-review-stat">
+            <span class="sp-field">Coins</span>
             <span class="text-stat" data-testid="quiz-reward">+{{ reward }}</span>
           </div>
-          <div class="review-stat">
-            <span class="text-label-field">Accuracy</span>
+          <div class="sp-review-stat">
+            <span class="sp-field">Accuracy</span>
             <span class="text-stat">{{ accuracy }}%</span>
           </div>
-          <div class="review-stat">
-            <span class="text-label-field">Time</span>
+          <div class="sp-review-stat">
+            <span class="sp-field">Time</span>
             <span class="text-stat">{{ timeTaken }}</span>
           </div>
         </div>
 
         <p v-if="!reward" class="text-body-small m-0">Score 60% or more to earn coins.</p>
-        <p v-if="error" class="text-danger m-0" role="alert">{{ error }}</p>
+        <p v-if="error" class="text-berry-deep m-0" role="alert">{{ error }}</p>
 
-        <button type="button" class="btn-primary border-0 text-button claim-btn" data-testid="quiz-claim"
+        <button type="button" class="sp-btn border-0 text-button sp-claim-btn" data-testid="quiz-claim"
           :disabled="claiming" @click="claim">
           {{ claiming ? 'Claiming…' : 'Claim Rewards' }}
         </button>
@@ -344,24 +344,6 @@ function backToGarden() {
 .option-main {
   min-width: 0;
   line-height: 1.25;
-}
-
-/* inline so the strike-through follows wrapped lines */
-.option-text {
-  font-family: var(--f-hand);
-  font-weight: 600;
-  font-size: 1.42rem;
-  line-height: 1.25;
-  color: var(--ink);
-  overflow-wrap: anywhere;
-  background: linear-gradient(var(--berry-deep), var(--berry-deep)) no-repeat 0 58% / 0% 2px;
-  transition: background-size .45s var(--ease), color .3s;
-}
-
-/* a wrong pick gets struck through, like a done to-do */
-.option.is-wrong .option-text {
-  background-size: 100% 2px;
-  color: var(--ink-faint);
 }
 
 .option.is-dim {

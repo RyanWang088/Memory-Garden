@@ -355,25 +355,25 @@ function save() {
     <section class="card-box">
       <h4>Study set details</h4>
       <label class="field">
-        <span class="text-label-field">Study set name</span>
+        <span class="sp-field">Study set name</span>
         <input v-model="title" maxlength="80" placeholder="e.g. WAD2 Lab Test 1 Revision" data-testid="seed-title" />
       </label>
       <label class="field">
-        <span class="text-label-field">Subject</span>
+        <span class="sp-field">Subject</span>
         <input v-model="subject" maxlength="60" list="seed-subjects" placeholder="e.g. WAD2" data-testid="seed-subject" />
         <datalist id="seed-subjects">
           <option v-for="s in knownSubjects" :key="s" :value="s" />
         </datalist>
       </label>
       <label class="field">
-        <span class="text-label-field">Exam</span>
+        <span class="sp-field">Exam</span>
         <input v-model="examName" maxlength="40" list="seed-exams" placeholder="e.g. Midterm" data-testid="seed-exam-name" />
         <datalist id="seed-exams">
           <option v-for="e in knownExams" :key="e" :value="e" />
         </datalist>
       </label>
       <div class="field">
-        <label class="text-label-field" for="seed-exam-date">Exam date</label>
+        <label class="sp-field" for="seed-exam-date">Exam date</label>
         <VueDatePicker
           v-model="examDate" model-type="yyyy-MM-dd" :formats="{ input: 'dd-MM-yyyy' }"
           :text-input="{ format: 'dd-MM-yyyy' }" placeholder="DD-MM-YYYY" :min-date="minExamDate"
@@ -383,7 +383,7 @@ function save() {
         <span class="help" data-testid="seed-exam-help">{{ examHelp }}</span>
       </div>
       <label class="field">
-        <span class="text-label-field">Tags</span>
+        <span class="sp-field">Tags</span>
         <input
           v-model="tagInput" maxlength="20" placeholder="Type a tag, pick a colour, press Enter"
           data-testid="seed-tag-input" @keydown="onTagKey"
@@ -391,7 +391,7 @@ function save() {
       </label>
       <div class="colours" role="radiogroup" aria-label="Tag colour">
         <button
-          v-for="c in tagColors" :key="c.id" type="button" class="tag-pill"
+          v-for="c in tagColors" :key="c.id" type="button" class="sp-chip"
           :class="{ selected: tagColor === c.id }" :style="tagStyle(c.id, tagColor === c.id)"
           role="radio" :aria-checked="tagColor === c.id" :aria-label="c.label"
           :data-testid="`tag-color-${c.id}`" @click="tagColor = c.id"
@@ -400,7 +400,7 @@ function save() {
         </button>
       </div>
       <ul v-if="tags.length" class="chips">
-        <li v-for="t in tags" :key="t.name" class="tag-pill" :style="tagStyle(t.color)">
+        <li v-for="t in tags" :key="t.name" class="sp-chip" :style="tagStyle(t.color)">
           {{ t.name }}
           <button type="button" :aria-label="`Remove tag ${t.name}`" @click="tags = tags.filter((x) => x !== t)">×</button>
         </li>
@@ -417,16 +417,16 @@ function save() {
       </div>
       <div class="qa">
         <label class="field">
-          <span class="text-label-field">Question</span>
+          <span class="sp-field">Question</span>
           <textarea v-model="question" rows="3" maxlength="500" placeholder="How do you centre text horizontally in CSS?" data-testid="card-question" />
         </label>
         <label class="field">
-          <span class="text-label-field">Answer</span>
+          <span class="sp-field">Answer</span>
           <textarea v-model="answer" rows="3" maxlength="500" placeholder="Use text-align: center; on the element." data-testid="card-answer" />
         </label>
       </div>
       <p class="count" :class="{ near: totalCards >= NEAR_LIMIT && overBy <= 0, over: overBy > 0 }" data-testid="card-count">
-        <span class="badge text-label-caption">NEW</span>
+        <span class="sp-badge">NEW</span>
         <span>
           {{ totalCards }} / {{ MAX_CARDS }} cards in this set<template v-if="overBy > 0">, delete {{ overBy }} to plant</template><template v-else-if="isFull">, this seed is full</template><template v-else-if="totalCards >= NEAR_LIMIT">, you're near the limit</template>
         </span>
@@ -524,7 +524,7 @@ function save() {
         </div>
         <details v-if="tileTraps" class="quiz-options" data-testid="quiz-options">
           <summary>
-            <span class="text-label-field">Quiz options</span>
+            <span class="sp-field">Quiz options</span>
             <span class="help">Optional{{ trapCount ? ` · ${trapCount} trap ${trapCount === 1 ? 'answer' : 'answers'}` : '' }}</span>
           </summary>
           <div class="tiles">
@@ -618,8 +618,8 @@ input:focus, textarea:focus { border-color: var(--periwinkle); outline: none; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .colours { display: flex; flex-wrap: wrap; gap: 8px; }
 
-button.tag-pill { cursor: pointer; }
-.chips .tag-pill { padding-right: 4px; }
+button.sp-chip { cursor: pointer; }
+.chips .sp-chip { padding-right: 4px; }
 .chips button, .file-list .remove {
   flex: none;
   width: 24px;

@@ -340,7 +340,7 @@ onBeforeUnmount(() => {
           class="plant-info"
         >
           <div class="plant-info-details" :class="{ 'is-visible': isPlantInfoVisible(seed.id) }" :aria-hidden="!isPlantInfoVisible(seed.id)">
-            <p class="p-1 text-body-strong text-center my-auto">{{ seed.title }}</p>
+            <p class="p-1  text-center my-auto">{{ seed.title }}</p>
           </div>
         </div>
         <PlantSprite ref="ghostRef" ghost :blocked="ghostBlocked" />
@@ -354,6 +354,7 @@ onBeforeUnmount(() => {
     confirm-text="Delete plant"
     :busy="deletingSeed"
     :error="deleteError"
+    variant="danger"
     @confirm="confirmDelete"
     @cancel="cancelDelete"
   />

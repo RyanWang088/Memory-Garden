@@ -172,10 +172,10 @@ function backToGarden() {
 </script>
 
 <template>
-  <main class="review-page">
+  <main class="sp-review-page">
     <SceneryBackdrop :mood="mood" :options="{ seed: 31, tulips: narrow ? 3 : 10, butterflies: 2, horizon: 0.64 }" />
     <!-- flashcards: the card is the whole box -->
-    <div v-if="!loading && totalCards && !finished" class="review-container" data-testid="deck-session">
+    <div v-if="!loading && totalCards && !finished" class="sp-review-container" data-testid="deck-session">
       <div :key="current.uid" ref="cardEl" class="deck-card" :class="flipped ? 'is-back' : 'is-front'">
         <!-- tapping anywhere on the front flips it; the hint is the keyboard / screen reader control,
              and Space / Enter still work from anywhere (onKeydown) -->
@@ -188,7 +188,7 @@ function backToGarden() {
           <div class="deck-middle">
             <h2 class="flashcard-text m-0">{{ current.question }}</h2>
           </div>
-          <button type="button" class="hand flip-hint" data-testid="show-answer">
+          <button type="button" class="sp-hand flip-hint" data-testid="show-answer">
             tap the card to flip <span aria-hidden="true">↻</span>
           </button>
         </article>
@@ -200,11 +200,11 @@ function backToGarden() {
             <span class="deck-subject">{{ seed.title }}</span>
           </div>
           <div class="deck-middle">
-            <p class="hand m-0">Q: {{ current.question }}</p>
+            <p class="sp-hand m-0">Q: {{ current.question }}</p>
             <h2 class="flashcard-text m-0">{{ current.answer }}</h2>
           </div>
           <div class="d-flex flex-column gap-2 w-100">
-            <p class="text-body-strong m-0">How well did you remember it?</p>
+            <p class=" m-0">How well did you remember it?</p>
             <div class="d-flex gap-3">
               <button v-for="(r, i) in RATINGS" :key="r.value" type="button"
                 class="rate-btn flex-fill" :class="`rate-${r.value}`" :data-testid="`rate-${r.value}`"
@@ -218,43 +218,43 @@ function backToGarden() {
       </div>
     </div>
 
-    <div v-else class="review-container review-sheet">
+    <div v-else class="sp-review-container sp-review-sheet">
       <p v-if="loading" role="status">Shuffling your flashcards…</p>
 
       <section v-else-if="!totalCards" class="text-center d-flex flex-column align-items-center gap-3 pt-5">
         <img src="../assets/ui/sprout.svg" width="96" height="96" alt="">
-        <p class="text-danger" role="alert">{{ error }}</p>
-        <button type="button" class="btn-secondary text-button" @click="backToGarden">Back to garden</button>
+        <p class="text-berry-deep" role="alert">{{ error }}</p>
+        <button type="button" class="sp-btn sp-btn-butter text-button" @click="backToGarden">Back to garden</button>
       </section>
 
       <!-- results -->
-      <section v-else class="review-results d-flex flex-column align-items-center text-center gap-3" data-testid="deck-results">        <div>
+      <section v-else class="sp-review-results d-flex flex-column align-items-center text-center gap-3" data-testid="deck-results">        <div>
           <h1 class="m-0">🌱 Deck Complete!</h1>
           <p class="bark-muted m-0">You went through {{ totalCards }} cards.</p>
         </div>
 
         <div class="stats d-flex flex-wrap gap-3 w-100 justify-content-center">
           <div class="stat">
-            <span class="text-label-field">Forgot</span>
+            <span class="sp-field">Forgot</span>
             <span class="text-stat">{{ counts.forgot }}</span>
           </div>
           <div class="stat">
-            <span class="text-label-field">Hard</span>
+            <span class="sp-field">Hard</span>
             <span class="text-stat">{{ counts.hard }}</span>
           </div>
           <div class="stat">
-            <span class="text-label-field">Easy</span>
+            <span class="sp-field">Easy</span>
             <span class="text-stat">{{ counts.easy }}</span>
           </div>
           <div class="stat">
-            <span class="text-label-field">Time</span>
+            <span class="sp-field">Time</span>
             <span class="text-stat">{{ timeTaken }}</span>
           </div>
         </div>
 
-        <p v-if="error" class="text-danger m-0" role="alert">{{ error }}</p>
+        <p v-if="error" class="text-berry-deep m-0" role="alert">{{ error }}</p>
 
-        <button type="button" class="btn-primary border-0 text-button finish-btn" data-testid="deck-finish"
+        <button type="button" class="sp-btn border-0 text-button finish-btn" data-testid="deck-finish"
           :disabled="saving" @click="finishSession">
           {{ saving ? 'Saving…' : 'Water my plant' }}
         </button>
@@ -338,7 +338,7 @@ function backToGarden() {
   width: 100%;
 }
 
-/* same look the seed title had on the sheet (.review-sheet .text-label-field) */
+/* same look the seed title had on the sheet (.sp-review-sheet .sp-field) */
 .deck-subject {
   flex: 1;
   min-width: 0;
@@ -374,7 +374,7 @@ function backToGarden() {
   color: #3e3553;
 }
 
-.deck-card .hand {
+.deck-card .sp-hand {
   font-family: var(--f-hand);
   font-weight: 400;
   font-size: 19px;
@@ -472,7 +472,7 @@ function backToGarden() {
 @media (min-width: 481px) and (max-width: 1080px) {
   .stats { max-width: 560px; gap: 24px !important; }
   .stat { padding: 36px 12px; gap: 8px; }
-  .stat .text-label-field { font-size: 18px; line-height: 24px; }
+  .stat .sp-field { font-size: 18px; line-height: 24px; }
   .stat .text-stat { font-size: 44px; line-height: 48px; }
   .finish-btn { max-width: 560px; }
 }

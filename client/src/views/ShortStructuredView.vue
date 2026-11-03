@@ -167,15 +167,15 @@ function backToGarden() {
 </script>
 
 <template>
-  <main class="review-page" @keydown="onKeydown">
+  <main class="sp-review-page" @keydown="onKeydown">
     <SceneryBackdrop :mood="mood" :options="{ seed: 31, tulips: narrow ? 3 : 10, butterflies: 2, horizon: 0.64 }" />
-    <div class="review-container review-sheet">
+    <div class="sp-review-container sp-review-sheet">
       <p v-if="loading" role="status">Getting your questions ready…</p>
 
       <section v-else-if="!questions.length" class="text-center d-flex flex-column align-items-center gap-3 pt-5">
         <img src="../assets/ui/sprout.svg" width="96" height="96" alt="">
-        <p class="text-danger" role="alert">{{ error }}</p>
-        <button type="button" class="btn-secondary text-button" @click="backToGarden">Back to garden</button>
+        <p class="text-berry-deep" role="alert">{{ error }}</p>
+        <button type="button" class="sp-btn sp-btn-butter text-button" @click="backToGarden">Back to garden</button>
       </section>
 
       <!-- questions -->
@@ -183,25 +183,25 @@ function backToGarden() {
         <header class="quiz-head d-flex flex-column gap-2">
           <div class="d-flex align-items-center gap-3">
             <button type="button" class="btn-close" aria-label="Quit and go back to garden" @click="backToGarden" />
-            <span class="text-label-field flex-grow-1 bark-muted">Question {{ index + 1 }} of {{ total }}</span>
-            <span :key="correctCount" class="score-pill text-button" :class="{ pop: correctCount }" :aria-label="`${correctCount} correct`">✓ {{ correctCount }}</span>
+            <span class="sp-field flex-grow-1 bark-muted">Question {{ index + 1 }} of {{ total }}</span>
+            <span :key="correctCount" class="sp-score-pill text-button" :class="{ pop: correctCount }" :aria-label="`${correctCount} correct`">✓ {{ correctCount }}</span>
           </div>
           <div class="progress" role="progressbar" :aria-valuenow="scores.length" aria-valuemin="0" :aria-valuemax="total">
-            <div class="progress-fill review-progress-fill" :style="{ width: `${(scores.length / total) * 100}%` }" />
+            <div class="progress-fill sp-review-progress-fill" :style="{ width: `${(scores.length / total) * 100}%` }" />
           </div>
         </header>
 
         <h2 class="question m-0">{{ current.question }}</h2>
 
         <label class="d-flex flex-column gap-2">
-          <span class="text-label-field">Your answer</span>
-          <textarea v-model="response" class="answer-box hand" rows="5" :maxlength="MAX_RESPONSE" :disabled="marking || !!mark"
+          <span class="sp-field">Your answer</span>
+          <textarea v-model="response" class="answer-box sp-hand" rows="5" :maxlength="MAX_RESPONSE" :disabled="marking || !!mark"
             placeholder="Type your answer… (Ctrl+Enter to check)" data-testid="short-answer" />
         </label>
 
-        <p v-if="markError" class="text-danger mb-0" role="alert">{{ markError }}</p>
+        <p v-if="markError" class="text-berry-deep mb-0" role="alert">{{ markError }}</p>
 
-        <button v-if="!mark" type="button" class="btn-primary border-0 text-button w-auto align-self-end"
+        <button v-if="!mark" type="button" class="sp-btn border-0 text-button w-auto align-self-end"
           :disabled="marking" data-testid="short-check" @click="check">
           {{ marking ? 'Marking…' : markError ? 'Try again' : 'Check answer' }}
         </button>
@@ -209,24 +209,24 @@ function backToGarden() {
         <!-- marked -->
         <template v-else>
           <div class="verdict d-flex flex-column gap-2" :class="`is-${verdict.tone}`" role="status" data-testid="short-verdict">
-            <span class="text-body-strong">{{ verdict.label }} · {{ mark.score }}%</span>
-            <p class="hand m-0">{{ mark.feedback }}</p>
+            <span class="">{{ verdict.label }} · {{ mark.score }}%</span>
+            <p class="sp-hand m-0">{{ mark.feedback }}</p>
             <span v-if="verdict.tone === 'correct'" class="petals" aria-hidden="true">
               <span v-for="i in PETALS" :key="i" class="petal" :style="{ '--angle': `${(360 / PETALS) * i}deg` }" />
             </span>
           </div>
           <div class="model-answer d-flex flex-column gap-1">
             <span class="text-label-caption bark-muted">Model answer</span>
-            <p class="hand m-0">{{ current.answer }}</p>
+            <p class="sp-hand m-0">{{ current.answer }}</p>
           </div>
-          <button type="button" class="btn-primary border-0 text-button w-auto align-self-end" data-testid="short-next" @click="next">
+          <button type="button" class="sp-btn border-0 text-button w-auto align-self-end" data-testid="short-next" @click="next">
             {{ isLast ? 'See results' : 'Next question' }}
           </button>
         </template>
       </section>
 
       <!-- results -->
-      <section v-else class="review-results d-flex flex-column align-items-center text-center gap-3" data-testid="short-results">
+      <section v-else class="sp-review-results d-flex flex-column align-items-center text-center gap-3" data-testid="short-results">
         <ScoreRing :percent="accuracy" :tier="tier" />
         <div>
           <h1 class="m-0">{{ heading }}</h1>
@@ -234,24 +234,24 @@ function backToGarden() {
         </div>
 
         <div class="d-flex gap-3 w-100 justify-content-center">
-          <div class="review-stat">
-            <span class="text-label-field">Coins</span>
+          <div class="sp-review-stat">
+            <span class="sp-field">Coins</span>
             <span class="text-stat" data-testid="short-reward">+{{ reward }}</span>
           </div>
-          <div class="review-stat">
-            <span class="text-label-field">Average</span>
+          <div class="sp-review-stat">
+            <span class="sp-field">Average</span>
             <span class="text-stat">{{ accuracy }}%</span>
           </div>
-          <div class="review-stat">
-            <span class="text-label-field">Time</span>
+          <div class="sp-review-stat">
+            <span class="sp-field">Time</span>
             <span class="text-stat">{{ timeTaken }}</span>
           </div>
         </div>
 
         <p v-if="!reward" class="text-body-small m-0">Average 60% or more to earn coins (1.5× for typed answers).</p>
-        <p v-if="error" class="text-danger m-0" role="alert">{{ error }}</p>
+        <p v-if="error" class="text-berry-deep m-0" role="alert">{{ error }}</p>
 
-        <button type="button" class="btn-primary border-0 text-button claim-btn" data-testid="short-claim"
+        <button type="button" class="sp-btn border-0 text-button sp-claim-btn" data-testid="short-claim"
           :disabled="claiming" @click="claim">
           {{ claiming ? 'Claiming…' : 'Claim Rewards' }}
         </button>
@@ -345,7 +345,7 @@ function backToGarden() {
   background: var(--paper);
 }
 
-.btn-primary:disabled {
+.sp-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -354,7 +354,7 @@ function backToGarden() {
 .verdict.is-correct { animation: verdict-pop 0.45s var(--spring); }
 .verdict.is-partial { animation: leaf-wiggle 0.6s ease-in-out; }
 .verdict.is-wrong { animation: verdict-droop 0.4s ease-out; }
-.score-pill.pop { animation: pill-pop 0.4s var(--spring); }
+.sp-score-pill.pop { animation: pill-pop 0.4s var(--spring); }
 
 .petals {
   position: absolute;
@@ -406,7 +406,7 @@ function backToGarden() {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .verdict, .score-pill.pop { animation: none; }
+  .verdict, .sp-score-pill.pop { animation: none; }
   .petals { display: none; }
 }
 </style>

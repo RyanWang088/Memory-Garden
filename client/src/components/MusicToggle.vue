@@ -1,25 +1,42 @@
 <script setup>
 import { useMusicStore } from '@/stores/music'
 import GardenRadio from '@/components/GardenRadio.vue'
+import musicArt from '@/assets/ui/music.svg'
 
 // Music on/off button (navbar, or floating on pages without a navbar).
 // Hovering it (or tabbing to it) opens a mini Garden Radio.
+// When music is off, a diagonal line is drawn over the icon.
 defineProps({ floating: { type: Boolean, default: false } })
 const music = useMusicStore()
 </script>
 
 <template>
-  <span class="music-wrap" :class="{ floating }">
+  <span class="music-wrap position-relative d-inline-flex flex-shrink-0" :class="{ floating }">
     <button
-      type="button" class="music-toggle" :class="{ on: music.playing }" data-music-control
-      :aria-pressed="music.playing" :aria-label="music.playing ? 'Turn music off' : 'Turn music on'"
+      type="button"
+      class="music-toggle position-relative d-flex align-items-center justify-content-center flex-shrink-0 p-0 border-0 bg-transparent"
+      data-music-control
+      :aria-pressed="music.playing"
+      :aria-label="music.playing ? 'Turn music off' : 'Turn music on'"
       :title="music.playing ? `Playing: ${music.track?.title}` : 'Turn on lo-fi music'"
-      data-testid="music-toggle" @click="music.toggle()"
+      data-testid="music-toggle"
+      @click="music.toggle()"
     >
-      <span aria-hidden="true">{{ music.playing ? '🎵' : '🔇' }}</span>
+      <img :src="musicArt" alt="" :class="{ 'opacity-75 ': !music.playing }" />
+      <svg
+        v-if="!music.playing"
+        class="music-slash text-berry-deep position-absolute top-0 start-0 w-100 h-100"
+        viewBox="0 0 32 32"
+        aria-hidden="true"
+        data-testid="music-off-slash"
+      >
+        <line x1="8" y1="8" x2="25" y2="25" stroke="#fff" stroke-width="3" stroke-linecap="round" />
+        <line x1="8" y1="8" x2="25" y2="25" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
     </button>
+
     <!-- see-through padding lets the mouse move from the icon onto the pop-up -->
-    <div class="radio-pop" data-testid="music-pop">
+    <div class="radio-pop position-absolute pt-2" data-testid="music-pop">
       <GardenRadio compact class="sp-card radio-card" />
     </div>
   </span>
@@ -27,48 +44,30 @@ const music = useMusicStore()
 
 <style scoped>
 .music-toggle {
-  display: grid;
-  place-items: center;
   width: 32px;
   height: 32px;
-  flex: none;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: var(--cream);
-  font-size: 15px;
   line-height: 1;
-  transition: background .15s, transform .15s;
+  transition: transform .15s;
 }
 .music-toggle:hover { transform: scale(1.08); }
-.music-toggle.on { background: var(--mint); }
 .music-toggle:focus-visible { outline: 3px solid var(--periwinkle); outline-offset: 2px; }
+.music-toggle img { width: 20px; height: 32px; object-fit: contain; transition: opacity .2s; }
+.music-slash { pointer-events: none; }
 
-/* mini Garden Radio pop-up, below the icon */
-.music-wrap { position: relative; display: inline-flex; flex: none; }
 .radio-pop {
-  position: absolute;
   top: 100%;
   right: 0;
   z-index: 10;
-  padding-top: 8px;
   opacity: 0;
   visibility: hidden;
   transition: opacity .15s, visibility .15s;
 }
-/* opens on hover or keyboard focus (a mouse click doesn't keep it open) */
-.music-wrap:hover .radio-pop, .music-wrap:has(:focus-visible) .radio-pop { opacity: 1; visibility: visible; }
-/* phones can't hover: they use the Garden Radio card on the Focus page */
-@media (hover: none) { .radio-pop { display: none; } }
-.radio-card { width: 280px; } /* paper look from theme.css .sp-card */
+.music-wrap:hover .radio-pop,
+.music-wrap:has(:focus-visible) .radio-pop { opacity: 1; visibility: visible; }
+.radio-card { width: 280px; max-width: calc(100vw - 32px); } /* paper look from theme.css .sp-card */
 
-/* floating version: bottom-left corner; the pop-up opens to the right */
-.music-wrap.floating { position: fixed; left: 16px; bottom: 16px; z-index: 1040; }
-.floating .music-toggle {
-  width: 44px;
-  height: 44px;
-  font-size: 20px;
-  box-shadow: 0 6px 16px -6px var(--shadow-card);
-}
-.floating .radio-pop { top: auto; right: auto; bottom: 0; left: 100%; padding: 0 0 0 8px; }
+.music-wrap.floating { position: fixed !important; left: 16px; bottom: 16px; z-index: 1040; }
+.floating .radio-pop { top: auto; right: auto; bottom: 0; left: 100%; padding: 0 0 0 8px !important; }
+
+@media (hover: none) { .radio-pop { display: none; } }
 </style>

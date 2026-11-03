@@ -23,7 +23,7 @@ const progress = computed(() => (music.duration ? (music.position / music.durati
 <template>
   <section aria-label="Garden Radio" data-testid="garden-radio">
     <div v-if="!compact" class="d-flex justify-content-between align-items-baseline gap-2 mb-2">
-      <span id="radio-title" class="text-label-caption sp-card-label">Garden Radio</span>
+      <span id="radio-title" class="text-label-caption text-berry-deep">Garden Radio</span>
       <span class="text-body-small" data-testid="radio-match">{{ matchLabel }}</span>
     </div>
 

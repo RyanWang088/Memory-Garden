@@ -146,7 +146,7 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
 
           <!-- before Start: Start button -->
           <div v-if="idle" class="mt-4">
-            <button type="button" class="btn-primary border-0 text-button justify-content-center" data-testid="pomodoro-start" @click="start">
+            <button type="button" class="sp-btn border-0 text-button justify-content-center" data-testid="pomodoro-start" @click="start">
               <SproutIcon glyph="play" :size="16" /> Start
             </button>
           </div>
@@ -157,13 +157,13 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
               <img v-for="n in pomo.focusTotal" :key="n" :class="blockArt(n).cls" :src="blockArt(n).src" alt="" />
             </div>
             <div class="d-flex gap-3 mt-4">
-              <button v-if="pomo.running" type="button" class="btn-primary border-0 text-button justify-content-center" @click="pomo.pause()">
+              <button v-if="pomo.running" type="button" class="sp-btn border-0 text-button justify-content-center" @click="pomo.pause()">
                 <SproutIcon glyph="pause" :size="16" /> Pause
               </button>
-              <button v-else type="button" class="btn-primary border-0 text-button justify-content-center" @click="pomo.resume()">
+              <button v-else type="button" class="sp-btn border-0 text-button justify-content-center" @click="pomo.resume()">
                 <SproutIcon glyph="play" :size="16" /> Resume
               </button>
-              <button type="button" class="btn-secondary text-button" @click="pomo.endEarly()">End early</button>
+              <button type="button" class="sp-btn sp-btn-butter text-button" @click="pomo.endEarly()">End early</button>
             </div>
           </template>
         </div>
@@ -175,7 +175,7 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
 
         <!-- timer settings (only before Start) -->
         <section v-if="idle" class="sp-card side-card area-settings" aria-labelledby="settings-title" data-testid="pomodoro-setup">
-          <div id="settings-title" class="text-label-caption sp-card-label mb-3">Timer settings</div>
+          <div id="settings-title" class="text-label-caption text-berry-deep mb-3">Timer settings</div>
           <div class="d-flex gap-2 mb-2" role="radiogroup" aria-label="Focus rhythm">
             <button
               v-for="r in PRESETS" :key="r.key" type="button" role="radio" class="quick-chip flex-fill justify-content-center"
@@ -214,7 +214,7 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
             </div>
           </div>
           <!-- shown only after Start is pressed with times that aren't allowed -->
-          <p v-if="showError && pomo.setupError" class="text-body-small text-danger text-center mt-2 mb-0" role="alert" data-testid="pomodoro-error">{{ pomo.setupError }}</p>
+          <p v-if="showError && pomo.setupError" class="text-body-small text-berry-deep text-center mt-2 mb-0" role="alert" data-testid="pomodoro-error">{{ pomo.setupError }}</p>
           <p class="text-body-small text-center mt-2 mb-0">Tip: click a time to type it</p>
         </section>
       </div>
@@ -233,7 +233,7 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
             <br />You ticked off {{ tasksDone }} task{{ tasksDone === 1 ? '' : 's' }}.
           </template>
         </p>
-        <button v-burst type="button" class="btn-primary border-0 text-button justify-content-center mx-auto" @click="pomo.endSession()">
+        <button v-burst type="button" class="sp-btn border-0 text-button justify-content-center mx-auto" @click="pomo.endSession()">
           Start another
         </button>
       </section>
@@ -346,9 +346,7 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
 @keyframes bloom { from { transform: scale(0) rotate(-10deg); } }
 .done-card { margin-top: 4vh; padding: 30px; }
 
-.btn-primary { width: auto; min-width: 140px; order: 0; } /* global .btn-primary has order: 4 */
-.btn-secondary { min-height: 44px; }
-
+.sp-btn { width: auto; min-width: 140px; order: 0; } /* global .sp-btn has order: 4 */
 @media (prefers-reduced-motion: reduce) {
   .blocks img.now, .ring.paused .text-timer { animation: none; }
 }

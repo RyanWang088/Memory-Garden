@@ -59,7 +59,7 @@ Follow Consistent.md in the repo root.
 | `--linen` | `#F3E3D8` | Borders, tracks, segmented control background |
 | `--peach` | `#FFB5A7` | Primary button background |
 | `--berry` | `#F27A8E` | Primary button "lip", hover accents |
-| `--berry-ink` | `#A8304A` | Primary button text, errors (`.text-danger`) |
+| `--berry-ink` | `#A8304A` | Primary button text, errors (`.text-berry-deep`) |
 | `--butter` / `--butter-deep` | `#FFE484` / `#E0A93A` | Secondary button and its lip, badges |
 | `--mint` / `--mint-deep` | `#BFEBD6` / `#7FC9A6` | Progress fill, success |
 | `--periwinkle` / `--peri-soft` | `#8FA4FF` / `#E6EBFF` | Focus rings, avatar, text selection |
@@ -81,17 +81,17 @@ The fonts are **Fredoka** (headings, labels, numbers) and **Nunito** (body text)
 | `.text-stat` | Fredoka 600 | 28 / 32 | Big numbers (profile stats) |
 | `.text-timer` | Fredoka 500 | 64 / 64, tabular numbers | Pomodoro timer |
 | `p` | Nunito 400 | 16 / 26 | Body text |
-| `.text-body-strong` | Nunito 700 | 16 / 26 | Emphasised body text |
+| `.` | Nunito 700 | 16 / 26 | Emphasised body text |
 | `.text-body-small` | Nunito | 14 / 22, muted | Hints, metadata |
-| `.text-label-field` | Nunito 700 | 14 / 20 | Form labels |
+| `.sp-field` | Nunito 700 | 14 / 20 | Form labels |
 | `.text-label-caption` | Nunito 700 | 12 / 16, uppercase | Badges, tiny captions |
-| `.text-danger` | none | `--berry-ink` | Error messages |
+| `.text-berry-deep` | none | `--berry-ink` | Error messages |
 
 ### 2.4 Shared component classes
 
 | Class | What it is |
 |---|---|
-| `.btn-primary` | Peach pill button with a berry lip. Use with Bootstrap's `.btn`. |
+| `.sp-btn` | Peach pill button with a berry lip. Use with Bootstrap's `.btn`. |
 | `.btn-secondary` | Butter pill button with a butter-deep lip. Has a disabled state. |
 | `.counter` | Pill showing a number (coins, streak) |
 | `.avatar` | 32px round avatar |
@@ -107,7 +107,7 @@ The fonts are **Fredoka** (headings, labels, numbers) and **Nunito** (body text)
 
 - `.segmented-tab` uses `var(--font-heading)`, which is **not defined**. Add `--font-heading: 'Fredoka', sans-serif;` (and `--font-body`) to `:root`.
 - `.segmented-tab.is-active` uses `box-shadow: var(--shadow-card)`, but that token is a colour, so the shadow doesn't show. It needs offsets, e.g. `0 2px 6px var(--shadow-card)`.
-- `.btn-primary` has a fixed `width: 193px` and Figma leftovers (`order: 4`, `flex: none`). It also replaces Bootstrap's `.btn-primary`.
+- `.sp-btn` has a fixed `width: 193px` and Figma leftovers (`order: 4`, `flex: none`). It also replaces Bootstrap's `.sp-btn`.
 - These components still contain hard-coded hex colours: `Skybox.vue` (10), `FlowerShelf.vue` (4), `PlantSeedForm.vue` (4), `FocusPlayer.vue`, `SessionTodo.vue`, `PomodoroView.vue`. Skybox's sky gradients may need their own tokens.
 - `SEED_COLORS` lives in `tagColors.js`.
 

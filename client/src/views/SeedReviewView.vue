@@ -80,8 +80,8 @@ function backToGarden() {
         </button>
       </template>
       <template v-else>
-        <p class="text-danger" role="alert">{{ error }}</p>
-        <button type="button" class="btn-secondary text-button align-self-center" @click="backToGarden">Back to garden</button>
+        <p class="text-berry-deep" role="alert">{{ error }}</p>
+        <button type="button" class="sp-btn sp-btn-butter text-button align-self-center" @click="backToGarden">Back to garden</button>
       </template>
     </section>
   </main>

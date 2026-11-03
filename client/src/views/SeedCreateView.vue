@@ -74,10 +74,10 @@ function cancel() {
     <section class="seed-panel pt-0">
       <p v-if="loading" role="status">Loading your garden…</p>
       <template v-else-if="error && !validLocation">
-        <p class="text-danger" role="alert">{{ error }}</p>
+        <p class="text-berry-deep" role="alert">{{ error }}</p>
         <button type="button" class="btn btn-outline-secondary" @click="cancel">Back to garden</button>
       </template>
-      <p v-else-if="error && !garden.loaded" class="text-danger" role="alert">{{ error }}</p>
+      <p v-else-if="error && !garden.loaded" class="text-berry-deep" role="alert">{{ error }}</p>
       <PlantSeedForm v-else :busy="saving" :error="error" @save="save" @cancel="cancel" />
     </section>
   </main>

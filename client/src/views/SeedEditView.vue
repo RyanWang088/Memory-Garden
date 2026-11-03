@@ -50,7 +50,7 @@ function cancel() {
     <section class="seed-panel pt-0">
       <p v-if="loading" role="status">Loading your seed…</p>
       <template v-else-if="!seed">
-        <p class="text-danger" role="alert">{{ error || 'This seed could not be found in your garden.' }}</p>
+        <p class="text-berry-deep" role="alert">{{ error || 'This seed could not be found in your garden.' }}</p>
         <button type="button" class="btn btn-outline-secondary" @click="cancel">Back to garden</button>
       </template>
       <PlantSeedForm v-else :key="seed.id" :seed="seed" :busy="saving" :error="error" @save="save" @cancel="cancel" />

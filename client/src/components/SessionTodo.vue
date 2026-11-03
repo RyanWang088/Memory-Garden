@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { usePomodoroStore, coinsFor, MIN_COIN_MINUTES } from '@/stores/pomodoro'
 import { usePlannerStore, isoDay } from '@/stores/planner'
+import { burst } from '@/lib/burst'
 
 // To-do card on the Focus page, with the coin line:
 // - today's planner tasks (ticking one here ticks it in the planner; × only hides it for this session)
@@ -10,6 +11,7 @@ const pomo = usePomodoroStore()
 const planner = usePlannerStore()
 planner.load()
 const draft = ref('')
+const removing = ref(new Set())
 
 // planner tasks first, then this session's; ticked ones at the bottom
 const list = computed(() => {
@@ -25,13 +27,20 @@ const doneCount = computed(() => list.value.filter(t => t.done).length)
 // highlight the first unticked task
 const currentKey = computed(() => list.value.find(t => !t.done)?.key)
 
-function toggle(task) {
+function toggle(task, event) {
+  const wasDone = task.done
   if (task.fromPlanner) planner.toggleDone(task.id)
   else pomo.toggleTask(task.id)
+  if (!wasDone) burst(event.currentTarget)
 }
 function remove(task) {
-  if (task.fromPlanner) pomo.hidePlannerTask(task.id)
-  else pomo.removeTask(task.id)
+  if (removing.value.has(task.key)) return
+  removing.value = new Set(removing.value).add(task.key)
+  setTimeout(() => {
+    if (task.fromPlanner) pomo.hidePlannerTask(task.id)
+    else pomo.removeTask(task.id)
+    removing.value.delete(task.key)
+  }, 350)
 }
 
 function add() {
@@ -56,20 +65,23 @@ const reward = computed(() => {
   <section aria-labelledby="todo-title" data-testid="session-todo">
     <!-- header: label on the left, count on the right -->
     <div class="d-flex justify-content-between align-items-baseline gap-2 mb-2">
-      <span id="todo-title" class="text-label-caption sp-card-label" data-testid="todo-heading">To-do list</span>
+      <span id="todo-title" class="text-label-caption text-berry-deep" data-testid="todo-heading">To-do list</span>
       <span v-if="list.length" class="text-body-small" data-testid="todo-count">{{ doneCount }} / {{ list.length }} done</span>
     </div>
 
     <ul v-if="list.length" class="list-unstyled sp-rows mb-3">
       <li
         v-for="task in list" :key="task.key"
-        class="task d-flex align-items-center gap-2" :class="{ done: task.done, current: task.key === currentKey }"
+        class="task sp-task-row d-flex align-items-center gap-2"
+        :class="{ done: task.done, 'is-done': task.done, 'is-removing': removing.has(task.key), current: task.key === currentKey }"
       >
-        <input
-          :id="`task-${task.key}`" type="checkbox" class="form-check-input mt-0"
-          :checked="task.done" @change="toggle(task)"
-        />
-        <label :for="`task-${task.key}`" class="flex-fill">{{ task.text }}</label>
+        <button
+          type="button" class="sp-check" :class="{ 'is-ticked': task.done }" role="checkbox" :aria-checked="task.done"
+          :aria-label="`Mark “${task.text}” ${task.done ? 'not done' : 'done'}`" @click="toggle(task, $event)"
+        >
+          <svg viewBox="0 0 30 30" aria-hidden="true"><circle class="sp-check-ring" cx="15" cy="15" r="12" /><path class="sp-check-ink" d="M15 3.2C22 3 27.2 8.4 26.8 15.3 26.4 22 21 27 14.6 26.8 8 26.6 3 21.4 3.3 14.8 3.6 8.2 9 3.4 16 3.6" /><path class="sp-check-tick" d="M9.5 15.5l3.8 3.8 7.4-8.3" /></svg>
+        </button>
+        <span class="sp-task-label flex-fill">{{ task.text }}</span>
         <!-- a recommended review links to that seed's review page -->
         <RouterLink
           v-if="task.seedId" :to="{ name: 'seed-review', params: { id: task.seedId } }" class="review-link"
@@ -101,12 +113,6 @@ const reward = computed(() => {
 /* the current task gets a soft butter highlight (label and dashed rows from theme.css) */
 .task { padding: 8px; border-radius: var(--r-sm); }
 .task.current { background: var(--butter-soft); }
-.task label { cursor: pointer; overflow-wrap: anywhere; font-family: var(--f-body); color: var(--ink); }
-.task.done label { color: var(--ink-faint); text-decoration: line-through; }
-
-.form-check-input { width: 20px; height: 20px; border: 2px solid var(--ink-faint); border-radius: 50%; }
-.form-check-input:checked { background-color: var(--leaf); border-color: var(--leaf); }
-.form-check-input:focus { box-shadow: 0 0 0 .2rem var(--leaf-soft); }
 
 /* × shows on hover (always on touch screens) */
 .remove { border: 0; background: none; color: var(--ink-faint); font-size: 20px; line-height: 1; padding: 0 2px; opacity: 0; }

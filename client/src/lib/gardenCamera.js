@@ -9,7 +9,7 @@ export const FILL = 0.96
 export const MIN_SCALE = 0.6
 export const FAR_SPREAD = 0.7
 export const FAR_SIZE = 0.35
-export const MEADOW_HEIGHT = 0.65 // share of the view the meadow fills below the horizon; the rest is open sky
+export const MEADOW_HEIGHT = 0.55 // share of the view the meadow fills below the horizon; the rest is open sky
 
 export function createGardenCamera() {
   const camera = { viewWidth: 400, viewHeight: 700, scale: 1, contentWidth: 400, frontY: 0, radius: 0, horizonY: 0, scrollPos: 0, panX: 0, centerX: 0 }

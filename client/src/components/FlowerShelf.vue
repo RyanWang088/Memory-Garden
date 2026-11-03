@@ -41,7 +41,7 @@ const canAfford = computed(() => props.coins >= SHELF_UNLOCK_PRICE)
               <path d="M16 2h16v6c0 3 2 5 6 9 5 5 8 11 8 19 0 11-9 18-22 18S2 47 2 36c0-8 3-14 8-19 4-4 6-6 6-9z" />
               <ellipse cx="24" cy="4" rx="9" ry="2.5" class="vase-rim" />
             </svg>
-            <span class="label text-label-field">{{ subject.name }}</span>
+            <span class="label sp-field">{{ subject.name }}</span>
           </div>
           <div v-else class="empty" aria-hidden="true"></div>
         </li>

@@ -153,7 +153,7 @@ function toggle(t, e) {
 const removing = ref(new Set())
 function remove(t) {
   removing.value = new Set(removing.value).add(t.id)
-  setTimeout(() => { src.remove(t.id); removing.value.delete(t.id) }, 320)
+  setTimeout(() => { src.remove(t.id); removing.value.delete(t.id) }, 350)
 }
 // double-click a task to edit it in place; Enter saves, Esc cancels
 const editingId = ref(null)
@@ -338,8 +338,8 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
                 <template v-for="(row, i) in rows" :key="row.key">
                   <li v-if="row.divider" class="day-divider" :class="{ picked: row.picked }">{{ row.label }}</li>
                   <li
-                    v-else class="task" :class="{ done: row.task.done, removing: removing.has(row.task.id) }"
-                    :style="{ animationDelay: `${Math.min(i * 45, 400)}ms` }" data-testid="planner-task"
+                    v-else class="task sp-task-row" :class="{ done: row.task.done, 'is-done': row.task.done, 'is-removing': removing.has(row.task.id) }"
+                    :style="{ animationDelay: removing.has(row.task.id) ? '0ms' : `${Math.min(i * 45, 400)}ms` }" data-testid="planner-task"
                   >
                     <button
                       type="button" class="sp-check" :class="{ 'is-ticked': row.task.done }" role="checkbox" :aria-checked="row.task.done"
@@ -349,7 +349,7 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
                     </button>
                     <div class="t-main">
                       <span
-                        class="t-text" title="Double-click to edit" :contenteditable="editingId === row.task.id"
+                        class="t-text sp-task-label" title="Double-click to edit" :contenteditable="editingId === row.task.id"
                         @dblclick="startEdit(row.task, $event)" @blur="finishEdit(row.task, $event)"
                         @keydown.enter.prevent="$event.target.blur()" @keydown.esc="finishEdit(row.task, $event, false)"
                       >{{ row.task.text }}</span>
@@ -594,18 +594,13 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
   scrollbar-width: thin; scrollbar-color: var(--sheet-3) transparent;
 }
 .tasks { list-style: none; margin: 0; padding: 0; }
-.task { position: relative; display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 0 12px; min-height: var(--lh); padding: 4px 4px 4px 0; animation: write-in .55s var(--ease) both; }
-.task.removing { animation: tear .35s ease forwards; }
-@keyframes tear { to { transform: translateX(30px) rotate(2deg); opacity: 0; } }
+.task { position: relative; display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 0 12px; min-height: var(--lh); padding: 4px 4px 4px 0; }
 /* check circle + write-in animations live in theme.css (.sp-check), shared with the quiz answers */
 .t-main { min-width: 0; line-height: 1.25; }
 .t-text {
-  position: relative; display: inline; font-family: var(--f-hand); font-weight: 600; font-size: 1.42rem; color: var(--ink);
-  background: linear-gradient(var(--berry-deep), var(--berry-deep)) no-repeat 0 58% / 0% 2px;
-  transition: background-size .45s var(--ease), color .3s; outline: none; overflow-wrap: anywhere;
+  position: relative; display: inline; outline: none;
 }
 .t-text[contenteditable="true"] { background: var(--butter-soft); border-radius: 4px; padding: 0 4px; }
-.task.done .t-text { background-size: 100% 2px; color: var(--ink-faint); }
 .t-meta { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; margin-top: 1px; font-size: .74rem; font-weight: 700; color: var(--ink-soft); }
 .tag { display: inline-flex; align-items: center; gap: 5px; }
 .tag::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }

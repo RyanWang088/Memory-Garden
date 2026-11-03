@@ -18,7 +18,6 @@ const props = defineProps({
   fliesFrom: { type: Number, default: 40 },
 })
 
-// wing colours as theme variables: [light, deep]
 const WINGS = [
   ['color-mix(in srgb, var(--berry) 55%, #fff)', 'var(--berry)'],
   ['var(--butter)', 'var(--butter-deep)'],
@@ -83,14 +82,14 @@ const visibleFireflies = computed(() => {
 </template>
 
 <style scoped>
-/* nothing to see, so nothing to animate (same trick the rain uses when it is dry) */
-.critters:not([data-mood='dusk'], [data-mood='night']) .flies i {
+.critters:not([data-mood='dusk'], [data-mood='night']) .flies i,
+.critters[data-mood='night'] :is(.bfly, .bfly .wing) {
   animation-play-state: paused;
 }
 
-.critters[data-mood='night'] :is(.bfly, .bfly .wing),
-.critters:is([data-weather='rainy'], [data-weather='stormy']) :is(.bfly, .bfly .wing) {
-  animation-play-state: paused;
+/* Hide both butterflies and flies completely during rain or storm */
+.critters:is([data-weather='rainy'], [data-weather='stormy']) :is(.bfly, .flies) {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

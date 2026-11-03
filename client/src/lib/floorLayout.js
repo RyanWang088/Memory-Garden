@@ -27,7 +27,7 @@ export const hillEdgeDepth = (hill, worldX) => {
 // ---- scatter: flower dots and margin trees ----
 export const SCATTER_DEPTH = 3000
 export const SCATTER_MIN_X = -300, SCATTER_MAX_X = GRID_WIDTH + 300  // overscan: far rows show wider than the grid
-const FLOWER_COUNT = 800
+const FLOWER_COUNT = 1500
 const TREE_MARGIN = 70   // trees stay this far outside the grid, so nothing stands where a plant can go
 
 // Theme variables for the dot colours (the white appears twice, like the weighting in scenery.js).

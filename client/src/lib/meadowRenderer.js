@@ -1,16 +1,38 @@
-import {
+import { 
   GRID_WIDTH, HILL_GAP, HILL_SAMPLE_GAP, PROPS_BY_HILL, hillEdgeDepth,
 } from './floorLayout.js'
 import { seeded } from './shuffle.js'
 import { HALF_PI, BOTTOM_MARGIN, FAR_SPREAD, FAR_SIZE } from './gardenCamera.js'
 
 const TAU = Math.PI * 2
-const BLADE_GAP = 25            // world units between grass blades along a crest
+const BLADE_GAP = 25          // world units between grass blades along a crest
 const BACKDROP_PARALLAX = 0.12  // how far the horizon ridges follow sideways panning
+const FLOWER_START = -.1        // no flowers above this fraction of the way down the ground (0 = horizon, 1 = bottom)
+const FLOWER_FULL = 0.8         // every flower is drawn by here
+const FLOWER_NIGHT_MIX = 0.7    // at full night, how far flowers are mixed toward the hill colour (0..1)
+const FLOWER_MAX_MIX = 0.85     // never mix further than this, or the flowers vanish into the hill
 
-// Draws the whole meadow. The caller has already set the DPR transform and cleared the canvas.
-//   cam     = createGardenCamera() result
-//   palette = createMeadowPalette() result: ramp(t), tree, tree2, flowers[], flowerEye, flowerAlpha
+// ---- colour mixing ----
+const colorCache = new Map()
+function parseColor(c) {
+  let v = colorCache.get(c)
+  if (v) return v
+  if (c[0] === '#') {
+    const h = c.length === 4 ? c.slice(1).split('').map(x => x + x).join('') : c.slice(1, 7)
+    v = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16))
+  } else {
+    v = (c.match(/-?[\d.]+(?:e-?\d+)?/g) || [0, 0, 0]).slice(0, 3).map(Number)
+    if (c.startsWith('color(')) v = v.map(n => n * 255)
+  }
+  if (colorCache.size > 500) colorCache.clear()
+  colorCache.set(c, v)
+  return v
+}
+function mixColor(a, b, t) {
+  const A = parseColor(a), B = parseColor(b)
+  return `rgb(${Math.round(A[0] + (B[0] - A[0]) * t)},${Math.round(A[1] + (B[1] - A[1]) * t)},${Math.round(A[2] + (B[2] - A[2]) * t)})`
+}
+
 export function drawMeadow(ctx, cam, palette) {
   const { camera, depthToAngle, screenX, screenY } = cam
   const { viewWidth, viewHeight, radius, horizonY, frontY, scale, scrollPos, centerX } = camera
@@ -19,7 +41,6 @@ export function drawMeadow(ctx, cam, palette) {
 
   drawBackdrop(ctx, camera, palette)
 
-  // far-distance base colour, flush with the horizon ridge above it
   ctx.fillStyle = palette.ramp(0)
   ctx.fillRect(0, horizonY, viewWidth, viewHeight - horizonY)
 
@@ -29,17 +50,17 @@ export function drawMeadow(ctx, cam, palette) {
   const x0 = Math.floor((centerX - halfVisible) / HILL_SAMPLE_GAP) * HILL_SAMPLE_GAP
   const x1 = centerX + halfVisible + HILL_SAMPLE_GAP
   const aFront = floorAngle(firstDepth)
-  const frame = { span, firstDepth, lastDepth, floorAngle, x0, x1, viewWidth, treeA: palette.tree, treeB: palette.tree2 }
+  const frame = {
+    span, horizonY, firstDepth, lastDepth, floorAngle, x0, x1, viewWidth,
+    treeA: palette.tree, treeB: palette.tree2,
+  }
 
-  // far hills first; each is flat-filled, gets a grass fringe along its crest, then its own flowers and trees
-  // are painted before the next hill in front covers whatever it should
   for (let hill = Math.ceil((lastDepth + 100) / HILL_GAP); hill >= Math.floor(firstDepth / HILL_GAP); hill--) {
     const mid = hillEdgeDepth(hill, GRID_WIDTH / 2)
     if (mid < firstDepth - 120) continue
-    // Make t reach the dark end of the palette faster higher up on the screen
     const y = screenY(floorAngle(mid))
     const rawT = (y - horizonY) / span
-    const t = Math.min(1, Math.pow(rawT, 0.6)) // Lower exponent = dark colors spread higher up
+    const t = Math.min(1, Math.pow(rawT, 0.6))
     ctx.fillStyle = palette.ramp(t)
     ctx.beginPath()
     for (let x = x0; x <= x1; x += HILL_SAMPLE_GAP) {
@@ -50,24 +71,22 @@ export function drawMeadow(ctx, cam, palette) {
     ctx.fill()
 
     drawFringe(ctx, cam, hill, frame)
-    drawBand(ctx, cam, palette, PROPS_BY_HILL.get(hill), frame)
+    drawBand(ctx, cam, palette, PROPS_BY_HILL.get(hill), frame, palette.ramp(t))
   }
 }
 
-// cheap deterministic noise for per-blade variation, stable between frames
 function hash(a, b) {
   let h = Math.imul(a | 0, 374761393) ^ Math.imul(b | 0, 668265263)
   h = Math.imul(h ^ (h >>> 13), 1274126177)
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296
 }
 
-// grass blades standing on the crest, in the hill's own colour so they read as its silhouette (fillStyle is still set)
 function drawFringe(ctx, cam, hill, { floorAngle, x0, x1 }) {
   const { camera, screenX, screenY, shrinkTo } = cam
   const midAngle = floorAngle(hillEdgeDepth(hill, GRID_WIDTH / 2))
   if (midAngle >= HALF_PI * 0.97) return
   const u0 = camera.scale * shrinkTo(FAR_SIZE, midAngle)
-  if (u0 < 0.26) return                       // blades would be under 2px: skip the far hills
+  if (u0 < 0.26) return
   const step = u0 < 0.5 ? 2 : 1
 
   ctx.beginPath()
@@ -85,12 +104,18 @@ function drawFringe(ctx, cam, hill, { floorAngle, x0, x1 }) {
   ctx.fill()
 }
 
-function drawBand(ctx, cam, palette, props, { firstDepth, lastDepth, viewWidth, treeA, treeB }) {
+function drawBand(ctx, cam, palette, props, { span, horizonY, firstDepth, lastDepth, viewWidth, treeA, treeB }, hillColor) {
   if (!props) return
   const { camera, depthToAngle, screenX, screenY, shrinkTo } = cam
   const { scale } = camera
 
-  for (const p of props) {                    // already sorted far -> near
+  const night = 1 - Math.min(1, Math.max(0, (palette.flowerAlpha - 0.55) / 0.45))
+  const mix = Math.min(FLOWER_MAX_MIX, night * FLOWER_NIGHT_MIX + (palette.wxK || 0))
+  const petals = palette.flowers.map(c => mixColor(c, hillColor, mix))
+  const eye = mixColor(palette.flowerEye, hillColor, mix)
+
+  for (let i = 0; i < props.length; i++) {
+    const p = props[i]
     if (p.d < firstDepth || p.d > lastDepth) continue
     const a = depthToAngle(p.d)
     if (a < -0.05 || a > HALF_PI * 0.985) continue
@@ -100,21 +125,19 @@ function drawBand(ctx, cam, palette, props, { firstDepth, lastDepth, viewWidth, 
     const u = scale * shrinkTo(FAR_SIZE, a) * p.s
 
     if (p.k === 'flower') {
+      const rawT = (py - horizonY) / span
+      const k = Math.min(1, Math.max(0, (rawT - FLOWER_START) / (FLOWER_FULL - FLOWER_START)))
+      if (hash(i, 7) >= k * k) continue
+
       const r = Math.max(0.9, 4.6 * u)
-
-      // dim as the light drops: full at flowerAlpha 1, 35% at 0.55 or below\
-      const t = Math.min(1, Math.max(0, (palette.flowerAlpha - 0.55) / 0.45))
-      ctx.globalAlpha = palette.flowerAlpha * (0.35 + 0.65 * t * t)
-
-      ctx.fillStyle = palette.flowers[p.c]
+      ctx.fillStyle = petals[p.c]
       ctx.beginPath(); ctx.arc(px, py - r, r, 0, TAU); ctx.fill()
 
-      if (r > 2.6 && palette.flowerAlpha > 0.4) {
-        ctx.fillStyle = palette.flowerEye
+      if (r > 2.6) {
+        ctx.fillStyle = eye
         ctx.beginPath(); ctx.arc(px, py - r, r * 0.35, 0, TAU)
         ctx.fill()
       }
-      ctx.globalAlpha = 1
     } else {
       for (const [dx, dy, rx, ry, alt] of p.blobs) {
         ctx.fillStyle = alt ? treeB : treeA
@@ -124,9 +147,6 @@ function drawBand(ctx, cam, palette, props, { firstDepth, lastDepth, viewWidth, 
   }
 }
 
-// ---- horizon backdrop: a ridge and tree line standing above the horizon ----
-// Infinitely far, so vertical scrolling never moves it; it only drifts a little with sideways panning.
-// Geometry is seeded and rebuilt only when the stage size changes; colours are read fresh every frame so it crossfades.
 let backdrop = null
 
 function buildBackdrop(viewWidth, horizonY) {
@@ -143,7 +163,7 @@ function buildBackdrop(viewWidth, horizonY) {
     }
     return pts
   }
-  const near = ridge(horizonY, room*0.4, 1.1)
+  const near = ridge(horizonY, room * 0.3, 1.1)
   const yAt = (pts, x) => {
     for (let i = 0; i < pts.length - 1; i++) {
       if (x >= pts[i][0] && x <= pts[i + 1][0]) return pts[i][1] + (pts[i + 1][1] - pts[i][1]) * ((x - pts[i][0]) / (pts[i + 1][0] - pts[i][0]))
@@ -151,16 +171,21 @@ function buildBackdrop(viewWidth, horizonY) {
     return pts[pts.length - 1][1]
   }
   const sizeK = Math.min(1, Math.max(0.45, room / 160))
-  const trees = []                                  // [cx, cy, rx, ry, alt]
-  for (let t = 0; t < Math.round((viewWidth + 2 * pad) / 70); t++) {
+  const trees = []
+  for (let t = 0; t < Math.round((viewWidth + 2 * pad) / 40); t++) {
     const x = -pad + rand() * (viewWidth + 2 * pad)
-    const y = yAt(near, x) + 6
-    const s = (1 + rand()) * sizeK
-    if (rand() < 0.22) { trees.push([x, y - 34 * s, 9 * s, 38 * s, 1]); continue }
-    const n = 3 + Math.floor(rand() * 3)
+    const y = yAt(near, x) + 10
+    const s = (.5 + rand()) * sizeK
+    
+    if (rand() < 0.22) { 
+      trees.push([x, y - 34 * s, 9 * s, 38 * s, 1])
+      continue 
+    }
+    
+    const n = 1 + Math.floor(rand() * 2) // slightly fewer cluster blobs for a cleaner look
     for (let k = 0; k < n; k++) {
       const r = (13 + rand() * 9) * s
-      trees.push([x + (k - n / 2) * 11 * s + rand() * 6, y - (12 + rand() * 22) * s, r, r, k % 2])
+      trees.push([x + (k - n / 2) * 16 * s + rand() * 6, y - (12 + rand() * 22) * s, r, r, k % 2])
     }
   }
   return { key: `${viewWidth}|${horizonY}`, near, trees, bottom: horizonY + 4 }
@@ -169,7 +194,7 @@ function buildBackdrop(viewWidth, horizonY) {
 function tracePath(ctx, pts, bottom) {
   ctx.beginPath()
   ctx.moveTo(pts[0][0], bottom); ctx.lineTo(pts[0][0], pts[0][1])
-  for (let i = 0; i < pts.length - 1; i++) {      // Catmull-Rom -> bezier, same smoothing as scenery.js
+  for (let i = 0; i < pts.length - 1; i++) {
     const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2
     ctx.bezierCurveTo(
       p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6,

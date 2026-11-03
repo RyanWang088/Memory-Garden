@@ -74,7 +74,7 @@ function setLibraryView(view) {
         <SeedCard class="sp-reveal" :style="{ '--i': Math.min(n, 6) }" :seed="seed" @select="emit('select', $event)" @edit="emit('edit', $event)" />
       </div>
     </TransitionGroup>
-    <p v-else class="text-danger border-0 text-body-small ms-1">
+    <p v-else class="text-berry-deep border-0 text-body-small ms-1">
       {{ isSearching
         ? `No seeds match "${query}".`
         : libraryView === 'recommended'
