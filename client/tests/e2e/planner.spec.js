@@ -27,5 +27,6 @@ await page.getByTestId('nav-planner').click();
 await page.getByTestId('planner-new-task').click();
 await page.getByTestId('planner-new-task').fill('test1');
 await page.getByTestId('planner-add').click();
+await page.goto('/planner')
 await expect(page.getByTestId('planner-task')).toContainText('test1');
 });
