@@ -372,8 +372,24 @@ body[data-sky="night"] .sp-greet small, body[data-sky="dusk"] .sp-greet small, b
 .sp-empty-state { border: 1px dashed var(--linen); border-radius: 16px; background: var(--paper); } /*style empty state ltr and add to other error msg panels*/
 @media (max-width: 480px) {
   .sp-review-page { padding: 16px 8px 32px; }
-  .sp-review-sheet { --margin-x: 26px; padding: 20px 14px 28px calc(var(--margin-x) + 14px); }
-  .sp-review-results { min-height: calc(100vh - 80px - 48px); }
+  .sp-review-page.phone-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100dvh;
+    padding: 24px 16px;
+  }
+  .phone-card .sp-review-container { width: 100%; }
+  .sp-review-sheet {
+    --margin-x: 26px;
+    display: flex;
+    flex-direction: column;
+    min-height: min(620px, calc(100dvh - 48px));
+    padding: 20px 14px 28px calc(var(--margin-x) + 14px);
+  }
+  .phone-card .quiz { flex: 1; }
+  .phone-card .quiz-end { margin-top: auto; }
+  .phone-card .sp-review-results { flex: 1; min-height: 0; padding: 16px 0 8px; }
   .sp-review-stat .text-stat { font-size: 22px; }
 }
 
@@ -401,7 +417,12 @@ body { font-family: var(--f-body); background: var(--sheet); color: var(--ink); 
 h1, h2, h3, .text-display, .text-stat, .text-timer { font-family: var(--f-display); letter-spacing: -.01em; }
 h1 em, h2 em, h3 em { font-style: italic; font-weight: 500; color: var(--berry); }
 .text-display, h1, h2 { font-weight: 600; }
-.text-timer { font-weight: 500; }
+.text-timer {
+  font-weight: 500;
+  font-size: clamp(3.4rem, 9vw, 4.6rem);
+  line-height: 1;
+  letter-spacing: -.02em;
+}
 .text-button { font-family: var(--f-body); font-weight: 800; letter-spacing: .01em; }
 .text-label-caption { font-family: var(--f-body); font-weight: 700; font-size: 12px; letter-spacing: 0.04em; color: var(--ink-soft); text-transform: uppercase;}
 .text-body-small { color: var(--ink-soft); }

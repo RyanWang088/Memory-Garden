@@ -326,7 +326,6 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
 .ring .fill { stroke: var(--fill); transition: stroke-dashoffset .4s linear, stroke .8s; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--fill) 60%, transparent)); }
 .ring-text { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 4px; padding-bottom: 16%; }
 .ring-cap { color: inherit; opacity: .8; letter-spacing: .16em; }
-.ring .text-timer { font-size: clamp(3.4rem, 9vw, 4.6rem); line-height: 1; letter-spacing: -.02em; }
 .ring-next { font-family: var(--f-hand); font-size: 1.3rem; opacity: .85; }
 .ring.paused .text-timer { animation: paused 1.4s ease-in-out infinite; }
 @keyframes paused { 50% { opacity: .35; } }

@@ -20,7 +20,7 @@ const ringOffset = computed(() => RING_LENGTH * (1 - props.percent / 100))
       <circle cx="60" cy="60" :r="RING_RADIUS" class="ring-fill" :stroke-dasharray="RING_LENGTH"
         :stroke-dashoffset="ringOffset" />
     </svg>
-    <span class="ring-label text-display">{{ percent }}%</span>
+    <span class="ring-label text-timer">{{ percent }}%</span>
   </div>
 </template>
 
@@ -57,6 +57,9 @@ const ringOffset = computed(() => RING_LENGTH * (1 - props.percent / 100))
   inset: 0;
   display: grid;
   place-items: center;
+  font-size: clamp(2.5rem, 7vw, 3.2rem);
+  line-height: 1;
+  letter-spacing: -.02em;
 }
 
 .tier-high .ring-fill { stroke: var(--mint-deep); }

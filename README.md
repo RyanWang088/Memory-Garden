@@ -95,8 +95,6 @@ The tests are in `client/tests/e2e/`. They log in as the demo account and click 
     pnpm exec playwright test --workers=1
     ```
 
-    `--workers=1` runs the files one after another. All the tests share the demo account, so running them at the same time could make one test change coins while another is checking them.
-
     **Option B: run one test file at a time**
 
     ```bash
@@ -110,13 +108,6 @@ The tests are in `client/tests/e2e/`. They log in as the demo account and click 
 
 
 You can also run the tests from VS Code with the **Playwright Test for VS Code** extension: open the Testing panel (the flask icon) and click ▶ next to a test file or a single test. The server must still be running.
-
-**Notes:**
-
-- The tests run one at a time, since they share the demo account's coins. A full run takes about a minute.
-- The short-structured tests in `review.spec.js` call the real AI to mark answers, so they need an internet connection. If one times out, run it again.
-- Each run of `review.spec.js` adds 30 coins to the demo account (from the multiple-choice quiz test). The tests compare coins before and after, so this doesn't make them fail.
-- If every test fails at login, check that the server is running (Terminal 1) and that the `.env` files are in place.
 
 ---
 
