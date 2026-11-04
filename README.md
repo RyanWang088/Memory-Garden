@@ -130,19 +130,19 @@ You can also run the tests from VS Code with the **Playwright Test for VS Code**
 
 ## 🤖 5. Appendix: AI Usage Declaration
 
-In accordance with course policies, AI (Large Language Models) was used as an assistant to speed up boilerplate, debug errors and explore ideas. All core logic was reviewed and finalised by the team.
-
 **Individual member breakdown:**
 
 - **Xiao Jing:** Used AI to:
-    - [what you used it for]
+    - Implement opening-page animations and transitions, as well as character reactions to user input on the login page.
 - **Yu Jia:** Used AI to:
     - [what you used it for]
 - **Jit Wei:** Used AI to:
     - the parsing of documents to generate the question answer pair
 - **Ryan:** Used AI to:
-    - Create the icon for the Flashcard Mode
-    - Utilised AI for the marking of the answers for the short-structured questions
+    - Help build and restyle the review modes (Flashcard, Multiple Choice and Short Structured) based on my requirements. (I made the feature and design decisions, tested them in the app, and reviewed the code.)
+    - Created custom made icon for the Flashcard Mode, Multiple choice and short structured in review features.
+    - Style the Short Structured answer box (brown outline on the notebook lines), using the colours from theme.css.
+    - Write out the AI marking prompt for Short Structured answers.
     - create the structure for the Planner book and the grids for the calendar view, and the background for the to-do list like a notebook/foolscap paper
 - **Claudine:** Used AI to:
     - Write Pomodoro feature code based on my requirements. (logic and feature decisions, as well as testing are done personally)

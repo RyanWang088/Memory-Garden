@@ -8,7 +8,9 @@ import weatherRouter from './routes/weather.js'
 const app = express()
 const PORT = process.env.PORT || 3000
 
-app.use(cors())
+// browsers may only call this API from these sites
+const ALLOWED_ORIGINS = ['https://memory-garden-gold.vercel.app', 'http://localhost:5173']
+app.use(cors({ origin: ALLOWED_ORIGINS }))
 app.use(express.json())
 
 app.get('/api/health', (req, res) => res.json({ ok: true }))
