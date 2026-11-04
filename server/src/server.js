@@ -1,4 +1,3 @@
-// Express API for Sproutly. Routes go in src/routes/ and are mounted under /api.
 import express from 'express'
 import cors from 'cors'
 import authRouter from './routes/auth.js'
