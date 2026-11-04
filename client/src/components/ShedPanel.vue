@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
 import { useToastStore } from '@/stores/toast'
@@ -15,17 +16,23 @@ const router = useRouter()
 const tabs = [
   { id: 'seeds', label: 'Plant', img: 'seed',help:'Create study materials' },
   { id: 'study', label: 'Grow', img: 'wateringCanIcon',help:'Revise study materials' },
-  { id: 'weed', label: 'Weed', img: 'shovel',help:'Delete study materials', action: true },
+  { id: 'weed', label: 'Weed', img: 'shovel',help:'Delete study materials', action: true, tool: 'shovel' },
+  { id: 'edit', label: 'Prune', img: 'shears',help:'Edit study materials', action: true, tool: 'shears' },
 ]
+const selectedTabId = ref(tabs.find(item => item.action && item.tool === ui.activeTool)?.id ?? ui.shedTab)
 
 function selectTab(tabId) {
-  if (tabId==='weed') {
-    ui.setTool('shovel')
+  selectedTabId.value = tabId
+  const tab = tabs.find(item => item.id === tabId)
+  if (tab?.action) {
+    ui.setTool(tab.tool)
     ui.shedOpen=false
     toast.show({
       type: 'success',
-      title: 'Shovel Equipped',
-      message: 'Tap a plant to delete the flashcards.',
+      title: tab.tool === 'shovel' ? 'Shovel Equipped' : 'Shears Equipped',
+      message: tab.tool === 'shovel'
+        ? 'Tap a plant to delete the flashcards.'
+        : 'Click on a plant to edit its flashcards.',
     })
     return
   }
@@ -58,10 +65,10 @@ function onSeedEdit(seed) {
     <nav class="shed-tabs" role="tablist" aria-label="Garden shed">
       <button
         v-for="t in tabs" :key="t.id" type="button" class="shed-tab" :title="t.help"
-        :class="{ 'is-active': ui.shedOpen && (t.action ? ui.activeTool === 'shovel' : ui.shedTab === t.id), 'is-tool': t.action }"
+        :class="{ 'is-active': selectedTabId === t.id }"
         :role="t.action ? 'button' : 'tab'"
-        :aria-selected="t.action ? undefined : ui.shedTab === t.id"
-        :aria-pressed="t.action ? ui.activeTool === 'shovel' : undefined"
+        :aria-selected="t.action ? undefined : selectedTabId === t.id"
+        :aria-pressed="t.action ? selectedTabId === t.id : undefined"
         :aria-label="t.label"
         :data-testid="`shed-tab-${t.id}`"
         @click="selectTab(t.id)"
@@ -103,7 +110,6 @@ function onSeedEdit(seed) {
 }
 .shed-tab:hover { --t: 2px; color: var(--ink); }
 .shed-tab.is-active { --t: 0px; background: var(--sheet); color: var(--berry-deep); box-shadow: -4px -4px 12px -6px rgba(74, 54, 46, .35); }
-.shed-tab.is-tool.is-active { background: var(--butter-soft); color: var(--ink); }
 .shed-tab:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
 .tab-art { transition: transform .35s var(--spring); }
 .shed-tab:hover .tab-art { transform: scale(1.15) rotate(-6deg); }

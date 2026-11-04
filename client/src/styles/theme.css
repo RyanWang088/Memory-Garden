@@ -83,6 +83,20 @@
 .sp-tnum { font-variant-numeric: tabular-nums; }
 .sr-only { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 img {height:100%;}
+
+.stage[data-tool="wateringCan"],
+.stage[data-tool="wateringCan"] * {
+  cursor: url('../assets/ui/wateringcan.png') 8 50, auto;
+}
+.stage[data-tool="shovel"],
+.stage[data-tool="shovel"] * {
+  cursor: url('../assets/ui/shovel.png') 12 61, auto;
+}
+.stage[data-tool="shears"],
+.stage[data-tool="shears"] * {
+  cursor: url('../assets/ui/shears.svg') 12 61, auto;
+}
+
 /* ---------- buttons (keeps the app's tactile "pressable" button, refined) ---------- */
 .sp-btn {
   --bg: var(--berry); --fg: #fff; --edge: var(--berry-deep);
@@ -292,16 +306,23 @@ body[data-sky="night"] .sp-greet small, body[data-sky="dusk"] .sp-greet small, b
 .sp-review-container { max-width: 720px; margin: 0 auto; }
 .sp-review-sheet {
   --lh: 44px;
-  --margin-x: 44px;
+  --margin-x: 56px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
   min-height: calc(100vh - 80px);
   padding: 28px 24px 36px calc(var(--margin-x) + 22px);
   border-radius: 10px 18px 18px 10px;
-  background-color: var(--paper);
+  background-color: #fff;
   background-image:
     linear-gradient(90deg, transparent var(--margin-x), var(--margin) var(--margin-x), var(--margin) calc(var(--margin-x) + 1.5px), transparent calc(var(--margin-x) + 1.5px)),
-    repeating-linear-gradient(180deg, transparent 0 calc(var(--lh) - 1px), var(--rule) calc(var(--lh) - 1px) var(--lh));
+    repeating-linear-gradient(180deg, var(--rule) 0 1.5px, transparent 1.5px 40px);
+  background-position: 0 0, 0 110px;
+  background-size: 100% 100%, 100% calc(100% - 110px);
+  background-repeat: no-repeat;
   box-shadow: var(--shadow-1);
 }
+.sp-review-header { height: calc(2 * var(--lh) - 28px); }
 .sp-review-sheet h1, .sp-review-sheet h2, .sp-review-sheet .sp-hand {
   font-family: var(--f-hand);
   font-weight: 700;
@@ -367,12 +388,11 @@ body[data-sky="night"] .sp-greet small, body[data-sky="dusk"] .sp-greet small, b
   }
   .phone-card .sp-review-container { width: 100%; }
   .sp-review-sheet {
-    --margin-x: 26px;
-    display: flex;
-    flex-direction: column;
+    --margin-x: 44px;
     min-height: min(620px, calc(100dvh - 48px));
     padding: 20px 14px 28px calc(var(--margin-x) + 14px);
   }
+  .sp-review-header { height: calc(2 * var(--lh) - 20px); }
   .phone-card .quiz { flex: 1; }
   .phone-card .quiz-end { margin-top: auto; }
   .phone-card .sp-review-results { flex: 1; min-height: 0; padding: 16px 0 8px; }

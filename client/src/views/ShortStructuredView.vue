@@ -11,6 +11,8 @@ import SceneryBackdrop from '@/components/SceneryBackdrop.vue'
 import { ding, fanfare, unlockAudio } from '@/lib/beep'
 import ConfettiBurst from '@/components/ConfettiBurst.vue'
 import ScoreRing from '@/components/ScoreRing.vue'
+import SproutIcon from '@/components/SproutIcon.vue'
+import { foliageUrl } from '@/lib/plantSprites'
 
 // "Short Structured Mode" review session: up to 10 questions from one seed. The user types each answer and the
 // server has AI mark it (one call per answer, see POST /api/seeds/:id/grade), then claims coins on a results screen.
@@ -18,9 +20,9 @@ const MAX_QUESTIONS = 10
 const MAX_RESPONSE = 1000
 const PETALS = 10 // petals in the burst on a correct answer
 const VERDICTS = {
-  short_correct: { label: '🌸 Correct', tone: 'correct' },
-  short_partial: { label: '🌿 Partly right', tone: 'partial' },
-  short_wrong: { label: '🥀 Not quite', tone: 'wrong' },
+  short_correct: { label: 'Correct', tone: 'correct' },
+  short_partial: { label: 'Partly right', tone: 'partial' },
+  short_wrong: { label: 'Not quite', tone: 'wrong' },
 }
 
 const route = useRoute()
@@ -51,6 +53,8 @@ const coinsClaimed = ref(false) // so a retry after a failed claim never pays tw
 const results = ref([]) // one { card_id, rating: 'short_correct' | 'short_partial' | 'short_wrong' } per question, saved on claim
 let markRequest // AbortController of the marking call in flight
 
+const TONES = ['', 'is-leaf', 'is-berry']
+const flower = computed(() => auth.profile?.onboarding_answers?.flower || 'pink')
 const seed = computed(() => garden.seeds.find(item => item.id === route.params.id))
 const current = computed(() => questions.value[index.value])
 const total = computed(() => questions.value.length)
@@ -62,11 +66,15 @@ const accuracy = computed(() => (scores.value.length ? Math.round(scores.value.r
 const reward = computed(() => (accuracy.value >= 90 ? 45 : accuracy.value >= 75 ? 30 : accuracy.value >= 60 ? 15 : 0))
 // same tiers and headings as the Multiple Choice Quiz's results
 const tier = computed(() => (accuracy.value >= 75 ? 'high' : accuracy.value >= 60 ? 'mid' : 'low'))
-const heading = computed(() => ({ high: '🌷 Session Complete!', mid: '🌿 Session Complete!', low: '🌱 Session Complete!' })[tier.value])
 const timeTaken = computed(() => {
   const seconds = Math.round(elapsedMs.value / 1000)
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
 })
+const stats = computed(() => [
+  { label: 'Coins', value: `+${reward.value}`, testid: 'short-reward' },
+  { label: 'Average', value: `${accuracy.value}%` },
+  { label: 'Time', value: timeTaken.value },
+])
 
 onMounted(async () => {
   try {
@@ -180,7 +188,7 @@ function backToGarden() {
 
       <!-- questions -->
       <section v-else-if="!finished" class="quiz d-flex flex-column" data-testid="short-quiz">
-        <header class="quiz-head d-flex flex-column gap-2">
+        <header class="sp-review-header d-flex flex-column gap-2">
           <div class="d-flex align-items-center gap-3">
             <button type="button" class="btn-close" aria-label="Quit and go back to garden" @click="backToGarden" />
             <span class="sp-field flex-grow-1 ink-soft">Question {{ index + 1 }} of {{ total }}</span>
@@ -193,8 +201,12 @@ function backToGarden() {
 
         <h2 class="question m-0">{{ current.question }}</h2>
 
-        <label class="d-flex flex-column gap-2">
-          <span class="sp-field">Your answer</span>
+        <!-- written straight onto the notebook lines -->
+        <label class="d-flex flex-column">
+          <span class="ans-label sp-field d-flex align-items-end justify-content-between">
+            <span>Your answer</span>
+            <span class="sp-hand count">{{ response.length }} / {{ MAX_RESPONSE }}</span>
+          </span>
           <textarea v-model="response" class="answer-box sp-hand" rows="5" :maxlength="MAX_RESPONSE" :disabled="marking || !!mark"
             placeholder="Type your answer… (Ctrl+Enter to check)" data-testid="short-answer" />
         </label>
@@ -211,54 +223,53 @@ function backToGarden() {
 
         <!-- marked -->
         <template v-else>
-          <div class="verdict d-flex flex-column gap-2" :class="`is-${verdict.tone}`" role="status" data-testid="short-verdict">
-            <span class="">{{ verdict.label }} · {{ mark.score }}%</span>
-            <p class="sp-hand m-0">{{ mark.feedback }}</p>
+          <div class="verdict sp-note d-flex flex-column gap-2" :class="[`is-${verdict.tone}`, { 'is-leaf': verdict.tone === 'correct', 'is-berry': verdict.tone === 'wrong' }]" role="status" data-testid="short-verdict">
+            <span class="sp-tape" :class="{ 'is-leaf': verdict.tone === 'correct' }" aria-hidden="true"></span>
+            <div class="d-flex align-items-center gap-3">
+              <SproutIcon v-if="verdict.tone === 'wrong'" name="wilted" :size="40" />
+              <img v-else class="verdict-art" :src="foliageUrl(verdict.tone === 'correct' ? `tulip-${flower}-4` : 'sprout')" alt="" />
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-baseline gap-2">
+                  <b class="verdict-title">{{ verdict.label }}</b><span class="sp-field">{{ mark.score }}%</span>
+                </div>
+                <div class="sp-meter-bar is-grow mt-1"><i :style="{ width: `${mark.score}%` }"></i></div>
+              </div>
+            </div>
+            <p class="sp-hand feedback m-0">{{ mark.feedback }}</p>
             <span v-if="verdict.tone === 'correct'" class="petals" aria-hidden="true">
               <span v-for="i in PETALS" :key="i" class="petal" :style="{ '--angle': `${(360 / PETALS) * i}deg` }" />
             </span>
           </div>
-          <div class="model-answer d-flex flex-column gap-1">
-            <span class="text-label-caption ink-soft">Model answer</span>
-            <p class="sp-hand m-0">{{ current.answer }}</p>
+          <div class="model-answer sp-note is-paper d-flex flex-column gap-1">
+            <span class="sp-tape is-lilac" aria-hidden="true"></span>
+            <span class="sp-eyebrow">Model answer</span>
+            <p class="sp-hand feedback m-0">{{ current.answer }}</p>
           </div>
           <div class="quiz-end d-flex flex-column">
             <button type="button" class="sp-btn border-0 text-button w-auto align-self-end" data-testid="short-next" @click="next">
-              {{ isLast ? 'See results' : 'Next question' }}
+              {{ isLast ? 'See results' : 'Next question' }} <span class="arrow">→</span>
             </button>
           </div>
         </template>
       </section>
 
       <!-- results -->
-      <section v-else class="sp-review-results d-flex flex-column align-items-center text-center gap-3" data-testid="short-results">
+      <section v-else class="sp-review-results d-flex flex-column align-items-center text-center gap-4" data-testid="short-results">
         <ScoreRing :percent="accuracy" :tier="tier" />
         <div>
-          <h1 class="m-0">{{ heading }}</h1>
-          <p class="ink-soft m-0">{{ correctCount }} of {{ total }} fully correct</p>
+          <h1 class="m-0">Session <em>complete</em></h1>
+          <p class="sp-hand sub m-0">{{ correctCount }} of {{ total }} fully correct</p>
         </div>
-
-        <div class="d-flex gap-3 w-100 justify-content-center">
-          <div class="sp-review-stat">
-            <span class="sp-field">Coins</span>
-            <span class="text-stat" data-testid="short-reward">+{{ reward }}</span>
-          </div>
-          <div class="sp-review-stat">
-            <span class="sp-field">Average</span>
-            <span class="text-stat">{{ accuracy }}%</span>
-          </div>
-          <div class="sp-review-stat">
-            <span class="sp-field">Time</span>
-            <span class="text-stat">{{ timeTaken }}</span>
-          </div>
+        <div class="d-flex flex-wrap justify-content-center gap-4 w-100">
+          <article v-for="(st, i) in stats" :key="st.label" class="sp-note sp-reveal stat" :class="TONES[i % 3]" :style="{ '--r': `${i % 2 ? 1.8 : -1.8}deg`, '--i': i }">
+            <span class="sp-label">{{ st.label }}</span>
+            <b :data-testid="st.testid">{{ st.value }}</b>
+          </article>
         </div>
-
-        <p v-if="!reward" class="text-body-small m-0">Average 60% or more to earn coins (1.5× for typed answers).</p>
-        <p v-if="error" class="text-berry-deep m-0" role="alert">{{ error }}</p>
-
-        <button type="button" class="sp-btn border-0 text-button sp-claim-btn" data-testid="short-claim"
-          :disabled="claiming" @click="claim">
-          {{ claiming ? 'Claiming…' : 'Claim Rewards' }}
+        <p v-if="!reward" class="sp-hand sub m-0">Average 60% or more to earn coins (1.5× for typed answers).</p>
+        <p v-if="error" class="text-berry-deep fw-bold m-0" role="alert">{{ error }}</p>
+        <button type="button" class="sp-btn sp-claim-btn" data-testid="short-claim" :disabled="claiming" @click="claim">
+          {{ claiming ? 'Claiming…' : 'Claim Rewards' }} <span class="arrow">→</span>
         </button>
       </section>
     </div>
@@ -272,60 +283,22 @@ function backToGarden() {
   color: var(--ink-soft);
 }
 
-.answer-box {
-  width: 100%;
-  padding: 14px 16px;
-  border: 2px solid var(--line);
-  border-radius: 16px;
-  background: var(--paper);
-  color: var(--ink);
-  resize: vertical;
-}
+.ans-label { height: var(--lh); }
+.count { font-size: 1.1rem; font-weight: 600; color: var(--ink-faint); }
+label:focus-within .pen { color: var(--berry); animation: write-wiggle .6s ease-in-out; }
+@keyframes write-wiggle { 25% { transform: rotate(-14deg) translateX(-2px); } 75% { transform: rotate(10deg) translateX(2px); } }
 
-/* same hand as the multiple choice quiz's answer options (MultipleChoiceQuizView .option-text) */
-.answer-box::placeholder {
-  font-family: var(--f-hand);
-  font-weight: 600;
-  font-size: 1.42rem;
-}
+/* typed straight onto the ruled lines: one rule per line of text */
+.answer-box { display: block; width: 100%; padding: 0; border: 0; outline: 0; resize: none; background: none; font-size: 1.42rem; line-height: var(--lh); color: var(--ink); caret-color: var(--berry); }
+.answer-box::placeholder { color: var(--ink-faint); }
+.answer-box:disabled { color: var(--ink-soft); }
 
-.answer-box:focus {
-  outline: none;
-  border-color: var(--leaf);
-}
-
-.answer-box:disabled {
-  background: var(--sheet);
-}
-
-.verdict {
-  position: relative;
-  padding: 16px 20px;
-  border: 2px solid;
-  border-radius: 16px;
-}
-
-.verdict.is-correct {
-  border-color: var(--leaf);
-  background: var(--leaf-soft);
-}
-
-.verdict.is-partial {
-  border-color: var(--butter-deep);
-  background: color-mix(in srgb, var(--butter) 40%, var(--paper));
-}
-
-.verdict.is-wrong {
-  border-color: var(--berry);
-  background: color-mix(in srgb, var(--berry) 14%, var(--paper));
-}
-
-/* header and question snap to the sheet's 44px rules, same as MultipleChoiceQuizView: the header fills
-   down to the second rule (sheet padding-top is 28px, 20px on phones) and every question line is one
-   rule tall; everything after the question is spaced 24px apart */
-.quiz-head {
-  height: calc(2 * var(--lh) - 28px);
-}
+.verdict { --r: -.8deg; position: relative; }
+.verdict-title { font-family: var(--f-display); font-style: italic; font-weight: 600; font-size: 1.3rem; }
+.verdict-art { height: 44px; width: auto; animation: pop-in .5s var(--spring); }
+.verdict.is-partial .sp-meter-bar i { background: var(--butter-deep); }
+.verdict.is-wrong .sp-meter-bar i { background: var(--berry); }
+.feedback { font-size: 1.4rem; line-height: 1.2; color: var(--ink); }
 
 .question {
   font-family: var(--f-display);
@@ -340,17 +313,9 @@ function backToGarden() {
 }
 
 @media (max-width: 480px) {
-  .quiz-head { height: calc(2 * var(--lh) - 20px); }
   /* the card itself is .phone-card in style.css; the button is pinned to its bottom, still 24px from the rest */
   .quiz > .quiz-end { margin-top: auto; padding-top: 24px; }
   .answer-box::placeholder { font-size: 1.3rem; } /* matches the MCQ answers on phones */
-}
-
-.model-answer {
-  padding: 16px 20px;
-  border: 2px dashed var(--line);
-  border-radius: 16px;
-  background: var(--paper);
 }
 
 .sp-btn:disabled {
@@ -358,10 +323,12 @@ function backToGarden() {
   cursor: not-allowed;
 }
 
+/* results (same as the flashcard deck) */
+.sub { font-size: 1.5rem; line-height: 1.1; color: var(--ink-soft); }
+.stat { flex: 1 1 120px; max-width: 170px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 24px 10px 14px; }
+.stat b { font-family: var(--f-display); font-weight: 600; font-size: 2rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+
 /* per-answer moments: correct pops with a petal burst, partly right wiggles like a leaf, wrong droops */
-.verdict.is-correct { animation: verdict-pop 0.45s var(--spring); }
-.verdict.is-partial { animation: leaf-wiggle 0.6s ease-in-out; }
-.verdict.is-wrong { animation: verdict-droop 0.4s ease-out; }
 .sp-score-pill.pop { animation: pill-pop 0.4s var(--spring); }
 
 .petals {
@@ -384,7 +351,20 @@ function backToGarden() {
 
 .petal:nth-child(3n + 2) { background: var(--berry); }
 .petal:nth-child(3n) { background: var(--lilac); }
+/* washi tape: extra colours and the centred placement used on a note */
+.sp-tape.is-lilac { background: repeating-linear-gradient(135deg, rgba(255,255,255,.35) 0 5px, transparent 5px 11px), color-mix(in srgb, var(--lilac) 70%, var(--sheet)); }
+.sp-tape.is-sky { background: radial-gradient(circle at 5px 5px, rgba(255,255,255,.6) 1.6px, transparent 2px) 0 0/10px 10px, color-mix(in srgb, var(--sky) 90%, var(--sheet)); }
 
+/* sticky note: verdicts, feedback, streak, model answer, results stats */
+.sp-note { --note: var(--butter-soft); --r: 0deg; position: relative; padding: 22px 18px 16px; border-radius: 6px; background: var(--note); box-shadow: var(--shadow-1); transform: rotate(var(--r)); transition: transform .35s var(--spring), box-shadow .3s; }
+.sp-note.is-leaf { --note: var(--leaf-soft); }
+.sp-note.is-berry { --note: var(--berry-soft); }
+.sp-note.is-paper { --note: var(--paper); }
+.sp-note > .sp-tape { top: -12px; left: calc(50% - 40px); width: 80px; transform: rotate(-3deg); }
+
+/* score bar that grows in */
+@keyframes sp-fill { from { width: 0; } }
+.sp-meter-bar.is-grow i { animation: sp-fill .8s var(--ease) .15s backwards; }
 @keyframes verdict-pop {
   0% { transform: scale(0.96); }
   60% { transform: scale(1.02); }

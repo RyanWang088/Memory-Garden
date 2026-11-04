@@ -26,7 +26,7 @@ const floatingMusic = computed(() => music.enabled && !route.meta.showNav)
 
 // Reflect the equipped tool on <body> so CSS can swap the cursor everywhere.
 watchEffect(() => {
-  document.body.classList.remove('tool-pointer', 'tool-wateringCan', 'tool-shovel')
+  document.body.classList.remove('tool-pointer', 'tool-wateringCan', 'tool-shovel', 'tool-shears')
   document.body.classList.add(`tool-${ui.activeTool}`)
 })
 </script>

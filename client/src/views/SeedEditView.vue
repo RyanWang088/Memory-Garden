@@ -46,7 +46,7 @@ function cancel() {
 </script>
 
 <template>
-  <main class="overlay">
+  <main class="overlay p-0 p-md-4">
     <section class="seed-panel pt-0">
       <p v-if="loading" role="status">Loading your seed…</p>
       <template v-else-if="!seed">
@@ -65,7 +65,17 @@ function cancel() {
   overflow-y: auto;
   padding: 24px;
   background: var(--sheet);
-  border: 2px solid var(--ink);
   border-radius: 10px;
+}
+
+@media (max-width: 767.98px) {
+  .seed-panel {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
 }
 </style>

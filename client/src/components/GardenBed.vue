@@ -246,6 +246,10 @@ function onPlantClick(seed, event) {
     deleteError.value = ''
     return
   }
+  if (ui.activeTool === 'shears') {
+    router.push({ name: 'seed-edit', params: { id: seed.id } })
+    return
+  }
   router.push({ name: 'seed-review', params: { id: seed.id } })
 }
 

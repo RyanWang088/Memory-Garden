@@ -437,7 +437,7 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
                       <p>{{ ticket.line }}</p>
                       <div v-if="!compact && (ticket.topic || ticket.due)" class="d-flex flex-wrap gap-2">
                         <button v-if="ticket.topic" v-burst type="button" class="sp-btn sp-btn-sm" @click="focusOnThis">Focus on this <span class="arrow">→</span></button>
-                        <RouterLink v-if="ticket.due" :to="{ name: 'garden', query: { q: ticket.dueSubject } }" class="sp-btn sp-btn-sm sp-btn-leaf">Water seeds</RouterLink>
+                        <RouterLink v-if="ticket.due" :to="{ name: 'garden', query: { q: ticket.topic||ticket.dueSubject } }" class="sp-btn sp-btn-sm sp-btn-leaf">Water seeds</RouterLink>
                       </div>
                     </div>
                   </div>
