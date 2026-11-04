@@ -19,13 +19,13 @@ const auth = useAuthStore()
 // the sky follows the session: night while focusing, day on a break
 const mood = computed(() => (pomo.phase === 'running' ? (pomo.mode === 'focus' ? 'night' : 'day') : pomo.phase === 'done' ? 'blush' : moodNow()))
 const narrow = typeof window !== 'undefined' && window.innerWidth < 600
-const flower = computed(() => auth.profile?.onboarding_answers?.flower || 'yellow')
+const flower = computed(() => auth.profile?.onboarding_answers?.flower || 'pink')
 // the plant inside the ring grows as the focus block runs (seed → sprout → bud → flower)
 const ringPlant = computed(() => {
   if (pomo.mode === 'break') return { src: foliageUrl(`tulip-${flower.value}-4`), small: false }
   const p = 1 - pomo.progress
-  const art = p < 0.25 ? 'seed' : p < 0.5 ? 'sprout' : p < 0.8 ? 'tulip-3' : `tulip-${flower.value}-4`
-  return { src: foliageUrl(art), small: art === 'seed' || art === 'sprout', art }
+  const art = p < 0.25 ? 'seed' : p < 0.5 ? 'sprout' : p < 0.8 ? `tulip-${flower.value}-3` : `tulip-${flower.value}-4`
+  return { src: foliageUrl(art), small: art === 'seed' || art === 'sprout' }
 })
 // one plant per focus block under the ring: done ones bloom, the current one is a sprout
 const blockArt = (n) => (n < pomo.current.number || (n === pomo.current.number && pomo.mode === 'break')
@@ -48,7 +48,6 @@ async function suggestReviews() {
 }
 
 onMounted(() => {
-  pomo.endBy = 'rounds' // sessions are always set by rounds
   openOnCustom()
   if (idle.value) suggestReviews()
 })
@@ -105,12 +104,11 @@ const ringNext = computed(() => (idle.value
   ? (pomo.breakSeconds ? `breaks of ${lengthText(pomo.breakSeconds)}` : 'no breaks')
   : nextLabel.value))
 
-// which focus block has started (for the plants row's screen-reader label)
-const focusStarted = computed(() => pomo.current.number)
-
 /* ---------- finished ---------- */
 // tasks ticked during the session (this list and the planner), not ones already ticked at Start
 const planner = usePlannerStore()
+// done card's tulip colours: the user's own first, then the rest
+const bouquet = computed(() => [flower.value, ...['pink', 'yellow', 'purple', 'red'].filter(c => c !== flower.value)])
 const tasksDone = computed(() => [...pomo.tasks, ...planner.tasks]
   .filter(t => t.done && !pomo.doneAtStart.includes(t.id)).length)
 // total focus time for the done card, e.g. "50 min"
@@ -153,7 +151,7 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
 
           <!-- running: one plant per focus block, then Pause / Resume and End early -->
           <template v-else>
-            <div class="blocks mt-3" :aria-label="`Focus round ${focusStarted} of ${pomo.focusTotal}`">
+            <div class="blocks mt-3" :aria-label="`Focus round ${pomo.current.number} of ${pomo.focusTotal}`">
               <img v-for="n in pomo.focusTotal" :key="n" :class="blockArt(n).cls" :src="blockArt(n).src" alt="" />
             </div>
             <div class="d-flex gap-3 mt-4">
@@ -169,9 +167,7 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
         </div>
 
         <!-- music -->
-        <div class="area-side d-grid gap-4">
-          <GardenRadio class="sp-card side-card" />
-        </div>
+        <GardenRadio class="sp-card side-card area-side" />
 
         <!-- timer settings (only before Start) -->
         <section v-if="idle" class="sp-card side-card area-settings" aria-labelledby="settings-title" data-testid="pomodoro-setup">
@@ -187,7 +183,7 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
           </div>
 
           <!-- one row each: label, then − time + -->
-          <div class="settings sp-rows">
+          <div class="sp-rows">
             <div class="setting d-flex align-items-center justify-content-between gap-2">
               <span class="d-flex align-items-center gap-2"><SproutIcon name="focus" :size="22" /><span class="text-label-caption">Focus</span></span>
               <div class="d-flex align-items-center gap-2">
@@ -220,10 +216,10 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
       </div>
 
       <!-- finished -->
-      <section v-else class="sp-paper panel text-center done-card" data-testid="pomodoro-done">
+      <section v-else class="sp-paper panel text-center" data-testid="pomodoro-done">
         <span class="sp-tape is-leaf" aria-hidden="true"></span>
         <div class="bouquet" aria-hidden="true">
-          <img v-for="n in Math.min(pomo.focusTotal, 7)" :key="n" :src="foliageUrl(`tulip-${['pink', 'yellow', 'purple', 'red'][(n - 1) % 4]}-4`)" alt="" :style="{ animationDelay: `${n * 0.12}s` }" />
+          <img v-for="n in Math.min(pomo.focusTotal, 7)" :key="n" :src="foliageUrl(`tulip-${bouquet[(n - 1) % bouquet.length]}-4`)" alt="" :style="{ animationDelay: `${n * 0.12}s` }" />
         </div>
         <h2 class="mb-2">Session complete</h2>
         <p class="text-body-small mb-4">
@@ -246,9 +242,9 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
 .focus-page { position: relative; min-height: calc(100vh - 92px); overflow-x: clip; padding-bottom: calc(var(--dock-h) + 40px); }
 
 /* done card (paper look from theme.css .sp-paper) */
-.panel { width: 100%; max-width: 460px; margin-top: 3vh; padding: 28px; }
+.panel { width: 100%; max-width: 460px; margin-top: 4vh; padding: 30px; }
 .panel > .sp-tape { top: -12px; left: calc(50% - 46px); transform: rotate(-3deg); }
-@media (max-width: 575.98px) { .panel { padding: 22px 18px 24px; border-radius: 20px; } }
+@media (max-width: 575.98px) { .panel { border-radius: 20px; } }
 
 
 .nudge {
@@ -304,7 +300,7 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
 }
 .area-tasks { grid-area: tasks; }
 .area-timer { grid-area: timer; }
-.area-side { grid-area: side; width: 100%; max-width: 320px; }
+.area-side { grid-area: side; }
 .area-settings { grid-area: settings; }
 
 /* width of the cards beside the timer (paper look from theme.css .sp-card) */
@@ -343,7 +339,6 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
 .bouquet img { flex: 0 1 auto; min-width: 0; height: 150px; width: auto; object-fit: contain; object-position: 50% 100%; margin: 0 -14px; transform-origin: 50% 100%; animation: bloom .8s var(--spring) both; }
 .bouquet img:nth-child(odd) { height: 128px; }
 @keyframes bloom { from { transform: scale(0) rotate(-10deg); } }
-.done-card { margin-top: 4vh; padding: 30px; }
 
 .sp-btn { width: auto; min-width: 140px; order: 0; } /* global .sp-btn has order: 4 */
 @media (prefers-reduced-motion: reduce) {

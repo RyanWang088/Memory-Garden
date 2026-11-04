@@ -3,13 +3,12 @@ import { ref, computed } from 'vue'
 import { formatSeconds } from '@/stores/pomodoro'
 
 // Google-timer style time box: click it, type digits and they fill in from the right
-// (2 5 0 0 -> 00h 25m 00s), Backspace removes the last one, Enter saves and emits 'enter'.
+// (2 5 0 0 -> 00h 25m 00s), Backspace removes the last one, Enter saves.
 const props = defineProps({
-  modelValue: { type: Number, default: null }, // seconds; null = not set yet
-  placeholder: { type: String, default: '--:--' },
+  modelValue: { type: Number, required: true }, // seconds
   allowZero: { type: Boolean, default: false }, // a break may be 0 (no break)
 })
-const emit = defineEmits(['update:modelValue', 'enter'])
+const emit = defineEmits(['update:modelValue'])
 
 const MAX_DIGITS = 6 // hhmmss
 const editing = ref(false)
@@ -18,13 +17,10 @@ let fresh = false // the first digit typed replaces the old time instead of addi
 
 const padded = computed(() => digits.value.padStart(MAX_DIGITS, '0'))
 const editLabel = computed(() => `${padded.value.slice(0, 2)}h ${padded.value.slice(2, 4)}m ${padded.value.slice(4)}s`)
-const shown = computed(() => {
-  if (editing.value) return editLabel.value
-  return props.modelValue === null ? props.placeholder : formatSeconds(props.modelValue)
-})
+const shown = computed(() => (editing.value ? editLabel.value : formatSeconds(props.modelValue)))
 
 function startEditing() {
-  const total = props.modelValue ?? 0
+  const total = props.modelValue
   const hms = [Math.floor(total / 3600), Math.floor(total / 60) % 60, total % 60]
   digits.value = hms.map(n => String(n).padStart(2, '0')).join('').replace(/^0+/, '')
   editing.value = true
@@ -53,7 +49,6 @@ function apply() {
 function onEnter(e) {
   apply()
   e.target.blur()
-  emit('enter')
 }
 
 function cancel(e) {
@@ -65,7 +60,7 @@ function cancel(e) {
 <template>
   <input
     type="text" inputmode="numeric" autocomplete="off"
-    class="duration-input" :class="{ editing, empty: modelValue === null && !editing }"
+    class="duration-input" :class="{ editing }"
     :value="shown"
     @focus="startEditing" @blur="apply" @beforeinput="onBeforeInput"
     @keydown.enter.prevent="onEnter" @keydown.esc="cancel"
@@ -88,5 +83,4 @@ function cancel(e) {
 }
 .duration-input:focus { outline: none; }
 .duration-input.editing { text-decoration: underline 3px var(--leaf); text-underline-offset: 10px; cursor: text; }
-.duration-input.empty { color: var(--ink-soft); }
 </style>

@@ -38,15 +38,14 @@ export function lengthText(total) {
 }
 
 // The session's blocks in order, e.g. 4 rounds of 25/5 -> focus, break, focus, break, focus, break, focus
-// (no break at the very end). `total` limits it by time instead; the page only uses rounds.
-function buildBlocks(focus, rest, { rounds = Infinity, total = Infinity }) {
+// (no break at the very end)
+function buildBlocks(focus, rest, rounds) {
   const blocks = []
-  let left = total, focusCount = 0, breakCount = 0
-  while (left > 0 && focusCount < rounds) {
+  let focusCount = 0, breakCount = 0
+  while (focusCount < rounds) {
     const type = rest > 0 && blocks.length % 2 ? 'break' : 'focus' // 0-min break: focus blocks back to back
-    const seconds = Math.min(type === 'focus' ? focus : rest, left)
+    const seconds = type === 'focus' ? focus : rest
     blocks.push({ type, number: type === 'focus' ? ++focusCount : ++breakCount, seconds })
-    left -= seconds
   }
   if (blocks.at(-1)?.type === 'break') blocks.pop()
   return blocks
@@ -59,9 +58,7 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
   const preset = ref(null) // 'classic', 'deep', 'custom', or null
   const focusSeconds = ref(PRESETS[0].focus)
   const breakSeconds = ref(PRESETS[0].rest)
-  const endBy = ref('rounds')   // the page always uses 'rounds'
   const rounds = ref(4)
-  const totalSeconds = ref(2 * 3600)
 
   // the session
   const phase = ref('setup') // setup -> running -> done
@@ -83,18 +80,12 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
   }
 
   // error to show under the settings ('' = fine)
-  const errors = computed(() => ({
-    // any length can be typed (even seconds, for demos); the − / + buttons keep their own minimums
-    rhythm: !preset.value ? 'Pick a rhythm to continue.'
-      : breakSeconds.value > focusSeconds.value ? "Your break can't be longer than your focus block." : '',
-    length: endBy.value === 'time' && focusSeconds.value > totalSeconds.value
-      ? "The session can't be shorter than one focus block." : '',
-  }))
-  const setupError = computed(() => Object.values(errors.value).find(Boolean) ?? '')
+  // any length can be typed (even seconds, for demos); the − / + buttons keep their own minimums
+  const setupError = computed(() => (breakSeconds.value > focusSeconds.value
+    ? "Your break can't be longer than your focus duration." : ''))
 
   // the blocks the current settings would give
-  const plan = computed(() => buildBlocks(focusSeconds.value, breakSeconds.value,
-    endBy.value === 'rounds' ? { rounds: rounds.value } : { total: totalSeconds.value }))
+  const plan = computed(() => buildBlocks(focusSeconds.value, breakSeconds.value, rounds.value))
 
   const current = computed(() => blocks.value[index.value] ?? null)
   const next = computed(() => blocks.value[index.value + 1] ?? null)
@@ -343,7 +334,7 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
   }
 
   return {
-    preset, focusSeconds, breakSeconds, endBy, rounds, totalSeconds, errors, setupError, plan, choosePreset,
+    preset, focusSeconds, breakSeconds, rounds, setupError, plan, choosePreset,
     phase, blocks, index, remaining, running, current, next, mode, focusTotal, breakTotal, progress, label,
     startSession, resume, pause, endEarly, endSession, restore,
     tasks, addTask, toggleTask, removeTask, hiddenPlannerIds, hidePlannerTask, addReviewTasks, focusDoneSeconds, doneAtStart,

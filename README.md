@@ -145,9 +145,9 @@ In accordance with course policies, AI (Large Language Models) was used as an as
     - Utilised AI for the marking of the answers for the short-structured questions
     - create the structure for the Planner book and the grids for the calendar view, and the background for the to-do list like a notebook/foolscap paper
 - **Claudine:** Used AI to:
-    - Write Pomodoro feature code based on my requirements. (I made the feature and design decisions, tested in the app, reported what to fix and reviewed the code.)
-    - Create the garden radio feature (lo-fi songs were selected and matched to weather personally)
-    - Add the onboarding Plant and Review animations in the Onboarding feature.
+    - Write Pomodoro feature code based on my requirements. (logic and feature decisions, as well as testing are done personally)
+    - Create the garden radio feature (lo-fi songs were selected from an open source on github and matched to weather personally)
+    - Add the Plant and Review animations in the Onboarding feature.
 
 ---
 
