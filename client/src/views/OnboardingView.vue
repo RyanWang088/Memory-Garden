@@ -7,6 +7,7 @@ import { foliageUrl } from '@/lib/plantSprites'
 import { vBurst } from '@/lib/burst'
 import potArt from '@/assets/ui/pot.svg'
 import canArt from '@/assets/ui/wateringcan.png'
+import sproutArt from '@/assets/ui/sprout.svg'
 import SproutIcon from '@/components/SproutIcon.vue'
 
 // Onboarding tour (journal look): five short "how it works" steps, an About-you step, then Ready.
@@ -232,6 +233,8 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
                 <!-- mini "Choose a goal" pop-up (same look as SeedReviewView) -->
                 <div class="goal-mini">
                   <div class="goal-dialog">
+                    <span class="btn-close align-self-end"></span>
+                    <img class="goal-hero" :src="sproutArt" alt="" />
                     <h2 class="goal-title">Choose a goal for this session</h2>
                     <p class="goal-sub">Statistics · 12 cards · Mastery 40%</p>
                     <span class="goal-option pick"><span class="goal-icon"><SproutIcon name="flashcard" :size="34" /></span><span class="goal-text"><span class="goal-name">Flashcard Mode</span><span class="goal-sub">Flip through up to 20 flashcards.</span></span></span>
@@ -460,13 +463,15 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
 .goal-title { margin: 0; text-align: center; font-family: var(--f-display); font-weight: 600; font-size: 1.75rem; line-height: 1.3; letter-spacing: -.01em; }
 .goal-sub { margin: 0; font-size: 14px; line-height: 22px; color: var(--ink-soft); }
 .goal-dialog > .goal-sub { margin-top: -12px; text-align: center; }
-.goal-option { display: flex; align-items: center; gap: 16px; padding: 16px 20px; border: 2px solid var(--line); border-radius: 16px; background: var(--paper); color: var(--ink); box-shadow: 0 4px 0 var(--line); }
+.goal-option { display: flex; align-items: center; gap: 16px; padding: 16px 20px; border: 1.5px solid var(--line); border-radius: 16px; background: #fff; color: var(--ink); }
 .goal-option.pick { animation: goal-pick 5s ease infinite; }
-.goal-icon { display: grid; place-items: center; flex: 0 0 48px; height: 48px; border-radius: 12px; background: var(--sheet); font-size: 24px; }
+.goal-icon { display: grid; place-items: center; flex: 0 0 48px; height: 48px; border-radius: 50%; background: var(--sheet-2); font-size: 24px; }
 .goal-text { display: flex; flex-direction: column; }
 .goal-name { font-family: var(--f-body); font-weight: 600; font-size: 1.05rem; line-height: 1.4; }
 @keyframes goal-open { 0%, 24% { opacity: 0; transform: translateY(24px) scale(.94); } 30%, 88% { opacity: 1; transform: none; } 94%, 100% { opacity: 0; transform: translateY(10px); } }
-@keyframes goal-pick { 0%, 46%, 84%, 100% { transform: none; } 52%, 80% { transform: translateY(-2px); border-color: var(--peach); box-shadow: 0 6px 0 var(--peach); } }
+@keyframes goal-pick { 0%, 46%, 84%, 100% { transform: none; } 52%, 80% { transform: translateX(3px); border-color: var(--ink-faint); } }
+.goal-hero { width: 72px; height: 72px; margin: -16px auto -8px; animation: goal-bob 2.4s ease-in-out infinite; }
+@keyframes goal-bob { 50% { transform: translateY(-4px) rotate(-3deg); } }
 .bed { position: absolute; left: 0; right: 0; bottom: 0; height: 120px; border-radius: 50% 50% 18px 18px / 30% 30% 18px 18px; background: linear-gradient(#8a5a3f, #6e4532); display: flex; justify-content: space-around; align-items: flex-end; padding: 0 20px 34px; }
 .bed img { width: 80px; height: 80px; margin-bottom: -6px; animation: pop-in .6s var(--spring) both; }
 .bed img.s { transform: scale(1.7); transform-origin: 50% 90%; animation-name: pop-in-s; }
@@ -479,7 +484,7 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
 .tap-can { position: absolute; z-index: 2; left: calc(50% - 4px); bottom: 60px; width: 52px; height: auto; transform-origin: 10% 40%; filter: drop-shadow(0 3px 3px rgba(74, 54, 46, .3)); animation: tap-can 5s ease-in-out infinite; }
 @keyframes tap-can { 0% { transform: translate(70px, 30px); opacity: 0; } 4% { opacity: 1; } 14%, 19% { transform: none; } 21% { transform: scale(.85); } 23% { transform: none; opacity: 1; } 30%, 100% { transform: none; opacity: 0; } }
 /* art 4: tap packet → pick purple → drag straight to the soil → planted as a seed (6.5s loop) */
-.plant-art { position: relative; width: min(420px, 96%); height: 300px; }
+.plant-art { position: relative; width: min(420px, 96%); height: 300px; container-type: inline-size; } /* cqw below = % of this width, so the seed lands on the spot at any size */
 .shed-mini { position: absolute; left: 0; top: -6px; width: 360px; transform: scale(.52); transform-origin: top left; }
 .shed-mini .sp-packet-grid { padding-top: 0; }
 .shed-mini .sp-packet { transition: none; }
@@ -518,8 +523,8 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
   25%, 30% { transform: translate(98px, 109px); }
   27% { transform: translate(98px, 109px) scale(.92); }
   36% { transform: translate(111px, 11px); }
-  58% { transform: translate(263px, 170px); opacity: 1; }
-  64%, 100% { transform: translate(263px, 174px); opacity: 0; }
+  58% { transform: translate(calc(70cqw - 31px), 170px); opacity: 1; }
+  64%, 100% { transform: translate(calc(70cqw - 31px), 174px); opacity: 0; }
 }
 @keyframes plant-carry { 0%, 35% { opacity: 0; } 37%, 58% { opacity: .6; } 61%, 100% { opacity: 0; } }
 @keyframes plant-pick { 0%, 14%, 94%, 100% { transform: rotate(var(--r, 0deg)); } 16%, 90% { transform: translateY(-3px) rotate(0deg); box-shadow: 0 0 0 3px var(--berry-soft), var(--shadow-2); } }
@@ -567,6 +572,10 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
 .linkish { border: 0; background: none; padding: 0; font-weight: 800; color: var(--berry-deep); text-decoration: underline; }
 @keyframes bob { to { transform: translateY(-10px) rotate(2deg); } }
 
+@media (max-width: 1200px) {
+  .hint { display: none; }
+  .ob-foot { flex-wrap: wrap; } /* the 7 thumbnails and the buttons don't fit on one row here */
+}
 @media (max-width: 1000px) {
   .ob-card { grid-template-columns: 1fr; max-height: none; }
   .steps { display: none; }
@@ -578,17 +587,21 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
   .copy { min-height: 380px; align-items: flex-start; }
   .sp-plate { width: 250px; }
   .flower-carousel { width: 250px; }
-  .orbit img { height: 76px; }
+  .orbit img { height: 60px; }
   .avatar-slot { height: 230px; }
   .guide-slot { width: 70px; height: 96px; }
   .ready-slot { height: 52%; }
-  .orbit { width: 270px; }
-  .mini-book { width: 300px; }
+  .orbit { width: 190px; }
+  .mini-book { width: min(300px, 92%); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .mini-book .pg { padding: 12px 10px; }
+  .mb-cal { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+  .mb-task { font-size: .92rem; }
+  .mb-task span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .focus-art { width: 220px; }
   .seeds-art, .plant-art { transform: scale(.78); transform-origin: top center; }
   .plant-art, .seeds-art { margin-top: 14px; } /* room for the packets' tape and the pop-up */
   .you-art { transform: scale(.55); transform-origin: bottom center; height: 260px; }
-  .ready-art { transform: scale(.62); transform-origin: bottom center; }
+  .ready-art { transform: scale(.62); transform-origin: bottom center; height: 260px; }
   .slide-art { overflow: hidden; }
   .ob-foot { flex-wrap: wrap; padding: 12px 18px 18px; gap: 10px; }
   .hint { display: none; }
