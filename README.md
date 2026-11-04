@@ -143,7 +143,9 @@ In accordance with course policies, AI (Large Language Models) was used as an as
     - Create the icon for the Flashcard Mode
     - Utilised AI for the marking of the answers for the short-structured questions
 - **Claudine:** Used AI to:
-    - [what you used it for]
+    - Write Pomodoro feature code based on my requirements. (I made the feature and design decisions, tested in the app, reported what to fix and reviewed the code.)
+    - Create the garden radio feature (lo-fi songs were selected and matched to weather personally)
+    - Add the onboarding Plant and Review animations in the Onboarding feature.
 
 ---
 
