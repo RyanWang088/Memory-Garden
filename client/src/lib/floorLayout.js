@@ -51,19 +51,12 @@ function buildProps() {
     out.push({ k: 'flower', x, d, s: 1 + rand(), c: Math.floor(rand() * FLOWER_VARS.length) })
   }
 
-  // tree clusters (circle blobs, or a poplar) down both margins; blobs are [dx, dy, rx, ry, alt] in world units
+  // Shrubs down both margins.
   for (const side of [-1, 1]) {
     for (let d = 30; d < SCATTER_DEPTH; d += 70 + rand() * 90) {
       const reach = rand() * (SCATTER_MAX_X - GRID_WIDTH - TREE_MARGIN)
       const x = side < 0 ? -TREE_MARGIN - reach : GRID_WIDTH + TREE_MARGIN + reach
-      const blobs = []
-      if (rand() < 0.22) {
-        blobs.push([0, 36, 10, 40, 1])
-      } else {
-        const n = 3 + Math.floor(rand() * 3)
-        for (let k = 0; k < n; k++) blobs.push([(k - n / 2) * 18 + rand() * 8, 14 + rand() * 30, 18 + rand() * 12, 18 + rand() * 12, k % 2])
-      }
-      out.push({ k: 'tree', x, d, s: 0.8 + rand() * 0.8, blobs })
+      out.push({ k: 'tree', type: 'shrub', x, d, s: 0.8 + rand() * 0.8 })
     }
   }
 

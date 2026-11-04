@@ -230,7 +230,7 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
             <!-- 5 review -->
             <div v-else-if="i === 4" key="a4" class="art a-seeds">
               <div class="seeds-art">
-                <!-- mini "Choose a goal" pop-up (same look as SeedReviewView) -->
+                <!-- mini review-mode pop-up -->
                 <div class="goal-mini">
                   <div class="goal-dialog">
                     <span class="btn-close align-self-end"></span>
@@ -457,7 +457,7 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
 @keyframes glow { from { opacity: .15; } to { opacity: 1; } }
 /* art 5 */
 .seeds-art { position: relative; width: min(420px, 96%); height: 300px; }
-/* mini goal pop-up: SeedReviewView's dialog at full size, shrunk to fit */
+/* mini review-mode pop-up, shrunk to fit */
 .goal-mini { position: absolute; z-index: 3; left: 50%; top: -14px; width: 440px; transform: translateX(-50%) scale(.56); transform-origin: top center; }
 .goal-dialog { display: flex; flex-direction: column; gap: 16px; padding: 24px; border-radius: 1rem; background: var(--paper); box-shadow: var(--shadow-2); opacity: 0; animation: goal-open 5s var(--spring) infinite; }
 .goal-title { margin: 0; text-align: center; font-family: var(--f-display); font-weight: 600; font-size: 1.75rem; line-height: 1.3; letter-spacing: -.01em; }

@@ -29,16 +29,32 @@ test.describe('Review feature', () => {
     await expect(plant(page)).toBeVisible()
   })
 
-  test('Test 1: open the goal page from a plant in garden view', async ({ page }) => {
-    // actions: click the plant
+  test('Test 1: show review controls above a selected plant', async ({ page }) => {
+    // actions: select the plant
     await openPlant(page)
 
-    // assert: the goal picker opens with all 3 modes
-    await expect(page).toHaveURL(/\/garden\/seeds\//)
-    await expect(page.getByText('Choose a goal for this session')).toBeVisible()
-    await expect(page.getByTestId('goal-flashcard')).toBeVisible()
-    await expect(page.getByTestId('goal-multiple-choice-quiz')).toBeVisible()
-    await expect(page.getByTestId('goal-short-structured')).toBeVisible()
+    // assert: the plant info and three floating review buttons appear in the garden
+    await expect(page).toHaveURL(/\/garden$/)
+    await expect(page.locator('.plant-title')).toHaveText(SEED)
+    await expect(page.locator('.plant-mastery')).toHaveText(/MASTERY \d+%/)
+    const flashcard = page.getByTestId('review-flashcard')
+    await expect(flashcard).toBeVisible()
+    const actions = [
+      flashcard,
+      page.getByTestId('review-multiple-choice-quiz'),
+      page.getByTestId('review-short-structured'),
+    ]
+    for (const action of actions) {
+      await expect(action).toBeVisible()
+      const receivesPointer = await action.evaluate((button) => {
+        const rect = button.getBoundingClientRect()
+        const target = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)
+        return target === button || button.contains(target)
+      })
+      expect(receivesPointer).toBe(true)
+    }
+    await flashcard.hover()
+    await expect(flashcard.locator('.tip')).toHaveCSS('opacity', '1')
   })
 
   test('Test 2: should finish Flashcard Mode and water the plant', async ({ page }) => {
@@ -46,7 +62,7 @@ test.describe('Review feature', () => {
 
     // actions: open Flashcard Mode, flip each card and rate it Easy
     await openPlant(page)
-    await page.getByTestId('goal-flashcard').click()
+    await page.getByTestId('review-flashcard').click()
     const total = await totalOf(page.getByTestId('card-count')) // "Card 1 of N"
     for (let i = 0; i < total; i++) {
       await page.getByTestId('show-answer').click()
@@ -67,7 +83,7 @@ test.describe('Review feature', () => {
 
     // actions: open the Multiple Choice Quiz and pick the correct answer for every question
     await openPlant(page)
-    await page.getByTestId('goal-multiple-choice-quiz').click()
+    await page.getByTestId('review-multiple-choice-quiz').click()
     const total = await totalOf(questionCount(page))
     for (let i = 0; i < total; i++) {
       const question = await page.locator('h2.question').innerText()
@@ -108,7 +124,7 @@ test.describe('Review feature', () => {
 
     // actions: open Short Structured Mode, type the correct answer to the first question and check it
     await openPlant(page)
-    await page.getByTestId('goal-short-structured').click()
+    await page.getByTestId('review-short-structured').click()
     const question = await page.locator('h2.question').innerText()
     await page.getByTestId('short-answer').fill(ANSWERS[question])
     const marking = page.waitForRequest('**/api/seeds/*/grade')
@@ -164,7 +180,7 @@ test.describe('Review feature', () => {
 
     // actions: open the Multiple Choice Quiz, answer every question right except the last one
     await openPlant(page)
-    await page.getByTestId('goal-multiple-choice-quiz').click()
+    await page.getByTestId('review-multiple-choice-quiz').click()
     const total = await totalOf(questionCount(page))
     expect(total, '2 of 3 right is 67%, so this test needs the 3-card seed').toBe(3)
     for (let i = 0; i < total; i++) {
@@ -188,7 +204,7 @@ test.describe('Review feature', () => {
 // opens Short Structured Mode and answers every question, checking each faked mark shows the expected score
 async function answerAllShort(page, expectedScore) {
   await openPlant(page)
-  await page.getByTestId('goal-short-structured').click()
+  await page.getByTestId('review-short-structured').click()
   const total = await totalOf(questionCount(page))
   for (let i = 0; i < total; i++) {
     await page.getByTestId('short-answer').fill('My answer')

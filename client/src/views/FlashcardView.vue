@@ -217,7 +217,6 @@ function backToGarden() {
           <div class="d-flex gap-2">
             <button v-for="(r, i) in RATINGS" :key="r.value" type="button" class="sp-btn rate flex-fill" :class="r.cls"
               :data-testid="`rate-${r.value}`" :aria-keyshortcuts="String(i + 1)" @click.stop="rate(r.value)">
-              <span class="keycap" aria-hidden="true">{{ i + 1 }}</span>
               <span class="rate-label">{{ r.label }}</span>
               <span class="rate-next">{{ r.next }}</span>
             </button>
@@ -276,7 +275,6 @@ function backToGarden() {
 .rate { position: relative; flex-direction: column; gap: 2px; min-height: 84px; padding: .6em .4em; white-space: normal; line-height: 1.1; }
 .rate-label { font-size: 1.05rem; }
 .rate-next { font-family: var(--f-hand); font-weight: 600; font-size: 1.15rem; opacity: .9; }
-.keycap { position: absolute; top: 6px; right: 9px; font-size: .65rem; opacity: .6; }
 
 /* hand-drawn underline: the path draws itself (pathLength=1 makes dash maths independent of its real length) */
 .sp-scribble { display: block; width: min(100%, 260px); height: 10px; margin-top: 6px; fill: none; stroke: var(--berry); stroke-width: 3; stroke-linecap: round; overflow: visible; }

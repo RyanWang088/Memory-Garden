@@ -13,7 +13,6 @@ const routes = [
     children: [
       { path: 'seeds/new/:col/:row', name: 'seed-create', component: () => import('@/views/SeedCreateView.vue'), meta: { showNav: false } },
       { path: 'seeds/:id/edit', name: 'seed-edit', component: () => import('@/views/SeedEditView.vue'), meta: { showNav: false } },
-      { path: 'seeds/:id', name: 'seed-review', component: () => import('@/views/SeedReviewView.vue'), meta: { showNav: false } },
     ],
   },
   { path: '/review/:id/multiple-choice-quiz', name: 'multiple-choice-quiz', component: () => import('@/views/MultipleChoiceQuizView.vue'), meta: { requiresAuth: true } },

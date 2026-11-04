@@ -82,9 +82,9 @@ const reward = computed(() => {
           <svg viewBox="0 0 30 30" aria-hidden="true"><circle class="sp-check-ring" cx="15" cy="15" r="12" /><path class="sp-check-ink" d="M15 3.2C22 3 27.2 8.4 26.8 15.3 26.4 22 21 27 14.6 26.8 8 26.6 3 21.4 3.3 14.8 3.6 8.2 9 3.4 16 3.6" /><path class="sp-check-tick" d="M9.5 15.5l3.8 3.8 7.4-8.3" /></svg>
         </button>
         <span class="sp-task-label flex-fill">{{ task.text }}</span>
-        <!-- a recommended review links to that seed's review page -->
+        <!-- a recommended review returns to the plant and opens its review controls -->
         <RouterLink
-          v-if="task.seedId" :to="{ name: 'seed-review', params: { id: task.seedId } }" class="review-link"
+          v-if="task.seedId" :to="{ name: 'garden', query: { scrollTo: task.seedId } }" class="review-link"
           :aria-label="`Open ${task.text}`" title="Open this review"
         >↗</RouterLink>
         <button
@@ -120,7 +120,7 @@ const reward = computed(() => {
 .remove:hover { color: var(--berry-deep); }
 @media (hover: none) { .remove { opacity: 1; } }
 
-/* ↗ opens the seed's review */
+/* ↗ opens the seed in the garden */
 .review-link { color: var(--ink-soft); text-decoration: none; font-weight: 700; }
 .review-link:hover, .review-link:focus-visible { color: var(--leaf); }
 
