@@ -36,7 +36,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function signUp(email, password) {
     await apiFetch('/api/auth/register', { method: 'POST', body: { email, password } })
+      .catch((e) => { throw new Error(`Couldn't create your account: ${e.message}`) })
     await signIn(email, password) // a DB trigger already created the profiles row
+      .catch((e) => { throw new Error(`Your account was created, but logging in failed, so try the Log in tab. Reason: ${e.message}`) })
   }
   async function signIn(email, password) {
     const { user: u } = check(await supabase.auth.signInWithPassword({ email, password }))

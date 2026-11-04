@@ -1,6 +1,3 @@
-// Model: data access for the `seeds` table (a seed = one topic = one plant).
-// Schema (supabase/schema.sql): subjects -> seeds -> cards, and subjects -> exams -> seeds (a seed's exam is
-// optional). Mastery lives on cards only, so a seed's mastery is the average card_mastery, calculated here.
 import { supabase, check } from '../lib/supabase.js'
 import { markTopPriority } from '../lib/priority.js'
 
@@ -8,12 +5,7 @@ const SEED_WITH_RELATIONS = '*, subjects(name, shelf_slot), exams!seeds_exam_fke
   + 'cards(id, question, answer, wrong_options, card_mastery, next_review)'
 const DAY = 86_400_000
 
-// How each rating changes ONE card:
-//   points = added to card_mastery (kept between 0 and 100)
-//   days   = days until the card is due again; 0 = due again today
-// forgot / hard / easy come from Flashcard Mode, correct / wrong from Multiple Choice Quiz,
-// short_* from Short Structured Mode (typed answers, marked by AI; see shortAnswerRating).
-// Typing the answer from memory is the strongest proof, so short_correct earns the most.
+
 export const RATING_RULES = {
   forgot: { points: -5, days: 0 },
   hard: { points: 2, days: 1 },
@@ -25,15 +17,10 @@ export const RATING_RULES = {
   short_wrong: { points: -5, days: 0 },
 }
 
-// AI score (0-100) for a typed answer -> its rating: 80+ correct, 50-79 partial, below 50 wrong
 export function shortAnswerRating(score) {
   return score >= 80 ? 'short_correct' : score >= 50 ? 'short_partial' : 'short_wrong'
 }
 
-// seed row + joined subject/exam/cards -> the flat shape the client uses
-// exam_name, exam_date and exam_choice belong to the seed's exam (null when it has none); shelf_slot belongs to
-// the subject (one vase per subject). The plant's stage is worked out on the client (client/src/lib/plantStage.js)
-// because it changes with time since last_reviewed.
 function shape({ subjects, exams, cards = [], ...seed }) {
   const mastery = cards.length ? Math.round(cards.reduce((n, c) => n + c.card_mastery, 0) / cards.length) : 0
   return {
@@ -54,9 +41,7 @@ async function subjectIdFor(userId, name) {
   return check(await supabase.from('subjects').insert({ user_id: userId, name }).select('id').single()).id
 }
 
-// Find the subject's exam by name (ignoring case, like the unique index), or create it. A given exam_date
-// (YYYY-MM-DD) is saved on the exam; leaving it out never clears a saved one. A new date also clears exam_choice,
-// so "exam is over" asks again after the new date.
+
 async function examIdFor(userId, subject_id, { name, exam_date }) {
   const exams = check(await supabase.from('exams').select('id, name, exam_date').eq('user_id', userId).eq('subject_id', subject_id))
   const found = exams.find(e => e.name.toLowerCase() === name.toLowerCase())
@@ -92,16 +77,14 @@ export const SeedModel = {
       .insert(cards.map(c => ({ user_id: userId, seed_id: seed.id, question: c.question, answer: c.answer, wrong_options: c.wrong_options })))
     if (error) {
       // no transactions over the REST API: undo the seed so no empty plant is left behind
+      // .eq('id', seed.id) =>  Only the row whose id equals this seed's id
       await supabase.from('seeds').delete().eq('id', seed.id)
       throw error
     }
     return getOne(userId, seed.id)
   },
 
-  // Edits a seed's details and cards. details: { title, subject, exam?: { name, exam_date? }, tags,
-  // cards: [{ id?, question, answer, wrong_options }] }. A card with the id of one of this seed's cards is updated
-  // in place (its card_mastery and next_review are kept); any other card is added; the seed's cards left out are
-  // deleted. Returns null if the seed doesn't exist for this user.
+  // Edits a seed's details and cards  
   async edit(userId, seedId, { title, subject, exam, tags, cards }) {
     const found = check(await supabase.from('seeds').select('id').eq('id', seedId).eq('user_id', userId).maybeSingle())
     if (!found) return null
@@ -132,8 +115,7 @@ export const SeedModel = {
     return getOne(userId, seedId)
   },
 
-  // patch: { mastery?, last_reviewed? }. Mastery is stored per card, so it is written to every card
-  // of the seed (placeholder until real spaced-repetition scheduling per card).
+  
   async update(userId, seedId, { mastery, last_reviewed }) {
     if (mastery !== undefined) {
       check(await supabase.from('cards').update({ card_mastery: mastery }).eq('seed_id', seedId).eq('user_id', userId))
@@ -150,9 +132,7 @@ export const SeedModel = {
       .eq('id', cardId).eq('seed_id', seedId).eq('user_id', userId).maybeSingle())
   },
 
-  // Saves one review session. ratings: [{ card_id, rating }], e.g. { card_id: '...', rating: 'easy' }.
-  // Each card changes on its own (see RATING_RULES). Setting last_reviewed waters the plant.
-  // Returns null if the seed doesn't exist for this user.
+  // Saves one review session.
   async review(userId, seedId, ratings) {
     const cards = check(await supabase.from('cards').select('id, card_mastery').eq('seed_id', seedId).eq('user_id', userId))
     if (!cards.length) return null

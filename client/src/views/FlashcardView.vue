@@ -9,7 +9,6 @@ import { moodNow } from '@/lib/greeting'
 import SceneryBackdrop from '@/components/SceneryBackdrop.vue'
 import { useAuthStore } from '@/stores/auth'
 import { foliageUrl } from '@/lib/plantSprites'
-import SproutIcon from '@/components/SproutIcon.vue'
 
 // "Flashcard Mode" review session: flip flashcards, up to 20 cards from one seed.
 // Forgot brings the card back soon, Hard brings it back later; Easy finishes it for today.

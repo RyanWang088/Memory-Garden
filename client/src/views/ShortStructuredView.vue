@@ -289,7 +289,8 @@ label:focus-within .pen { color: var(--berry); animation: write-wiggle .6s ease-
 @keyframes write-wiggle { 25% { transform: rotate(-14deg) translateX(-2px); } 75% { transform: rotate(10deg) translateX(2px); } }
 
 /* typed straight onto the ruled lines: one rule per line of text */
-.answer-box { display: block; width: 100%; padding: 0; border: 0; outline: 0; resize: none; background: none; font-size: 1.42rem; line-height: var(--lh); color: var(--ink); caret-color: var(--berry); }
+.answer-box { display: block; width: 100%; padding: 0 12px; border: 0; outline: 1.5px solid var(--ink-soft); border-radius: var(--r-sm); resize: none; background: none; font-size: 1.42rem; line-height: var(--lh); color: var(--ink); caret-color: var(--berry); }
+.answer-box:focus { outline-color: var(--leaf); }
 .answer-box::placeholder { color: var(--ink-faint); }
 .answer-box:disabled { color: var(--ink-soft); }
 

@@ -17,12 +17,14 @@ export async function apiFetch(path, { method = 'GET', body, signal } = {}) {
     },
     body: isForm ? body : body && JSON.stringify(body),
     signal,
+  }).catch((err) => {
+    if (signal?.aborted) throw err
+    throw new Error(UNREACHABLE) // no response at all: offline, or the server's address can't be reached
   })
 
   let res = await send()
   let text = await res.text()
-  // An empty 500 comes from Vite's proxy when the server can't be reached (e.g. it is restarting after a save);
-  // the server's own errors always have a JSON body. The request never got to the server, so it is safe to resend once.
+
   if (res.status === 500 && !text) {
     await wait(RETRY_MS, signal)
     res = await send()
@@ -31,11 +33,12 @@ export async function apiFetch(path, { method = 'GET', body, signal } = {}) {
 
   let json = null
   try { json = JSON.parse(text) } catch { /* empty or not JSON */ }
-  if (!res.ok) throw new Error(json?.error || `Request failed (${res.status})`)
+  if (!res.ok) throw new Error(json?.error || (json ? `The server gave no details (error ${res.status}).` : UNREACHABLE))
   return json
 }
 
 const RETRY_MS = 1000
+const UNREACHABLE = "We couldn't reach the Sproutly server. Check that the server is running and your internet is connected, then try again."
 
 // resolves after ms, or rejects straight away if the request is cancelled meanwhile
 function wait(ms, signal) {

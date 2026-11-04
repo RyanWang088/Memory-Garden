@@ -23,13 +23,14 @@ To run this application locally, please follow these steps:
 
 2. **Unzip the project folder** and open a terminal in the root directory.
 
-3. **Install dependencies**, once for each folder:
+3. **Install dependencies** from the root folder, once for each folder:
 
     ```bash
     cd server
     pnpm install
+    
 
-    cd ../client
+    cd client
     pnpm install
     ```
 
@@ -38,13 +39,13 @@ To run this application locally, please follow these steps:
     - `server/.env`: `SUPABASE_URL`, `SUPABASE_SECRET_KEY` and the AI keys (`OPENROUTER_API_KEY`, `GROQ_API_KEY`)
     - `client/.env.local`: `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`
 
-    _Note: if one of them is missing, copy `server/.env.example` to `server/.env` and fill in the values._
+    
 
 5. **Start the server** (Terminal 1, leave it running):
 
     ```bash
     cd server
-    pnpm dev
+    pnpm start
     ```
 
 6. **Start the client** (Terminal 2):
@@ -85,7 +86,7 @@ The tests are in `client/tests/e2e/`. They log in as the demo account and click 
 
 2. **Start the server** (Terminal 1 from step 5 above) and leave it running.
 
-    _You don't need to start the client: Playwright starts it by itself, or reuses it if it's already running._
+    Ensure that "localhost:5173" is running before continuing onto the below steps.
 
 3. **Run the tests** from the `client` folder.
 
@@ -142,6 +143,7 @@ In accordance with course policies, AI (Large Language Models) was used as an as
 - **Ryan:** Used AI to:
     - Create the icon for the Flashcard Mode
     - Utilised AI for the marking of the answers for the short-structured questions
+    - create the structure for the Planner book and the grids for the calendar view, and the background for the to-do list like a notebook/foolscap paper
 - **Claudine:** Used AI to:
     - Write Pomodoro feature code based on my requirements. (I made the feature and design decisions, tested in the app, reported what to fix and reviewed the code.)
     - Create the garden radio feature (lo-fi songs were selected and matched to weather personally)
