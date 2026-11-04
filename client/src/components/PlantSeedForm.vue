@@ -10,8 +10,7 @@ import { useFlowerStore } from '@/stores/flower'
 import { plantSpriteUrl, BLOOM_STAGE } from '@/lib/plantSprites'
 import { apiFetch } from '@/lib/http'
 import { tagColors, tagStyle } from '@/lib/tagColors'
-import { VueDatePicker } from '@vuepic/vue-datepicker'
-import '@vuepic/vue-datepicker/dist/main.css'
+import DatePicker from '@/components/DatePicker.vue'
 import tulipSvg from '@/assets/foliage/tulip-pink-4.svg'
 import SuggestInput from './SuggestInput.vue'
 
@@ -404,12 +403,7 @@ function save() {
       </div>
       <div class="sp-field">
         <label class="sp-label" for="seed-exam-date">Exam date</label>
-        <VueDatePicker
-          v-model="examDate" model-type="yyyy-MM-dd" :formats="{ input: 'dd-MM-yyyy' }"
-          :text-input="{ format: 'dd-MM-yyyy' }" placeholder="DD-MM-YYYY" :min-date="minExamDate"
-          :time-config="{ enableTimePicker: false }" auto-apply teleport
-          :ui="{ input: 'exam-input' }" :input-attrs="{ id: 'seed-exam-date' }" data-testid="seed-exam-date"
-        />
+        <DatePicker v-model="examDate" input-id="seed-exam-date" :min-date="minExamDate" data-testid="seed-exam-date" />
         <span class="help" data-testid="seed-exam-help">{{ examHelp }}</span>
       </div>
       <label class="sp-field">
@@ -685,23 +679,4 @@ textarea.sp-input { resize: vertical; }
 .line:first-child .line-text { background: linear-gradient(var(--leaf-soft), var(--leaf-soft)) no-repeat 0 90% / 100% .55em; justify-self: start; }
 .line-input { width: 100%; min-width: 0; padding: 0; border: 0; border-bottom: 1.5px dashed var(--line); border-radius: 0; outline: 0; background: none; transition: border-color .2s; }
 .line-input:focus { border-bottom-color: var(--leaf); }
-</style>
-
-<style>
-/* Exam date picker (@vuepic/vue-datepicker) in the form's colours. Not scoped: the calendar menu is teleported to <body>. */
-:root .dp--theme-light {
-  --dp-font-family: nunito, sans-serif;
-  --dp-font-size: 15px;
-  --dp-border-radius: 14px;
-  --dp-input-padding: 12px 30px 12px 16px;
-  --dp-background-color: var(--paper);
-  --dp-text-color: var(--ink);
-  --dp-border-color: var(--line);
-  --dp-border-color-hover: var(--line);
-  --dp-border-color-focus: var(--leaf);
-  --dp-menu-border-color: var(--line);
-  --dp-primary-color: var(--leaf);
-  --dp-icon-color: var(--ink-soft);
-}
-.dp--input.exam-input { border-width: 1.5px; }
 </style>

@@ -7,6 +7,7 @@ import { usePomodoroStore } from '@/stores/pomodoro'
 import { foliageUrl } from '@/lib/plantSprites'
 import { burst, vBurst } from '@/lib/burst'
 import SproutIcon from '@/components/SproutIcon.vue'
+import DatePicker from '@/components/DatePicker.vue'
 import potArt from '@/assets/ui/pot.svg'
 
 // The open-book planner: to-do list on the left page, month calendar on the right.
@@ -72,6 +73,9 @@ const state = reactive({
   turn: 'next',  // direction of the page-turn animation
 })
 const parse = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d) }
+// new tasks can't be due in the past, even when a past day is picked on the calendar page
+const minDueDate = parse(todayIso)
+const notPast = (k) => (k < todayIso ? todayIso : k)
 const fmt = (d, o) => d.toLocaleDateString('en-GB', o)
 
 /* ---------- cover ---------- */
@@ -173,7 +177,7 @@ const draftInvalid = ref(false)
 const listEl = ref(null)
 function addTask() {
   if (!draft.text.trim()) { draftInvalid.value = true; setTimeout(() => (draftInvalid.value = false), 900); return }
-  const date = draft.date || state.selected
+  const date = draft.date || notPast(state.selected)
   src.addTask({ text: draft.text, subject: draft.subject, date })
   draft.text = ''
   if (date !== state.selected) select(date)
@@ -227,7 +231,7 @@ const ticket = computed(() => {
 
 function select(k) {
   state.selected = k
-  draft.date = k
+  draft.date = notPast(k)
   const d = parse(k)
   if (d.getMonth() !== state.view.getMonth() || d.getFullYear() !== state.view.getFullYear()) {
     turn(d > state.view ? 1 : -1, new Date(d.getFullYear(), d.getMonth(), 1))
@@ -382,7 +386,7 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
                 <option v-for="s in src.subjects" :key="s.name" :value="s.name">{{ s.name }}</option>
               </select>
               <label class="sr-only" :for="`${demo ? 'demo' : 'j'}-date`">Due date</label>
-              <input :id="`${demo ? 'demo' : 'j'}-date`" v-model="draft.date" class="sp-input" type="date" />
+              <DatePicker v-model="draft.date" class="add-date" :clearable="false" :min-date="minDueDate" :input-id="`${demo ? 'demo' : 'j'}-date`" data-testid="planner-date" />
               <button class="add-btn" type="submit" aria-label="Add task" data-testid="planner-add">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
               </button>
@@ -435,7 +439,7 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
                     <div class="ticket-body">
                       <h4>{{ ticket.heading }}</h4>
                       <p>{{ ticket.line }}</p>
-                      <div v-if="!compact && (ticket.topic || ticket.due)" class="d-flex flex-wrap gap-2">
+                      <div v-if="!compact && (ticket.topic || ticket.due)" class="d-flex flex-column align-items-start gap-1">
                         <button v-if="ticket.topic" v-burst type="button" class="sp-btn sp-btn-sm" @click="focusOnThis">Focus on this <span class="arrow">→</span></button>
                         <RouterLink v-if="ticket.due" :to="{ name: 'garden', query: { q: ticket.topic||ticket.dueSubject } }" class="sp-btn sp-btn-sm sp-btn-leaf">Water seeds</RouterLink>
                       </div>
@@ -618,10 +622,12 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 .day-divider.picked::after { content: " · picked day"; letter-spacing: .06em; text-transform: none; font-weight: 700; color: var(--ink-soft); }
 .day-divider { padding-left: 46px; height: var(--lh); display: flex; align-items: flex-end; padding-bottom: 6px; font-size: .7rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--berry-deep); }
 
-.add-task { display: grid; grid-template-columns: 1fr auto auto 44px; gap: 8px; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1.5px dashed var(--line); }
-.add-task .sp-input { min-height: 44px; font-family: var(--f-hand); font-size: 1.3rem; padding: .2em .8em; }
-.add-task select.sp-input, .add-task input[type="date"].sp-input { font-family: var(--f-body); font-size: .82rem; font-weight: 700; padding: .3em .6em; width: auto; }
-.add-task select.sp-input { max-width: 140px; text-overflow: ellipsis; }
+.add-task { display: grid; grid-template-columns: minmax(0, 1fr) auto auto 44px; gap: 8px; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1.5px dashed var(--line); }
+.add-task .sp-input { min-width: 0; min-height: 44px; font-family: var(--f-hand); font-size: 1.3rem; padding: .2em .8em; }
+.add-task select.sp-input { font-family: var(--f-body); font-size: .82rem; font-weight: 700; padding: .3em .6em; width: auto; }
+.add-task select.sp-input { height: 44px; max-width: 140px; padding-right: 1.8em; text-overflow: ellipsis; -webkit-appearance: none; appearance: none; background: var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%238a6f5e' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right .8em center / 11px; }
+.add-date { width: 170px; min-width: 0; }
+.add-date :deep(.dp--input) { height: 44px; padding-block: 0; padding-inline-end: 10px; font-size: .82rem; font-weight: 700; }
 .add-btn { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--ink); color: var(--sheet); display: grid; place-items: center; box-shadow: 0 3px 0 #2c201b; transition: transform .2s var(--spring), box-shadow .2s; }
 .add-btn:hover { transform: translateY(-2px) rotate(90deg); }
 .add-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #2c201b; }
@@ -663,10 +669,11 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 .ticket-date::after { content: ""; position: absolute; right: -6px; top: 0; bottom: 0; width: 12px; background: radial-gradient(circle at 6px 8px, var(--paper)4px, transparent 4.5px) 0 0/12px 16px; }
 .ticket-date b { font-family: var(--f-display); font-size: 1.7rem; font-weight: 600; display: block; margin: 3px 0; }
 .ticket-date small { font-size: .6rem; font-weight: 800; letter-spacing: .14em; }
-.ticket-body { padding: 10px 14px 10px 18px; min-width: 0; display: grid; gap: 4px; align-content: center; }
+.ticket-body { padding: 6px 14px 6px 18px; min-width: 0; display: grid; gap: 4px; align-content: center; }
 .ticket-body h4 { margin: 0; font-family: var(--f-display); font-style: italic; color: var(--berry-deep); font-size: 1.05rem; font-weight: 600; }
 .ticket-body p { margin: 0; font-size: .8rem; color: var(--ink-soft); line-height: 1.4; overflow-wrap: anywhere; }
-.ticket-body .sp-btn { margin-top: 4px; }
+.ticket-body .sp-btn { min-height: 24px; padding: .1em .8em; font-size: .76rem; line-height: 1.2; }
+.ticket-body button.sp-btn { margin: 3px 0; }
 .legend { display: grid; align-content: center; gap: 2px; font-size: .7rem; font-weight: 700; color: var(--ink-soft); }
 
 /* corner curl = next month */
@@ -711,11 +718,12 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
   .page-right { background-image: linear-gradient(90deg, rgba(110,80,50,.16), transparent 6%); }
   .page-inner { padding: 22px 18px 18px 26px !important; }
   .ribbon { left: auto; right: 54px; }
-  .add-task { grid-template-columns: 1fr 1fr 44px; }
-  .add-task > .sp-input:first-of-type { grid-column: 1 / 3; }
-  .add-task .add-btn { grid-column: 3; grid-row: 1; }
-  .add-task select.sp-input { grid-row: 2; grid-column: 1; width: 100%; }
-  .add-task input[type="date"].sp-input { grid-row: 2; grid-column: 2 / 4; width: 100%; }
+  /* mirrored tracks: subject and date each take one fr + one 44px, so they match in width */
+  .add-task { grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr) 44px; }
+  .add-task > input.sp-input:first-of-type { grid-column: 1 / 4; }
+  .add-task .add-btn { grid-column: 4; grid-row: 1; }
+  .add-task select.sp-input { grid-row: 2; grid-column: 1 / 3; width: 100%; max-width: none; }
+  .add-task .add-date { grid-row: 2; grid-column: 3 / 5; width: 100%; }
   .lined { max-height: 52vh; min-height: 260px; }
   .cal-grid { min-height: 380px; }
   .cal-title { flex-basis: 100%; }
@@ -733,6 +741,11 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 @container book (min-width: 761px) {
   .cal-nav { width: auto !important; }
 }
+@container book (max-width: 335px) {
+  /* too narrow for the icon and DD-MM-YYYY side by side; tapping the field still opens the calendar */
+  .add-date :deep(.dp--input) { padding-inline-start: 12px; }
+  .add-date :deep(.dp--input-icon) { display: none; }
+}
 @container book (max-width: 420px) {
   .day .n { font-size: .9rem; }
   .stamp { font-size: .48rem; padding: 0 3px; right: 1px; }
@@ -742,11 +755,11 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 @keyframes flip-in { from { transform: perspective(1400px) rotateY(70deg); opacity: .4; } }
 .book.compact { --page-h: 540px; }
 @container book (min-width: 761px) and (max-width: 1000px) {
-  .add-task { grid-template-columns: 1fr 1fr 44px; }
-  .add-task > .sp-input:first-of-type { grid-column: 1 / 3; }
+  .add-task { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px; }
+  .add-task > input.sp-input:first-of-type { grid-column: 1 / 3; }
   .add-task .add-btn { grid-column: 3; grid-row: 1; }
-  .add-task select.sp-input { grid-row: 2; grid-column: 1; width: 100%; }
-  .add-task input[type="date"].sp-input { grid-row: 2; grid-column: 2 / 4; width: 100%; }
+  .add-task select.sp-input { grid-row: 2; grid-column: 1; width: 100%; max-width: none; }
+  .add-task .add-date { grid-row: 2; grid-column: 2 / 4; width: 100%; }
 }
 .due-drop { margin-left: 1px; }
 </style>

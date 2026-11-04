@@ -93,8 +93,8 @@ async function deleteAccount() {
 
 <template>
   <main class="profile-page mx-auto" data-testid="profile">
-    <div class="row g-4 align-items-start">
-      <aside class="col-12 col-md-5 col-lg-4 col-xl-3 d-flex flex-column gap-3">
+    <div class="profile-layout">
+      <aside class="d-flex flex-column gap-3">
         <div>
           <p class="text-label-caption m-0 eyebrow">Profile</p>
           <h1 class="m-0">Your flower house</h1>
@@ -105,54 +105,54 @@ async function deleteAccount() {
             <span class="text-body-small">{{ stat.label }}</span>
           </li>
         </ul>
-
-        <!-- Account & settings: the three account actions, always visible here -->
-        <section id="settings" class="settings" aria-labelledby="settings-title" data-testid="settings">
-          <h2 id="settings-title" class="settings-title">Account &amp; settings</h2>
-          <p class="text-body-small m-0">Signed in as <b>{{ auth.user?.email }}</b></p>
-
-          <div class="setting">
-            <div class="setting-row">
-              <span class="setting-ic" aria-hidden="true">🔑</span>
-              <span class="flex-fill"><b>Change password</b><small>Use at least 8 characters.</small></span>
-              <button type="button" class="sp-btn sp-btn-ghost sp-btn-sm" :aria-expanded="pw.open" data-testid="settings-password" @click="pw.open = !pw.open; pw.error = ''; pw.done = false">
-                {{ pw.open ? 'Cancel' : 'Change' }}
-              </button>
-            </div>
-            <p v-if="pw.done" class="setting-ok" role="status">Password changed.</p>
-            <form v-if="pw.open" class="setting-form" novalidate @submit.prevent="changePassword">
-              <label class="sp-field"><span>Current password</span><input v-model="pw.current" class="sp-input" type="password" autocomplete="current-password" data-testid="pw-current" /></label>
-              <label class="sp-field"><span>New password</span><input v-model="pw.next" class="sp-input" type="password" autocomplete="new-password" minlength="8" data-testid="pw-new" /></label>
-              <label class="sp-field"><span>Repeat new password</span><input v-model="pw.confirm" class="sp-input" type="password" autocomplete="new-password" data-testid="pw-confirm" /></label>
-              <p v-if="pw.error" class="sp-field-msg" role="alert">{{ pw.error }}</p>
-              <button class="sp-btn sp-btn-leaf sp-btn-sm" type="submit" :disabled="pw.busy" data-testid="pw-save">{{ pw.busy ? 'Saving…' : 'Save new password' }}</button>
-            </form>
-          </div>
-
-          <div class="setting">
-            <div class="setting-row">
-              <span class="setting-ic" aria-hidden="true">👋</span>
-              <span class="flex-fill"><b>Log out</b><small>You can log back in any time.</small></span>
-              <button type="button" class="sp-btn sp-btn-ghost sp-btn-sm" data-testid="logout" @click="logout">Log out</button>
-            </div>
-          </div>
-
-          <div class="setting danger">
-            <div class="setting-row">
-              <span class="setting-ic" aria-hidden="true">🗑️</span>
-              <span class="flex-fill"><b>Delete account</b><small>Removes your garden, seeds and progress for good.</small></span>
-              <button type="button" class="sp-btn sp-btn-sm" data-testid="settings-delete" @click="openDelete">Delete</button>
-            </div>
-          </div>
-        </section>
       </aside>
 
-      <div class="col-12 col-md-7 col-lg-8 col-xl-9 d-flex flex-column gap-2">
+      <div class="profile-shelf d-flex flex-column gap-2">
         <p v-if="loadError" class="text-berry-deep m-0" role="alert">{{ loadError }}</p>
         <FlowerShelf :subjects="garden.housedSubjects" :unlocked="!!auth.profile?.shelf_unlocked" :coins="auth.profile?.coins ?? 0"
           :unlocking="unlocking" :new-id="newId" @unlock="unlockShelf" />
         <p v-if="unlockError" class="text-berry-deep m-0" role="alert">{{ unlockError }}</p>
       </div>
+
+      <!-- Account & settings: the three account actions, always visible here -->
+      <section id="settings" class="settings" aria-labelledby="settings-title" data-testid="settings">
+        <h2 id="settings-title" class="settings-title">Account &amp; settings</h2>
+        <p class="text-body-small m-0">Signed in as <b>{{ auth.user?.email }}</b></p>
+
+        <div class="setting">
+          <div class="setting-row">
+            <span class="setting-ic" aria-hidden="true">🔑</span>
+            <span class="flex-fill"><b>Change password</b><small>Use at least 8 characters.</small></span>
+            <button type="button" class="sp-btn sp-btn-ghost sp-btn-sm" :aria-expanded="pw.open" data-testid="settings-password" @click="pw.open = !pw.open; pw.error = ''; pw.done = false">
+              {{ pw.open ? 'Cancel' : 'Change' }}
+            </button>
+          </div>
+          <p v-if="pw.done" class="setting-ok" role="status">Password changed.</p>
+          <form v-if="pw.open" class="setting-form" novalidate @submit.prevent="changePassword">
+            <label class="sp-field"><span>Current password</span><input v-model="pw.current" class="sp-input" type="password" autocomplete="current-password" data-testid="pw-current" /></label>
+            <label class="sp-field"><span>New password</span><input v-model="pw.next" class="sp-input" type="password" autocomplete="new-password" minlength="8" data-testid="pw-new" /></label>
+            <label class="sp-field"><span>Repeat new password</span><input v-model="pw.confirm" class="sp-input" type="password" autocomplete="new-password" data-testid="pw-confirm" /></label>
+            <p v-if="pw.error" class="sp-field-msg" role="alert">{{ pw.error }}</p>
+            <button class="sp-btn sp-btn-leaf sp-btn-sm" type="submit" :disabled="pw.busy" data-testid="pw-save">{{ pw.busy ? 'Saving…' : 'Save new password' }}</button>
+          </form>
+        </div>
+
+        <div class="setting">
+          <div class="setting-row">
+            <span class="setting-ic" aria-hidden="true">👋</span>
+            <span class="flex-fill"><b>Log out</b><small>You can log back in any time.</small></span>
+            <button type="button" class="sp-btn sp-btn-ghost sp-btn-sm" data-testid="logout" @click="logout">Log out</button>
+          </div>
+        </div>
+
+        <div class="setting danger">
+          <div class="setting-row">
+            <span class="setting-ic" aria-hidden="true">🗑️</span>
+            <span class="flex-fill"><b>Delete account</b><small>Removes your garden, seeds and progress for good.</small></span>
+            <button type="button" class="sp-btn sp-btn-sm" data-testid="settings-delete" @click="openDelete">Delete</button>
+          </div>
+        </div>
+      </section>
     </div>
 
     <!-- delete-account dialog: the shared Modal, with the two inputs in its default slot -->
@@ -183,6 +183,20 @@ async function deleteAccount() {
 <style scoped>
 .profile-page { max-width: 1400px; padding: 24px 16px calc(var(--dock-h) + 48px); }
 .eyebrow { color: var(--ink-soft); }
+/* phones, portrait and landscape: one column of stats, shelf, settings.
+   Larger screens: stats above settings on the left, shelf on the right.
+   The min-height keeps wide landscape phones (768px+) in one column. */
+.profile-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+@media (min-width: 768px) and (min-height: 501px) {
+  .profile-layout { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); grid-template-rows: auto 1fr; row-gap: 1rem; }
+  .profile-shelf { grid-column: 2; grid-row: 1 / span 2; }
+}
+@media (min-width: 992px) and (min-height: 501px) {
+  .profile-layout { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); }
+}
+@media (min-width: 1200px) and (min-height: 501px) {
+  .profile-layout { grid-template-columns: minmax(0, 3fr) minmax(0, 9fr); }
+}
 .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .stat {
   display: flex; flex-direction: column; gap: 2px; padding: 14px 16px;

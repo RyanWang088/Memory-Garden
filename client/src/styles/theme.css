@@ -439,7 +439,7 @@ h1 em, h2 em, h3 em { font-style: italic; font-weight: 500; color: var(--berry);
 .counter { font-family: var(--f-body); font-weight: 800; }
 .progress { background: var(--sheet-3); height: 8px; }
 .progress-fill { background: var(--leaf); }
-.overlay { background: rgba(46, 34, 28, .42); backdrop-filter: blur(4px);  position: fixed;inset: 0;display: grid;place-items: center;padding: 24px; }
+.overlay { background: rgba(46, 34, 28, .42); backdrop-filter: blur(4px);  position: fixed;inset: 0;display: grid;place-items: center;padding: 24px; overflow-y: auto; overscroll-behavior: contain; }
 .form-control { border: 1.5px solid var(--line); border-radius: 14px; background: color-mix(in srgb, #fff 55%, var(--sheet)); }
 .form-control:focus { border-color: var(--leaf); box-shadow: 0 0 0 4px color-mix(in srgb, var(--leaf) 18%, transparent); }
 ::-webkit-scrollbar { width: 5px; }

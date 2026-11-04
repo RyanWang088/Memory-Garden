@@ -45,7 +45,7 @@ const current = computed(() => NAV_ITEMS.findIndex((i) => route.matched.some((r)
         </span>
         <MusicToggle />
         <RouterLink
-          :to="{ name: 'profile' }" class="avatar d-none d-md-grid" aria-label="Profile"
+          :to="{ name: 'profile' }" class="avatar" aria-label="Profile"
           :aria-current="route.name === 'profile' ? 'page' : undefined" title="Profile &amp; settings"
         >🏡</RouterLink>
       </div>
@@ -94,13 +94,16 @@ const current = computed(() => NAV_ITEMS.findIndex((i) => route.matched.some((r)
   font-weight: 800; font-size: .85rem; font-variant-numeric: tabular-nums;
 }
 .coin-value { width: 7ch; overflow: hidden; text-align: right; white-space: nowrap; }
+/* portrait phones reach Profile from the dock; landscape phones and larger screens get it here */
 .avatar {
+  display: none; flex: none;
   width: 38px; height: 38px; border-radius: 50%; place-items: center;
   background: var(--leaf-soft); border: 2px solid #fff; box-shadow: var(--shadow-1);
   transition: transform .3s var(--spring), box-shadow .2s;
 }
 .avatar:hover { transform: rotate(-8deg) scale(1.06); }
 .avatar[aria-current="page"] { box-shadow: 0 0 0 3px var(--berry); }
+@media (min-width: 768px), (orientation: landscape) and (max-height: 500px) { .avatar { display: grid; } }
 @media (max-width: 767.98px) { .topbar-inner { gap: 10px; } }
 @media (max-width: 420px) {
   .counter { padding: 0 8px 0 4px; font-size: .78rem; gap: 3px; }
