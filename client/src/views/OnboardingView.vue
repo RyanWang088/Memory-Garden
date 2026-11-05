@@ -7,8 +7,9 @@ import { foliageUrl } from '@/lib/plantSprites'
 import { vBurst } from '@/lib/burst'
 import potArt from '@/assets/ui/pot.svg'
 import canArt from '@/assets/ui/wateringcan.png'
-import targetArt from '@/assets/ui/target.svg'
-import writingHandArt from '@/assets/ui/writing-hand.svg'
+import flashcardArt from '@/assets/ui/flashcard.svg'
+import quizArt from '@/assets/ui/mcq.svg'
+import structuredArt from '@/assets/ui/ssq.svg'
 import SproutIcon from '@/components/SproutIcon.vue'
 
 // Onboarding tour (journal look): five short "how it works" steps, an About-you step, then Ready.
@@ -231,11 +232,20 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
             <!-- 5 review -->
             <div v-else-if="i === 4" key="a4" class="art a-seeds">
               <div class="seeds-art">
-                <!-- the three review buttons that fan out above a clicked plant (same look as PlantReviewActions) -->
-                <div class="review-ring">
-                  <span class="mode"><SproutIcon name="flashcard" :size="34" /><b>Flashcard</b></span>
-                  <span class="mode"><img :src="targetArt" alt="" width="28" height="28" /><b>Multiple Choice Quiz</b></span>
-                  <span class="mode"><img :src="writingHandArt" alt="" width="28" height="28" /><b>Short Structured Mode</b></span>
+                <!-- the wooden sign that opens above a clicked plant (same look as PlantReviewActions) -->
+                <div class="review-sign">
+                  <div class="sign">
+                    <div class="tags">
+                      <span class="tag"><span class="sp-tape is-butter"></span><span class="art-tile"><img class="tag-ico" :src="flashcardArt" alt="" width="34" height="34" /></span></span>
+                      <span class="tag"><span class="sp-tape"></span><span class="art-tile"><img class="tag-ico" :src="quizArt" alt="" width="34" height="34" /></span></span>
+                      <span class="tag"><span class="sp-tape is-leaf"></span><span class="art-tile"><img class="tag-ico" :src="structuredArt" alt="" width="34" height="34" /></span></span>
+                    </div>
+                    <div class="slip">
+                      <span class="slip-line"><b>Flashcard</b><small>Flip through up to 20 cards</small></span>
+                      <span class="slip-line"><b>Multiple Choice Quiz</b><small>Up to 10 quick questions</small></span>
+                      <span class="slip-line"><b>Short Structured Mode</b><small>Prove you've mastered it</small></span>
+                    </div>
+                  </div>
                 </div>
                 <div class="bed"><img class="s" :src="foliageUrl('sprout')" alt="" /><img :src="foliageUrl('tulip-3')" alt="" /><img :src="foliageUrl('tulip-red-4')" alt="" /></div>
                 <img class="tap-can" :src="canArt" alt="" />
@@ -452,25 +462,46 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
 @keyframes glow { from { opacity: .15; } to { opacity: 1; } }
 /* art 5 */
 .seeds-art { position: relative; width: min(420px, 96%); height: 300px; }
-/* review buttons: fan out after the click, then each one is pointed at in turn */
-.review-ring { position: absolute; z-index: 3; left: 50%; bottom: 92px; width: 0; height: 0; }
-.mode {
-  position: absolute; left: calc(var(--x) - 34px); top: calc(var(--y) - 34px); width: 68px; height: 68px;
-  display: grid; place-items: center; border-radius: 50%; background: var(--paper);
-  box-shadow: var(--shadow-1), inset 0 0 0 3px var(--linen);
-  animation: mode-in 5s var(--spring) calc(var(--i) * 90ms) infinite backwards, mode-on 5s ease calc(var(--i) * 800ms) infinite;
+/* wooden sign: opens after the click with Flashcard chosen, then the choice moves along the three cards */
+.review-sign { position: absolute; z-index: 3; left: 50%; bottom: 92px; width: 0; height: 0; }
+.sign {
+  --stake: 24px;
+  position: absolute; left: 0; bottom: calc(var(--stake) + 8px); translate: -50% 0; width: 192px; padding: 10px 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px; border-radius: var(--r-md);
+  background: repeating-linear-gradient(92deg, rgba(255, 255, 255, .06) 0 2px, transparent 2px 7px), var(--ink);
+  box-shadow: 0 0 0 3px var(--paper), var(--shadow-2);
+  animation: sign-show 5s var(--spring) infinite backwards;
 }
-.mode b {
-  position: absolute; left: 50%; bottom: calc(100% + 6px); translate: -50% 0; padding: .2em .65em; border-radius: 8px;
-  background: var(--ink); color: var(--sheet); font-size: .72rem; font-weight: 800; white-space: nowrap; opacity: 0;
-  animation: tip-on 5s ease calc(var(--i) * 800ms) infinite;
+.sign::before, .sign::after { content: ""; position: absolute; left: 50%; clip-path: polygon(0 0, 100% 0, 100% 55%, 50% 100%, 0 55%); }
+.sign::before { top: 100%; width: 22px; height: var(--stake); margin-left: -11px; background: var(--paper); }
+.sign::after { top: calc(100% - 4px); width: 16px; height: calc(var(--stake) - 2px); margin-left: -8px; background: var(--ink); }
+.tags { display: flex; justify-content: center; align-items: flex-end; width: 100%; padding-top: 10px; }
+.tag {
+  position: relative; flex: none; display: grid; place-items: center; width: 60px; height: 70px;
+  border: 2px solid var(--ink); border-radius: var(--r-sm); background: var(--paper); box-shadow: 0 3px 0 rgba(0, 0, 0, .35);
+  transform: translateY(var(--dy)) rotate(var(--r));
+  animation: tag-on 5s var(--spring) calc(var(--i) * 950ms) infinite;
 }
-.mode:nth-child(1) { --i: 0; --x: -77px; --y: -85px; }
-.mode:nth-child(2) { --i: 1; --x: 0px; --y: -115px; }
-.mode:nth-child(3) { --i: 2; --x: 77px; --y: -85px; }
-@keyframes mode-in { 0%, 24% { opacity: 0; translate: 0 14px; } 30%, 88% { opacity: 1; translate: 0 0; } 94%, 100% { opacity: 0; translate: 0 0; } }
-@keyframes mode-on { 0%, 33%, 50%, 100% { scale: 1; background: var(--paper); z-index: 1; } 36%, 47% { scale: 1.15; background: var(--butter-soft); z-index: 2; } }
-@keyframes tip-on { 0%, 33%, 50%, 100% { opacity: 0; } 36%, 47% { opacity: 1; } }
+.tag + .tag { margin-left: -10px; }
+.tag:nth-child(1) { --i: 0; --r: -7deg; --dy: 4px; }
+.tag:nth-child(2) { --i: 1; --r: 0deg; --dy: 0px; }
+.tag:nth-child(3) { --i: 2; --r: 7deg; --dy: 4px; }
+.tag .sp-tape { top: -11px; left: 50%; margin-left: -22px; transform: rotate(calc(var(--r) * -1.5)); }
+.art-tile { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 8px; background: var(--sheet); }
+.tag-ico { animation: ico-on 5s var(--spring) calc(var(--i) * 950ms) infinite; }
+.slip { display: grid; width: 100%; min-height: 52px; padding: 5px 8px 6px; border-radius: var(--r-sm); background: var(--sheet); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); text-align: center; line-height: 1.15; }
+.slip-line { grid-area: 1 / 1; display: flex; flex-direction: column; justify-content: center; opacity: 0; animation: slip-on 5s ease calc(var(--i) * 950ms) infinite; }
+.slip-line:nth-child(1) { --i: 0; } .slip-line:nth-child(2) { --i: 1; } .slip-line:nth-child(3) { --i: 2; }
+.slip-line b { font-family: var(--f-hand); font-size: 1.1rem; font-weight: 700; }
+.slip-line small { font-size: .7rem; font-weight: 700; color: var(--ink-soft); }
+@keyframes sign-show { 0%, 24% { opacity: 0; transform: translateY(14px) scale(.9); } 30%, 88% { opacity: 1; transform: none; } 94%, 100% { opacity: 0; transform: none; } }
+@keyframes tag-on {
+  0%, 28%, 50%, 100% { z-index: 1; background: var(--paper); transform: translateY(var(--dy)) rotate(var(--r)); box-shadow: 0 3px 0 rgba(0, 0, 0, .35); }
+  31%, 47% { z-index: 2; background: var(--butter-soft); transform: translateY(-8px) scale(1.1); box-shadow: 0 0 0 2px var(--butter), 0 7px 0 rgba(0, 0, 0, .35); }
+}
+@keyframes slip-on { 0%, 28%, 50%, 100% { opacity: 0; } 31%, 47% { opacity: 1; } }
+@keyframes ico-on { 0%, 28%, 50%, 100% { scale: 1; rotate: 0deg; } 30% { scale: .8; rotate: -10deg; } 33% { scale: 1.25; rotate: 6deg; } 36%, 47% { scale: 1.08; rotate: 0deg; } }
+@media (prefers-reduced-motion: reduce) { .slip-line:first-child { opacity: 1; } }
 .bed { position: absolute; left: 0; right: 0; bottom: 0; height: 120px; border-radius: 50% 50% 18px 18px / 30% 30% 18px 18px; background: linear-gradient(#8a5a3f, #6e4532); display: flex; justify-content: space-around; align-items: flex-end; padding: 0 20px 34px; }
 .bed img { width: 80px; height: 80px; margin-bottom: -6px; animation: pop-in .6s var(--spring) both; }
 .bed img.s { transform: scale(1.7); transform-origin: 50% 90%; animation-name: pop-in-s; }
@@ -479,7 +510,7 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
 @keyframes pop-in-s { from { transform: scale(0); } to { transform: scale(1.7); } }
 /* cursor (plant) */
 .cursor { color: var(--sheet); filter: drop-shadow(0 0 1px var(--ink)) drop-shadow(0 0 1px var(--ink)) drop-shadow(0 3px 3px rgba(74, 54, 46, .4)); }
-/* watering can (the garden's Study cursor) glides onto the middle plant and clicks it, then the review buttons open */
+/* watering can (the garden's Study cursor) glides onto the middle plant and clicks it, then the sign opens */
 .tap-can { position: absolute; z-index: 2; left: calc(50% - 4px); bottom: 60px; width: 52px; height: auto; transform-origin: 10% 40%; filter: drop-shadow(0 3px 3px rgba(74, 54, 46, .3)); animation: tap-can 5s ease-in-out infinite; }
 @keyframes tap-can { 0% { transform: translate(70px, 30px); opacity: 0; } 4% { opacity: 1; } 14%, 19% { transform: none; } 21% { transform: scale(.85); } 23% { transform: none; opacity: 1; } 30%, 100% { transform: none; opacity: 0; } }
 /* art 4: tap packet → pick purple → drag straight to the soil → planted as a seed (6.5s loop) */
