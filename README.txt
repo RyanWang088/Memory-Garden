@@ -5,11 +5,14 @@ Welcome to Sproutly! Every subject you study becomes a plant in your garden. Pla
 The project is a full-stack web application with two parts, and client and server must be running:
 
 | Folder | What it is | Runs on |
-| :-- | :-- | :-- |
+
 | `client/` | Vue 3 + Vite front end (Pinia, Vue Router, Bootstrap) | `http://localhost:5173` |
 | `server/` | Node.js + Express API (AI flashcard generation and marking) | `http://localhost:3000` |
 
 The database is hosted on Supabase, so no database setup is needed.
+
+Landing page for live application: https://memory-garden-gold.vercel.app
+Our GitHub repo: https://github.com/RyanWang088/Memory-Garden
 
 ---
 
@@ -22,20 +25,36 @@ To run this application locally, please follow these steps:
     - **Node.js 22.9 or newer** (check with `node -v`)
     - **pnpm** (install it with `npm install -g pnpm`)
 
-2. **Unzip the project folder** and open a terminal in the root directory.
-
+2. **Unzip the project folder** and open a terminal inside the "Sproutly source code" folder (the one that contains the `client` and `server` folders). From here on, this folder is called the root folder.
 3. **Install dependencies** from the root folder, once for each folder:
 
     ```bash
     cd server
     pnpm install
 
-    cd client
+    cd ../client
     pnpm install
     ```
 
-4.  .env files
-    Please add the following .env files into your folder:
+4.  **Create the .env files**
+    Create the two new files below, using these exact names. On Windows, check that the name does not end in .txt (in Notepad, choose "Save as type: All files").
+
+
+Create client/.env.local (inside the client folder) with these 2 lines:
+VITE_SUPABASE_URL=
+VITE_SUPABASE_PUBLISHABLE_KEY=
+
+
+Create server/.env (inside the server folder) with these 6 lines:
+PORT=
+SUPABASE_URL=
+SUPABASE_SECRET_KEY=
+OPENROUTER_API_KEY=
+OPENROUTER_MODEL=
+GROQ_API_KEY=
+
+If the server stops with the error "supabaseUrl is required", server/.env is missing or misnamed.
+
 
 
 5. **Start the server** (Terminal 1, opened in the root folder, leave it running):
@@ -86,7 +105,7 @@ The tests are in `client/tests/e2e/`. They log in as the demo account and click 
 2. If server and client are not started, Start the server and the client (steps 5 and 6 above) and leave both running.
 
 3. Then from a new terminal, run the tests from the `client` folder.
-    
+
     Paste each command line one at a time:
 
     pnpm exec playwright test tests/e2e/add-a-seed.spec.js
@@ -95,7 +114,7 @@ The tests are in `client/tests/e2e/`. They log in as the demo account and click 
     pnpm exec playwright test tests/e2e/planner.spec.js
     pnpm exec playwright test tests/e2e/pomodoro.spec.js
     pnpm exec playwright test tests/e2e/review.spec.js
-    
+
 
     If a test fails at the login step, wait a few minutes and run it again.
 
@@ -145,4 +164,4 @@ You can also run the tests from VS Code with the **Playwright Test for VS Code**
 
 ---
 
-Created by Team Sproutly:  Xiao Jing, Yu Jia, Jit Wei, Ryan, Claudine._
+Created by Team Sproutly:  Xiao Jing, Yu Jia, Jit Wei, Ryan, Claudine.

@@ -2,14 +2,17 @@
 
 Welcome to Sproutly! Every subject you study becomes a plant in your garden. Plant a seed of flashcards, review it with flashcards, a multiple-choice quiz or AI-marked short structured questions, and watch the plant grow. Skip your revision and it starts to wilt.
 
-The project is a full-stack web application with two parts, and **both must be running**:
+The project is a full-stack web application with two parts, and client and server must be running:
 
 | Folder | What it is | Runs on |
 | :-- | :-- | :-- |
 | `client/` | Vue 3 + Vite front end (Pinia, Vue Router, Bootstrap) | `http://localhost:5173` |
 | `server/` | Node.js + Express API (AI flashcard generation and marking) | `http://localhost:3000` |
 
-The database will be hosted on Supabase.
+The database is hosted on Supabase, so no database setup is needed.
+
+Landing page for live application: https://memory-garden-gold.vercel.app
+Our GitHub repo: https://github.com/RyanWang088/Memory-Garden
 
 ---
 
@@ -18,37 +21,50 @@ The database will be hosted on Supabase.
 To run this application locally, please follow these steps:
 
 1. **Check the requirements:**
-    - **Node.js 22 or newer** (check with `node -v`)
+
+    - **Node.js 22.9 or newer** (check with `node -v`)
     - **pnpm** (install it with `npm install -g pnpm`)
 
-2. **Unzip the project folder** and open a terminal in the root directory.
-
+2. **Unzip the project folder** and open a terminal inside the "Sproutly source code" folder (the one that contains the `client` and `server` folders). From here on, this folder is called the root folder.
 3. **Install dependencies** from the root folder, once for each folder:
 
     ```bash
     cd server
     pnpm install
-    
 
-    cd client
+    cd ../client
     pnpm install
     ```
 
-4. **Environment variables:** the keys the app needs are already included in the `.env` files of this zip package:
+4.  **Create the .env files**
+    Create the two new files below, using these exact names. On Windows, check that the name does not end in .txt (in Notepad, choose "Save as type: All files"). Then copy over the values from the README.txt submitted.
 
-    - `server/.env`: `SUPABASE_URL`, `SUPABASE_SECRET_KEY` and the AI keys (`OPENROUTER_API_KEY`, `GROQ_API_KEY`)
-    - `client/.env.local`: `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`
 
-    
+Create client/.env.local (inside the client folder) with these 2 lines:
+VITE_SUPABASE_URL=
+VITE_SUPABASE_PUBLISHABLE_KEY=
 
-5. **Start the server** (Terminal 1, leave it running):
+
+Create server/.env (inside the server folder) with these 6 lines:
+PORT=
+SUPABASE_URL=
+SUPABASE_SECRET_KEY=
+OPENROUTER_API_KEY=
+OPENROUTER_MODEL=
+GROQ_API_KEY=
+
+If the server stops with the error "supabaseUrl is required", server/.env is missing or misnamed.
+
+
+
+5. **Start the server** (Terminal 1, opened in the root folder, leave it running):
 
     ```bash
     cd server
     pnpm start
     ```
 
-6. **Start the client** (Terminal 2):
+6. **Start the client** (Terminal 2, opened in the root folder, leave it running):
 
     ```bash
     cd client
@@ -63,49 +79,44 @@ To run this application locally, please follow these steps:
 
 All pages except the landing page require the user to log in.
 
-To make grading easier, you may use the following pre-configured account. It already has seeds planted, and the E2E tests use it too.
+To make grading easier, you may use the following pre-configured account. It already has seeds planted, and the E2E tests use it too, so please don't delete any seeds in the demo account!
 
-_Note: you may also create a new account with **Sign up** to experience the onboarding process._
+Note: you may also create a new account with **Sign up** to experience the onboarding process.
 
 | Role | Email | Password |
 | :-- | :-- | :-- |
 | **Demo account** | `demo@smu.edu.sg` | `demo@smu.edu.sg` |
 
+
+
 ---
 
 ## 🧪 3. End-to-End Testing (Playwright)
 
-The tests are in `client/tests/e2e/`. They log in as the demo account and click through the app in a real browser.
+The tests are in `client/tests/e2e/`. They log in as the demo account and click through the app in a real browser, so running them changes that account's coins and mastery.
 
-1. **Install the test browser** (once only):
+1. **Install the test browser** (once only, in a new terminal opened in the root folder):
 
     ```bash
     cd client
     pnpm exec playwright install chromium
     ```
 
-2. **Start the server** (Terminal 1 from step 5 above) and leave it running.
+2. If server and client are not started, Start the server and the client (steps 5 and 6 above) and leave both running.
 
-    Ensure that "localhost:5173" is running before continuing onto the below steps.
+3. Then from a new terminal, run the tests from the `client` folder.
 
-3. **Run the tests** from the `client` folder.
+    Paste each command line one at a time:
 
-    **Option A: run all the test files at once**
-
-    ```bash
-    pnpm exec playwright test --workers=1
-    ```
-
-    **Option B: run one test file at a time**
-
-    ```bash
     pnpm exec playwright test tests/e2e/add-a-seed.spec.js
     pnpm exec playwright test tests/e2e/garden.spec.js
     pnpm exec playwright test tests/e2e/opening.spec.js
     pnpm exec playwright test tests/e2e/planner.spec.js
     pnpm exec playwright test tests/e2e/pomodoro.spec.js
     pnpm exec playwright test tests/e2e/review.spec.js
-    ```
+
+
+    If a test fails at the login step, wait a few minutes and run it again.
 
 
 You can also run the tests from VS Code with the **Playwright Test for VS Code** extension: open the Testing panel (the flask icon) and click ▶ next to a test file or a single test. The server must still be running.
@@ -138,17 +149,19 @@ You can also run the tests from VS Code with the **Playwright Test for VS Code**
     - HTML canvas rendering achieved with AI assistance
 - **Jit Wei:** Used AI to:
     - the parsing of documents to generate the question answer pair
+    - Figuring out a function's syntax, then manually cross checked with documentation for open source items
 - **Ryan:** Used AI to:
-    - Help build and restyle the review modes (Flashcard, Multiple Choice and Short Structured) based on my requirements. (I made the feature and design decisions, tested them in the app, and reviewed the code.)
+    - Help build and restyle the review modes (Flashcard, Multiple Choice and Short Structured) based on my requirements.
     - Created custom made icon for the Flashcard Mode, Multiple choice and short structured in review features.
     - Style the Short Structured answer box (brown outline on the notebook lines), using the colours from theme.css.
     - Write out the AI marking prompt for Short Structured answers.
-    - create the structure for the Planner book and the grids for the calendar view, and the background for the to-do list like a notebook/foolscap paper
+    - Created the structure for the Planner book and the grids for the calendar view, and the background for the to-do list
 - **Claudine:** Used AI to:
-    - Write Pomodoro feature code based on my requirements. (logic and feature decisions, as well as testing are done personally)
-    - Create the garden radio feature (lo-fi songs were selected from an open source on github and matched to weather personally)
+    - Write Pomodoro feature code based on my requirements. (logic and feature decisions, as well as testing of feature were done personally)
+    - Create the garden radio feature (lo-fi tracks were sourced from github and matched to weather personally after AI helped to filter away noisy ones)
+    - Convert tracks to 96kbps at the same loudness.
     - Add the Plant and Review animations in the Onboarding feature.
 
 ---
 
-_Created by Team Sproutly:  Xiao Jing, Yu Jia, Jit Wei, Ryan, Claudine._
+Created by Team Sproutly:  Xiao Jing, Yu Jia, Jit Wei, Ryan, Claudine.

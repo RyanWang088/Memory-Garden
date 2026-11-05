@@ -61,7 +61,7 @@ const flowerImage = computed(() => plantSpriteUrl(stage.value, props.seed.flower
 
 <template>
   <!-- a little ticket: the plant on a tinted stub, details on the right, a status stamp on top.
-       The ticket opens the review; Edit is its own button beside it (a button can't sit inside another button). -->
+       The ticket opens the review. -->
   <div class="seed-card" :class="`status-${status}`">
     <button class="sc-open" type="button" @click="$emit('select', seed)">
       <span class="sc-stub"><img :src="flowerImage" alt="" /></span>
@@ -80,8 +80,6 @@ const flowerImage = computed(() => plantSpriteUrl(stage.value, props.seed.flower
         {{ LABELS[status] }}
       </span>
     </button>
-
-    <button class="sc-edit" type="button" :aria-label="`Edit ${seed.title}`" data-testid="seed-edit" @click="$emit('edit', seed)">Edit</button>
   </div>
 </template>
 
@@ -103,17 +101,6 @@ const flowerImage = computed(() => plantSpriteUrl(stage.value, props.seed.flower
 }
 /* drawn inside the edge: the card clips anything outside it */
 .sc-open:focus-visible { outline: 3px solid color-mix(in srgb, var(--leaf) 45%, transparent); outline-offset: -3px; }
-
-/* Edit: a small outlined pill in the bottom-right corner, beside the mastery % */
-.sc-edit {
-  position: absolute; z-index: 2; right: 12px; bottom: 12px;
-  padding: 2px 12px; border: 1.5px solid var(--ink); border-radius: 999px;
-  background: var(--paper); color: var(--ink);
-  font-size: .72rem; font-weight: 800; line-height: 1.4; cursor: pointer;
-  transition: background .2s var(--ease), color .2s var(--ease);
-}
-.sc-edit:hover { background: var(--ink); color: var(--paper); }
-.sc-edit:focus-visible { outline: 3px solid color-mix(in srgb, var(--leaf) 45%, transparent); outline-offset: 2px; }
 
 .status-new { --tone: var(--lilac); --tone-soft: color-mix(in srgb, var(--lilac) 28%, var(--paper)); }
 .status-due { --tone: var(--berry); --tone-soft: var(--berry-soft); }
