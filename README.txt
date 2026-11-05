@@ -146,8 +146,9 @@ You can also run the tests from VS Code with the **Playwright Test for VS Code**
     - Write out the AI marking prompt for Short Structured answers.
     - create the structure for the Planner book and the grids for the calendar view, and the background for the to-do list like a notebook/foolscap paper
 - **Claudine:** Used AI to:
-    - Write Pomodoro feature code based on my requirements. (logic and feature decisions, as well as testing were done personally)
-    - Create the garden radio feature (lo-fi songs were selected from an open source on github and matched to weather personally)
+    - Write Pomodoro feature code based on my requirements. (logic and feature decisions, as well as testing of feature were done personally)
+    - Create the garden radio feature (lo-fi tracks were sourced from github and matched to weather personally after AI helped to filter away noisy ones)
+    - Convert tracks to 96kbps at the same loudness.
     - Add the Plant and Review animations in the Onboarding feature.
 
 ---

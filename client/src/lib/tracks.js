@@ -1,6 +1,5 @@
 // Garden Radio tracks (client/public/music). From open-lofi by btahir, CC0 1.0 (public domain,
 // no credit required): https://github.com/btahir/open-lofi
-// Picked for being calm (low hiss/noise, steady volume) and matched to weather by ear and brightness.
 // Converted to 96 kbps at the same loudness. To add a track: put the mp3 in public/music and add a line.
 export const TRACKS = [
   { title: 'Soft Gold Sky', file: 'soft-gold-sky.mp3', weather: ['sunny'] },

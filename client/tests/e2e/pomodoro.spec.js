@@ -24,13 +24,13 @@ test.describe('Pomodoro feature', () => {
     await page.getByTestId('pomodoro-rhythm-classic').click()
     await page.getByTestId('pomodoro-start').click()
 
-    // assert: the settings are gone and the timer is counting down
+    // assert: the timer settings are gone and the timer is counting down
     await expect(page.getByTestId('pomodoro-setup')).toBeHidden()
     await expect(page.getByTestId('pomodoro-mode')).toContainText('Focus · 1 of 4')
     await expect(page.getByTestId('pomodoro-time')).not.toHaveText('25:00')
   })
 
-  test('Test 2: move from focus to break and back', async ({ page }) => {
+  test('Test 2: run a full session from focus to the done card', async ({ page }) => {
     // actions: 3 s focus, 2 s break, 2 rounds, then Start
     await setTimer(page, { focus: '3', rest: '2', rounds: 2 })
     await page.getByTestId('pomodoro-start').click()
@@ -38,16 +38,9 @@ test.describe('Pomodoro feature', () => {
     // assert: the pop-ups appear as the rounds change
     await expect(page.getByText('Break time')).toBeVisible(ROUND_CHANGE)
     await expect(page.getByText("Break's over")).toBeVisible(ROUND_CHANGE)
-  })
-
-  test('Test 3: finish a full session', async ({ page }) => {
-    // actions: 2 rounds of 3 s, then wait for the end
-    await setTimer(page, { focus: '3', rest: '2', rounds: 2 })
-    await page.getByTestId('pomodoro-start').click()
 
     // assert: the done card shows the total focus time
-    await expect(page.getByTestId('pomodoro-done')).toBeVisible({ timeout: 20_000 })
-    await expect(page.getByTestId('pomodoro-done')).toContainText('You focused for 6 sec.')
+    await expect(page.getByTestId('pomodoro-done')).toContainText('You focused for 6 sec.', ROUND_CHANGE)
 
     // actions: start another session
     await page.getByRole('button', { name: 'Start another' }).click()
@@ -56,7 +49,7 @@ test.describe('Pomodoro feature', () => {
     await expect(page.getByTestId('pomodoro-setup')).toBeVisible()
   })
 
-  test('Test 4: pause and resume', async ({ page }) => {
+  test('Test 3: pause and resume', async ({ page }) => {
     // actions: start, then pause
     await page.getByTestId('pomodoro-start').click()
     await page.getByRole('button', { name: 'Pause' }).click()
@@ -75,7 +68,7 @@ test.describe('Pomodoro feature', () => {
     await expect(page.getByTestId('pomodoro-time')).not.toHaveText(pausedAt)
   })
 
-  test('Test 5: end early after a finished round', async ({ page }) => {
+  test('Test 4: end early after a finished round', async ({ page }) => {
     // actions: finish round 1, then press End early during the break
     await setTimer(page, { focus: '3', rest: '3', rounds: 2 })
     await page.getByTestId('pomodoro-start').click()
@@ -87,7 +80,7 @@ test.describe('Pomodoro feature', () => {
     await expect(page.getByText('Break time')).toBeHidden()
   })
 
-  test('Test 6: a 25 minute round earns 10 coins', async ({ page }) => {
+  test('Test 5: a 25 minute round earns 10 coins', async ({ page }) => {
     const coinsBefore = await coins(page)
 
     // actions: 1 Classic round, then skip the 25 minutes with the fake clock
@@ -105,9 +98,9 @@ test.describe('Pomodoro feature', () => {
     await expect(page.getByTestId('nav-coins')).toHaveText(String(coinsBefore + 10))
   })
 
-  test('Test 7: use the to-do list during a session', async ({ page }) => {
+  test('Test 6: use the to-do list during a session', async ({ page }) => {
     // actions: start a short session, add two tasks and tick one
-    await setTimer(page, { focus: '8', rest: '1', rounds: 1 })
+    await setTimer(page, { focus: '12', rest: '1', rounds: 1 })
     await page.getByTestId('pomodoro-start').click()
     await page.getByTestId('todo-input').fill('Wad2')
     await page.getByTestId('todo-input').press('Enter')
@@ -123,7 +116,7 @@ test.describe('Pomodoro feature', () => {
     await expect(page.getByTestId('pomodoro-done')).toContainText('You ticked off 1 task.', { timeout: 15_000 })
   })
 
-  test('Test 8: the mini timer follows you to other pages', async ({ page }) => {
+  test('Test 7: the mini timer follows you to other pages', async ({ page }) => {
     // actions: start a session and go to the garden
     await page.getByTestId('pomodoro-start').click()
     await page.getByTestId('nav-garden').click()
@@ -153,7 +146,7 @@ test.describe('Pomodoro feature', () => {
     await expect(page.getByTestId('focus-player')).toBeVisible()
   })
 
-  test('Test 9: control Garden Radio', async ({ page }) => {
+  test('Test 8: control Garden Radio', async ({ page }) => {
     const radio = page.getByTestId('pomodoro').getByTestId('garden-radio')
 
     // actions: play, then skip to the next song
@@ -184,7 +177,7 @@ test.describe('Pomodoro feature', () => {
     await expect(page.getByTestId('music-toggle')).toHaveAttribute('aria-pressed', 'true')
   })
 
-  test('Test 10: planner tasks show in the Focus to-do list', async ({ page }) => {
+  test('Test 9: planner tasks show in the Focus to-do list', async ({ page }) => {
     // actions: add a task for today in the planner, then open Focus
     await page.getByTestId('nav-planner').click()
     await page.getByTestId('planner-new-task').fill('Finish lab report')
@@ -201,6 +194,27 @@ test.describe('Pomodoro feature', () => {
 
     // assert: it's ticked in the planner too
     await expect(page.getByRole('checkbox', { name: 'Mark “Finish lab report” not done' })).toBeVisible()
+  })
+
+  test('Test 10: end early pays for the finished round only', async ({ page }) => {
+    const coinsBefore = await coins(page)
+
+    // actions: 2 rounds of 20 min with 3 min breaks, skip to 10 minutes into round 2, then end early
+    await page.clock.install()
+    await setTimer(page, { focus: '2000', rest: '300', rounds: 2 })
+    await page.getByTestId('pomodoro-start').click()
+    await expect(page.getByTestId('pomodoro-mode')).toContainText('Focus · 1 of 2')
+    await page.clock.fastForward(20 * 60 * 1000)
+    await expect(page.getByTestId('pomodoro-mode')).toContainText('Break · 1 of 1')
+    await page.clock.fastForward(3 * 60 * 1000)
+    await expect(page.getByTestId('pomodoro-mode')).toContainText('Focus · 2 of 2')
+    await page.clock.fastForward(10 * 60 * 1000)
+    await page.getByRole('button', { name: 'End early' }).click()
+
+    // assert: only the finished 20 minutes count, so 8 coins
+    await expect(page.getByTestId('pomodoro-done')).toContainText('You focused for 20 min.')
+    await expect(page.getByText('+8 coins')).toBeVisible()
+    await expect(page.getByTestId('nav-coins')).toHaveText(String(coinsBefore + 8))
   })
 })
 
