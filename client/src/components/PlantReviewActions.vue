@@ -1,13 +1,16 @@
 <script setup>
 import { ref } from 'vue'
 import SproutIcon from './SproutIcon.vue'
+import targetArt from '@/assets/ui/target.svg'
+import writingHandArt from '@/assets/ui/writing-hand.svg'
 
 const emit = defineEmits(['review'])
 
+// images, not emoji: emoji are drawn by each device's own font, so they'd differ on phones
 const reviewModes = [
   { label: 'Flashcard', route: 'flashcard', iconType: 'sprout', iconName: 'flashcard' },
-  { label: 'Multiple Choice Quiz', route: 'multiple-choice-quiz', iconType: 'emoji', emoji: '🎯' },
-  { label: 'Short Structured Mode', route: 'short-structured', iconType: 'emoji', emoji: '✍️' },
+  { label: 'Multiple Choice Quiz', route: 'multiple-choice-quiz', iconType: 'art', art: targetArt },
+  { label: 'Short Structured Mode', route: 'short-structured', iconType: 'art', art: writingHandArt },
 ]
 
 const RADIUS = 115
@@ -16,14 +19,6 @@ const SPOTS = ANGLES.map((deg) => {
   const rad = (deg * Math.PI) / 180
   return { x: Math.round(RADIUS * Math.sin(rad)), y: -Math.round(RADIUS * Math.cos(rad)) }
 })
-
-let pointer = 'mouse'
-let armed = true
-const onDown = (i, event) => { pointer = event.pointerType; armed = selected.value === i }
-function pick(i, route) {
-  if (pointer === 'touch' && !armed) return
-  emit('review', route)
-}
 
 const selected = ref(0)
 const ring = ref(null)
@@ -42,7 +37,6 @@ function onWheel(event) {
 }
 
 function onKey(event) {
-  pointer = 'mouse'
   const direction = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key]
   if (!direction) return
   event.preventDefault()
@@ -69,13 +63,12 @@ function onKey(event) {
       :data-testid="`review-${mode.route}`"
       :aria-label="mode.label"
       :aria-pressed="selected === i"
-      @pointerdown="onDown(i, $event)"
       @pointerenter="$event.pointerType === 'mouse' && (selected = i)"
       @focus="selected = i"
-      @click.stop="pick(i, mode.route)"
+      @click.stop="emit('review', mode.route)"
     >
       <SproutIcon v-if="mode.iconType === 'sprout'" :name="mode.iconName" :size="34" class="ico" aria-hidden="true" />
-      <span v-else-if="mode.iconType === 'emoji'" class="ico d-flex align-items-center justify-content-center fs-4" aria-hidden="true">{{ mode.emoji }}</span>
+      <span v-else-if="mode.iconType === 'art'" class="ico d-flex align-items-center justify-content-center" aria-hidden="true"><img :src="mode.art" alt="" width="28" height="28" /></span>
       <span class="tip position-absolute start-50 text-nowrap" aria-hidden="true">{{ mode.label }}</span>
     </button>
   </div>
