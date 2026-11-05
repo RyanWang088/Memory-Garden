@@ -651,7 +651,7 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
   .cal-grid .day { padding: 1px 6px 3px; }
   .cal-grid .day .n { padding: 1px 3px; }
 }
-.day { position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-width: 0; padding: 5px 6px 6px; border: 0; background: none; text-align: left; border-bottom: 1px solid var(--line); border-right: 1px dashed color-mix(in srgb, var(--line) 80%, transparent); transition: background .2s; color: var(--ink); }
+.day { position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-width: 0; padding: 5px 6px 6px; border: 0; background: none; text-align: left; border-bottom: 1px solid var(--line); border-right: 1px dashed color-mix(in srgb, var(--line) 80%, transparent); transition: background .2s; color: var(--ink);overflow: visible; }
 .day:nth-child(7n) { border-right: 0; }
 .day.in-week { background: color-mix(in srgb, var(--leaf-soft) 55%, transparent); }
 .day:hover { background: color-mix(in srgb, var(--butter-soft) 60%, transparent); }

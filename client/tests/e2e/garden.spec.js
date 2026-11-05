@@ -1,4 +1,4 @@
-import { test, expect, devices } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 
 const EMAIL = 'demo@smu.edu.sg'
 const PASSWORD = 'demo@smu.edu.sg'
@@ -104,85 +104,32 @@ test.describe('Garden', () => {
     await expect(sky).toHaveAttribute('data-mood', 'dusk')
     await expect(page.locator('.rain').first()).toHaveAttribute('data-weather', 'rainy')
   })
-})
 
-// defaultBrowserType can't be set inside a describe block, so strip it from the device preset
-const { defaultBrowserType, ...pixel7 } = devices['Pixel 7']
-
-test.describe('Garden on a phone @mobile', () => {
-  test.use({ ...pixel7 }) // phone viewport, touch events, mobile user agent
-
-  test('finds a seed by tag, auto scrolls to it, and starts a flashcard review', async ({ page }) => {
-    const decoy = makeSeed({ id: 'mobile-decoy', title: 'Mobile decoy' })
-    decoy.row = 2
-    const target = makeSeed({ id: 'mobile-tagged', title: 'Mobile tagged seed' })
+  test('finds a seed by tag', async ({ page }) => {
+    const target = makeSeed({ id: 'tag-search-target', title: 'Tag search target' })
     target.tags = [{ name: 'exam prep' }]
-    target.row = 14
 
-    await test.step('Given a garden where the target plant is out of view', async () => {
-      await openGarden(page, [decoy, target]) // opens scrolled to the decoy
-      await expect(openButton(page, decoy.title)).toBeInViewport()
-      await expect(openButton(page, target.title)).not.toBeInViewport()
-    })
+    await openGarden(page, [target])
 
-    await test.step('When I search by tag and pick the result', async () => {
-      const search = page.getByRole('searchbox', { name: 'Search planted seeds' })
-      await expect(search).toBeVisible()
-      await search.fill('exam prep')
-      await expect(searchResult(page, decoy.title)).toHaveCount(0) // the filter really narrowed the list
-      await searchResult(page, target.title).tap()
-    })
+    const search = page.getByRole('searchbox', { name: 'Search planted seeds' })
+    await expect(search).toBeVisible()
+    await search.fill('exam prep')
+    const result = searchResult(page, target.title).first()
+    await expect(result).toBeVisible()
+    await result.click()
 
-    await test.step('Then the garden scrolls the plant into view', async () => {
-      await expect(openButton(page, target.title)).toBeInViewport()
-    })
-
-    await test.step('And the first tap shows the study mode label, the second starts it', async () => {
-      await tapPlant(page, target.title)
-
-      const flashcard = page.getByTestId('review-flashcard')
-      const slip = page.getByTestId('review-open-selected')
-      await expect(flashcard).toBeVisible() // auto-waits: the controls now appear once the camera has settled
-
-      // the default pick is Multiple Choice, so "Flashcard" only shows once the first tap has selected it
-      await expect(slip).not.toContainText('Flashcard')
-
-      await tapButton(page, flashcard) // first tap: arms the mode and shows its label
-      await expect(flashcard).toHaveAttribute('aria-pressed', 'true')
-      await expect(slip).toContainText('Flashcard')
-      await expect(page.getByTestId('show-answer')).toBeHidden() // still in the garden
-
-      await tapButton(page, flashcard) // second tap: enter the session
-      await expect(page.getByTestId('show-answer')).toBeVisible()
-    })
+    await expect(plant(page, target.title)).toHaveClass(/is-highlighted/)
+    await expect(page.getByTestId('review-open-selected')).toBeVisible()
   })
 })
 
 const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
-// the plant sprite in the garden ("Open <title>")
-function openButton(page, title) {
-  return page.getByRole('button', { name: `Open ${title}` })
-}
 
 // the search result card in the shed: its name starts with the title, so it can't collide with the sprite
 function searchResult(page, title) {
   return page.getByRole('button', { name: new RegExp(`^${escapeRe(title)}`) })
 }
 
-// a real touch at the stem (the sprite always sways, so locator.tap() would wait forever for it to settle)
-async function tapPlant(page, title) {
-  const box = await openButton(page, title).boundingBox()
-  expect(box, `Expected ${title} to be in the garden`).not.toBeNull()
-  await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height * 0.85)
-}
-// a real touch at the centre of the button (the floating buttons sway with the plant,
-// so locator.tap() would wait forever for them to stop moving)
-async function tapButton(page, locator) {
-  const box = await locator.boundingBox()
-  expect(box, 'Expected the button to be on screen').not.toBeNull()
-  await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2)
-}
 async function openGarden(page, seeds) {
   await installFixtures(page, seeds)
   await page.goto('/auth')

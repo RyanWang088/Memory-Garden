@@ -55,7 +55,6 @@ function setLibraryView(view) {
           Recommended<span v-if="recommended.length" class="count">{{ recommended.length }}</span>
         </button>
       </div>
-<!-- delete extra bloat class ltr -->
       <label class="sp-search mb-2" for="study-seed-search">
         <span class="sr-only">Search planted seeds</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></svg>
