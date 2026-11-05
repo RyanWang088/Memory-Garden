@@ -9,7 +9,14 @@ const { look, sun } = storeToRefs(useWeatherStore())
 </script>
 
 <template>
-  <SkyLayer :mood="look.mood" :weather="look.weather" :sun="sun" fade="6s" data-testid="sky">
+  <SkyLayer
+    :mood="look.mood"
+    :weather="look.weather"
+    :sun="sun"
+    :label="`Garden sky, ${look.weather} weather, ${look.mood}`"
+    fade="6s"
+    data-testid="sky"
+  >
     <div class="lightning"></div>
   </SkyLayer>
   <Teleport to="#sky-front" defer>

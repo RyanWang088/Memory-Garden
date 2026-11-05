@@ -21,8 +21,18 @@ const SPOTS = ANGLES.map((deg) => {
 })
 
 const selected = ref(0)
+const revealedTip = ref(null)
 const ring = ref(null)
 let wheelAt = 0
+
+function onReviewClick(mode, index) {
+  if (window.matchMedia('(max-width: 767.98px)').matches && revealedTip.value !== index) {
+    selected.value = index
+    revealedTip.value = index
+    return
+  }
+  emit('review', mode.route)
+}
 
 function spin(direction) {
   selected.value = (selected.value + direction + reviewModes.length) % reviewModes.length
@@ -65,11 +75,16 @@ function onKey(event) {
       :aria-pressed="selected === i"
       @pointerenter="$event.pointerType === 'mouse' && (selected = i)"
       @focus="selected = i"
-      @click.stop="emit('review', mode.route)"
+      @click.stop="onReviewClick(mode, i)"
     >
       <SproutIcon v-if="mode.iconType === 'sprout'" :name="mode.iconName" :size="34" class="ico" aria-hidden="true" />
       <span v-else-if="mode.iconType === 'art'" class="ico d-flex align-items-center justify-content-center" aria-hidden="true"><img :src="mode.art" alt="" width="28" height="28" /></span>
-      <span class="tip position-absolute start-50 text-nowrap" aria-hidden="true">{{ mode.label }}</span>
+      <span class="tip position-absolute start-50 text-nowrap d-none d-md-block" aria-hidden="true">{{ mode.label }}</span>
+      <span
+        class="tip tip-mobile position-absolute start-50 text-nowrap d-md-none"
+        :class="{ 'is-visible': revealedTip === i }"
+        aria-hidden="true"
+      >{{ mode.label }}</span>
     </button>
   </div>
 </template>
@@ -102,7 +117,7 @@ function onKey(event) {
 
 .review-action:hover { transform: translateY(-2px); }
 .review-action:active { transform: scale(.94); }
-.review-action.is-on { z-index: 2; transform: scale(1.15); background: var(--butter-soft); }
+.review-action.is-on { z-index: 2; background: var(--butter-soft); }
 .review-action.is-on:hover { transform: scale(1.15) translateY(-2px); }
 
 .ico {
@@ -144,6 +159,7 @@ function onKey(event) {
 }
 
 .review-action.is-on .tip { opacity: 1; transform: translateY(0) scale(1); }
+.tip-mobile.is-visible { opacity: 1; transform: translateY(0) scale(1); }
 
 @media (prefers-reduced-motion: reduce) {
   .review-action, .ico { animation: none; }

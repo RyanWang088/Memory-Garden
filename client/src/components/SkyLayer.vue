@@ -17,6 +17,7 @@ const props = defineProps({
   seed: { type: Number, default: 7 },
   fade: { type: String, default: undefined },
   page: { type: Boolean, default: true },
+  label: { type: String, default: '' },
 })
 
 // one seeded pass, in the same order the old scenery.js used, so stars and clouds sit where they always did
@@ -40,7 +41,16 @@ onBeforeUnmount(() => { if (props.page) delete document.body.dataset.sky })
 </script>
 
 <template>
-  <div class="scenery" :class="{ 'scenery-section': !page }" :data-mood="mood" :data-weather="weather" :style="fade && { '--fade': fade }" aria-hidden="true">
+  <div
+    class="scenery"
+    :class="{ 'scenery-section': !page }"
+    :data-mood="mood"
+    :data-weather="weather"
+    :style="fade && { '--fade': fade }"
+    :role="label ? 'img' : undefined"
+    :aria-label="label || undefined"
+    :aria-hidden="label ? undefined : 'true'"
+  >
     <div class="stars"><i v-for="(style, i) in scene.stars" :key="i" :style="style"></i></div>
     <div class="sun" :style="{ left: `${sun.x}%`, top: `${sun.y}%` }"></div>
     <div class="clouds"><div v-for="(style, i) in scene.clouds" :key="i" class="cloud" :style="style"></div></div>

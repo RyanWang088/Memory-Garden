@@ -50,7 +50,7 @@ const registerPlantOverlay = (id, el) => (el ? plantOverlayElements.set(id, el) 
 const hoveredPlantId = ref(null)
 const isPlantInfoVisible = id => hoveredPlantId.value === id || ui.selectedGardenSeedId === id
 const areReviewActionsVisible = id => ui.selectedGardenSeedId === id
-const isPlantGrowing = id => garden.growthRecords[id]?.phase === 'playing'
+const isPlantGrowing = id => Boolean(garden.growthRecords[id])
 const isPlantAlertVisible = seed => seed.alert && !areReviewActionsVisible(seed.id) && !isPlantGrowing(seed.id)
 const isPlantOverlayVisible = seed => isPlantInfoVisible(seed.id) || areReviewActionsVisible(seed.id) || isPlantAlertVisible(seed)
 const plantOverlayBottom = stage => stage === 1 || stage === 8 ? 40 : stage === 2 || stage === 7 ? 65 : stage === 3 || stage === 6 ? 110 : 170
@@ -167,6 +167,16 @@ function placePlantOverlay(el, col, row) {
   const visible = worldToScreen((col + 0.5) * CELL_SIZE, (row + 0.5) * CELL_SIZE)
   setDisplay(el, visible ? 'block' : 'none')
   if (!visible) return
+  const last = placedState(el)
+  if (el.classList.contains('has-review-actions')) {
+    if (last.z !== null) {
+      el.style.removeProperty('z-index')
+      last.z = null
+    }
+  } else {
+    const z = 2000 - row
+    if (last.z !== z) { el.style.zIndex = z; last.z = z }
+  }
   const { x, y, scale } = screenPoint
   el.style.transform = `translate3d(${x}px,${y}px,0) scale(${scale})`
 }
@@ -396,6 +406,7 @@ onBeforeUnmount(() => {
           :key="`overlay-${seed.id}`"
           :ref="el => registerPlantOverlay(seed.id, el)"
           class="plant-overlay"
+          :class="{ 'has-review-actions': areReviewActionsVisible(seed.id) && !isPlantGrowing(seed.id) }"
         >
           <PlantReviewActions
             v-if="areReviewActionsVisible(seed.id) && !isPlantGrowing(seed.id)"
@@ -440,11 +451,11 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 10000;
   width: 0;
   height: 0;
   pointer-events: none;
 }
+.plant-overlay.has-review-actions { z-index: 10001; }
 .alert-mark {
   position: absolute;
   left: -25px;

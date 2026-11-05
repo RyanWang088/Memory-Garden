@@ -112,7 +112,7 @@ function drawLand(root, opts) {
   for (let t = 0; t < treeCount; t++) {
     const x = rand() * W;
     if (opts.clearCenter && Math.abs(x - W / 2) < W * 0.16 && rand() < .7) continue;
-    const y = yAt(layers[0], x) + 6;
+    const y = yAt(layers[0], x) + 15;
     const s = (0.6 + rand() * 0.9) * Math.min(1.4, Math.max(.7, span / 380));
     if (rand() < .22) {
       const height = 76 * s;

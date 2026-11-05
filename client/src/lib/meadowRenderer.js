@@ -74,7 +74,7 @@ export function drawMeadow(ctx, cam, palette) {
   const aFront = floorAngle(firstDepth)
   const frame = {
     span, horizonY, firstDepth, lastDepth, floorAngle, x0, x1, viewWidth,
-    treeFill: palette.ramp(0.8), treeShade: palette.ramp(1), treeHighlight: palette.ramp(0.5),
+    treeFill: palette.tree, treeShade: palette.ramp(1), treeHighlight: palette.ramp(0.6),
   }
 
   for (let hill = Math.ceil((lastDepth + 100) / HILL_GAP); hill >= Math.floor(firstDepth / HILL_GAP); hill--) {
@@ -214,15 +214,15 @@ function buildBackdrop(viewWidth, horizonY) {
   const sizeK = Math.min(1, Math.max(0.45, room / 160))
   const trees = []
   for (let t = 0; t < Math.round((viewWidth + 2 * pad) / 40); t++) {
-    const x = -pad + rand() * (viewWidth + 2 * pad)
-    const y = yAt(near, x) + 10
+    const x = -pad + rand() * (viewWidth + 4* pad)
+    const y = yAt(near, x) +10
     const s = (.5 + rand()) * sizeK
     
     const type = rand() < 0.3 ? 'shrub' : 'tree'
     trees.push({
       type, x, baseline: y,
-      width: (type === 'shrub' ? 38 : 82) * s,
-      height: (type === 'shrub' ? 23 : 72) * s,
+      width: (type === 'shrub' ? 45 : 82) * s,
+      height: (type === 'shrub' ? 25 : 72) * s,
     })
   }
   return { key: `${viewWidth}|${horizonY}`, near, trees, bottom: horizonY + 4 }
@@ -253,7 +253,7 @@ function drawBackdrop(ctx, camera, palette) {
   for (const tree of backdrop.trees) {
     drawSprite(
       ctx, SPRITES[tree.type], tree.x, tree.baseline, tree.width, tree.height,
-      palette.ramp(0.7), palette.ramp(1), palette.ramp(0.5),
+      palette.ramp(.8), palette.tree, palette.ramp(0.6),
       palette.tree2,
     )
   }
