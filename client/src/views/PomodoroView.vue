@@ -299,6 +299,34 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
     gap: 40px;
   }
 }
+/* desktop: the page fits the window; the dock (and the space kept for it) only shows on phones */
+@media (min-width: 768px) {
+  .focus-page { padding-bottom: 0; }
+}
+@media (min-width: 1200px) {
+  .focus-page > .container { padding-top: 16px !important; padding-bottom: 16px !important; }
+  .session { gap: 20px 40px; }
+  .area-tasks { display: flex; flex-direction: column; max-height: calc(100dvh - 69px - 32px); }
+  .area-tasks :deep(ul) { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+}
+
+/* ~1000px wide: timer on top, to-do list left, Garden Radio + Timer settings stacked right.
+   The to-do card is as tall as the right column and its list scrolls inside. */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  .session { grid-template-columns: 1fr 1fr; grid-template-areas: "timer timer" "tasks side" "tasks settings"; align-items: start; justify-items: stretch; column-gap: 24px; }
+  .session:not(:has(.area-settings)) { grid-template-areas: "timer timer" "tasks side"; }
+  .area-timer { justify-self: center; }
+  .session .side-card { max-width: none; }
+  .area-tasks { align-self: stretch; height: 0; min-height: 100%; display: flex; flex-direction: column; }
+  .area-tasks :deep(ul) { flex: 1 1 auto; min-height: 0; max-height: none; }
+}
+
+/* short laptop windows: tighten the right-hand cards so they still fit */
+@media (min-width: 1200px) and (max-height: 720px) {
+  .session { row-gap: 12px; }
+  .setting { padding: 4px 0; }
+}
+
 .area-tasks { grid-area: tasks; }
 .area-timer { grid-area: timer; }
 .area-side { grid-area: side; }
@@ -310,7 +338,8 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
 /* timer ring: night look while focusing, paper and green on a break */
 .ring {
   --disc: rgba(16, 24, 56, .55); --ring-fg: #fdf3d6; --track: rgba(255,255,255,.14); --fill: var(--butter);
-  position: relative; width: min(390px, 84vw); aspect-ratio: 1; border-radius: 50%;
+  --ring: min(390px, 84vw, calc(100dvh - 290px));
+  position: relative; width: var(--ring); aspect-ratio: 1; border-radius: 50%;
   background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--disc) 70%, transparent), var(--disc));
   backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset, 0 30px 60px -30px rgba(0,0,0,.6), 0 0 80px -10px rgba(255, 230, 150, .25);
@@ -322,12 +351,12 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
 .ring .track { stroke: var(--track); transition: stroke .8s; }
 .ring .fill { stroke: var(--fill); transition: stroke-dashoffset .4s linear, stroke .8s; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--fill) 60%, transparent)); }
 .ring-text { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 4px; padding-bottom: 16%; }
-.ring-cap { color: inherit; opacity: .8; letter-spacing: .16em; }
-.ring-next { font-family: var(--f-hand); font-size: 1.3rem; opacity: .85; }
+.ring-cap { color: inherit; opacity: .8; letter-spacing: .16em; font-size: max(10px, calc(var(--ring) * .031)); }
+.ring-next { font-family: var(--f-hand); font-size: calc(var(--ring) * .053); opacity: .85; }
 .ring.paused .text-timer { animation: paused 1.4s ease-in-out infinite; }
 @keyframes paused { 50% { opacity: .35; } }
 .ring-plant { position: absolute; left: 50%; bottom: 12%; height: 26%; width: auto; transform: translateX(-50%); transform-origin: 50% 100%; animation: sprout-in .6s var(--spring); }
-.ring-plant.s { height: 38%; bottom: 5%; }
+.ring-plant.s { height: 30%; bottom: 12%; }
 @keyframes sprout-in { from { transform: translateX(-50%) scale(.4); } }
 .blocks { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; padding: 8px 14px; border-radius: var(--r-pill); background: color-mix(in srgb, var(--sheet) 85%, transparent); box-shadow: var(--shadow-1); }
 .blocks img { width: 34px; height: 34px; transition: transform .5s var(--spring); }
@@ -344,5 +373,10 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
 .sp-btn { width: auto; min-width: 140px; order: 0; } /* global .sp-btn has order: 4 */
 @media (prefers-reduced-motion: reduce) {
   .blocks img.now, .ring.paused .text-timer { animation: none; }
+
+/* text inside the ring is sized from the ring's width, so it always fits inside the circle */
+.ring .text-timer { font-size: calc(var(--ring) * .19); }
 }
+
+
 </style>

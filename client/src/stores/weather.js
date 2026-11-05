@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { apiFetch } from '@/lib/http'
 
 const FALLBACK = { lat: 1.3005, lon: 103.8626 } // SMU SCIS 1
+
 const MOOD_BY_PHASE = Object.freeze({ dawn: 'morning', day: 'day', blush:'blush', dusk: 'dusk', night: 'night' })
 
 // Resolves the user's coords, or null if they block it, ignore the popup, or have no geolocation

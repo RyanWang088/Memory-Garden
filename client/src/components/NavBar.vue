@@ -94,7 +94,7 @@ const current = computed(() => NAV_ITEMS.findIndex((i) => route.matched.some((r)
   border-radius: 999px; background: var(--sheet-2); border: 1px solid var(--line);
   font-weight: 800; font-size: .85rem; font-variant-numeric: tabular-nums;
 }
-.coin-value { width: 7ch; overflow: hidden; text-align: right; white-space: nowrap; }
+.coin-value { min-width: 2ch; text-align: center; white-space: nowrap; }
 /* portrait phones reach Profile from the dock; landscape phones and larger screens get it here */
 .avatar {
   display: none; flex: none;

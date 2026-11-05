@@ -439,7 +439,7 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
                     <div class="ticket-body">
                       <h4>{{ ticket.heading }}</h4>
                       <p>{{ ticket.line }}</p>
-                      <div v-if="!compact && (ticket.topic || ticket.due)" class="d-flex flex-column align-items-start gap-1">
+                      <div v-if="!compact && (ticket.topic || ticket.due)" class="ticket-actions">
                         <button v-if="ticket.topic" v-burst type="button" class="sp-btn sp-btn-sm" @click="focusOnThis">Focus on this <span class="arrow">→</span></button>
                         <RouterLink v-if="ticket.due" :to="{ name: 'garden', query: { q: ticket.topic||ticket.dueSubject } }" class="sp-btn sp-btn-sm sp-btn-leaf">Water seeds</RouterLink>
                       </div>
@@ -483,8 +483,8 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 
 .book {
   --cloth: #3d6b4c; --cloth-2: #31593f;
-  --page-h: clamp(560px, calc(100vh - 180px), 820px);
-  position: relative; margin: 0 auto; max-width: 1220px;
+  --page-h: clamp(420px, calc(100dvh - 150px), 900px);
+  position: relative; margin: 0 auto; max-width: 1320px;
   perspective: 2600px;
   transition: transform 1.1s var(--ease);
 }
@@ -542,7 +542,7 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 
 .sp-tape.t1 { top: -8px; left: 22%; transform: rotate(-4deg); }
 .sp-tape.t2 { top: -9px; left: -14%; transform: rotate(5deg); }
-.ribbon { position: absolute; z-index: 7; left: calc(50% + 34px); bottom: -30px; width: 14px; height: 74px; pointer-events: none; transform-origin: top center; animation: ribbon-sway 6s ease-in-out infinite alternate; }
+.ribbon { position: absolute; z-index: 7; left: calc(50% + 34px); bottom: -16px; width: 12px; height: 46px; pointer-events: none; transform-origin: top center; animation: ribbon-sway 6s ease-in-out infinite alternate; }
 .ribbon::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #b13a51, #e0546a 45%, #c7445c); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 10px), 0 100%); }
 @keyframes ribbon-sway { from { transform: rotate(-.6deg); } to { transform: rotate(.8deg); } }
 .book.is-closed .ribbon { opacity: 0; }
@@ -641,11 +641,16 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 .cal-title span { display: block; font-family: var(--f-body); font-style: normal; font-size: .72rem; font-weight: 800; letter-spacing: .3em; color: var(--ink-soft); margin-top: 6px; }
 .cal-nav { display: flex; flex: 0 0 auto; justify-content: flex-end; gap: 4px; align-items: center; }
 .sp-icon-btn-sm { width: 32px; height: 32px; }
-.cal-grid { flex: 1; min-height: 0; display: grid; grid-template-rows: auto repeat(6, 1fr); margin-top: 14px; border-top: 1.5px solid var(--ink); }
+.cal-grid { flex: 1; min-height: 0; display: grid; grid-template-rows: auto repeat(6, minmax(0, 1fr)); margin-top: 14px; border-top: 1.5px solid var(--ink); }
 .cal-row { display: grid; grid-template-columns: repeat(7, 1fr); }
 .cal-row.wk { padding: 6px 0; border-bottom: 1px solid var(--line); }
 .cal-row.wk span { font-size: .66rem; font-weight: 800; letter-spacing: .12em; color: var(--ink-soft); text-align: left; padding-left: 6px; }
 .cal-row.wk span:nth-child(n+6) { color: var(--berry-deep); }
+.day { min-height: 0; overflow: hidden; }
+@media (max-height: 760px) {
+  .cal-grid .day { padding: 1px 6px 3px; }
+  .cal-grid .day .n { padding: 1px 3px; }
+}
 .day { position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-width: 0; padding: 5px 6px 6px; border: 0; background: none; text-align: left; border-bottom: 1px solid var(--line); border-right: 1px dashed color-mix(in srgb, var(--line) 80%, transparent); transition: background .2s; color: var(--ink); }
 .day:nth-child(7n) { border-right: 0; }
 .day.in-week { background: color-mix(in srgb, var(--leaf-soft) 55%, transparent); }
@@ -663,18 +668,20 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 .stamp { position: absolute; z-index: 1; right: 4px; top: 6px; padding: 1px 5px; border: 1.5px solid var(--berry); border-radius: 4px; font-size: .56rem; font-weight: 900; letter-spacing: .1em; color: var(--berry); transform: rotate(8deg); background: rgba(255,255,255,.6); }
 .day .bloom { position: absolute; z-index: 1; right: 2px; bottom: 2px; width: 26px; height: 26px; }
 .cal-foot { display: flex; gap: 14px; align-items: stretch; margin-top: 14px; }
-.ticket { flex: 1; display: grid; grid-template-columns: 64px 1fr; min-width: 0; border-radius: 14px; background: #fff; box-shadow: var(--shadow-1); overflow: hidden; animation: ticket-in .45s var(--spring); }
+.ticket { flex: 0 0 calc(50% - 7px); display: grid; grid-template-columns: 52px 1fr; min-width: 0; border-radius: 14px; background: #fff; box-shadow: var(--shadow-1); overflow: hidden; animation: ticket-in .45s var(--spring); }
 @keyframes ticket-in { from { transform: translateY(8px) rotate(-1deg); opacity: 0; } }
-.ticket-date { display: grid; place-content: center; text-align: center; color: #fff; background: var(--berry); position: relative; line-height: 1; padding: 8px 0; }
+.ticket-date { display: grid; place-content: center; text-align: center; color: #fff; background: var(--berry); position: relative; line-height: 1; padding: 6px 0; }
 .ticket-date::after { content: ""; position: absolute; right: -6px; top: 0; bottom: 0; width: 12px; background: radial-gradient(circle at 6px 8px, var(--paper)4px, transparent 4.5px) 0 0/12px 16px; }
-.ticket-date b { font-family: var(--f-display); font-size: 1.7rem; font-weight: 600; display: block; margin: 3px 0; }
-.ticket-date small { font-size: .6rem; font-weight: 800; letter-spacing: .14em; }
-.ticket-body { padding: 6px 14px 6px 18px; min-width: 0; display: grid; gap: 4px; align-content: center; }
-.ticket-body h4 { margin: 0; font-family: var(--f-display); font-style: italic; color: var(--berry-deep); font-size: 1.05rem; font-weight: 600; }
-.ticket-body p { margin: 0; font-size: .8rem; color: var(--ink-soft); line-height: 1.4; overflow-wrap: anywhere; }
-.ticket-body .sp-btn { min-height: 24px; padding: .1em .8em; font-size: .76rem; line-height: 1.2; }
-.ticket-body button.sp-btn { margin: 3px 0; }
-.legend { display: grid; align-content: center; gap: 2px; font-size: .7rem; font-weight: 700; color: var(--ink-soft); }
+.ticket-date b { font-family: var(--f-display); font-size: 1.35rem; font-weight: 600; display: block; margin: 2px 0; }
+.ticket-date small { font-size: .55rem; font-weight: 800; letter-spacing: .14em; }
+.ticket-body { padding: 8px 12px 8px 16px; min-width: 0; display: grid; gap: 3px; align-content: center; }
+.ticket-body h4 { margin: 0; font-family: var(--f-display); font-style: italic; color: var(--berry-deep); font-size: 0.95rem; font-weight: 600; }
+.ticket-body p { margin: 0; font-size: .74rem; color: var(--ink-soft); line-height: 1.35; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ticket-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 3px; }
+.ticket-body .sp-btn { min-height: 22px; padding: .15em .75em; font-size: .7rem; line-height: 1.2; box-shadow: 0 2px 0 var(--edge); }
+.ticket-body button.sp-btn { margin: 0; }
+.legend .tag { white-space: nowrap; }
+.legend { flex: 1; min-width: 0; display: grid; grid-auto-flow: column; grid-template-rows: repeat(3, auto); align-content: center; gap: 2px 16px; font-size: .7rem; font-weight: 700; color: var(--ink-soft); }
 
 /* corner curl = next month */
 .curl { position: absolute; z-index: 8; right: 0; bottom: 0; width: 46px; height: 46px; padding: 0; border: 0; background: linear-gradient(135deg, transparent 50%, #efe2cc 50%, #fbf5ea 72%, #e5d4b8 100%); border-radius: 0 0 10px 0; box-shadow: -3px -3px 6px -2px rgba(90, 60, 30, .25); transition: width .3s var(--spring), height .3s var(--spring); }
@@ -736,7 +743,19 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
   .page.flip-out { animation: flip-out .28s ease-in forwards; transform-origin: left center; }
   .page.flip-in { animation: flip-in .38s var(--ease); transform-origin: left center; }
   .curl { display: none; }
-  .cal-foot { flex-direction: column; }
+  .cal-foot { align-items: center; }
+}
+
+/* narrow single page: not enough room for two columns beside the ticket */
+@container book (max-width: 600px) {
+  .legend { grid-auto-flow: row; grid-template-rows: none; }
+}
+
+/* phones: subject list on top, ticket centred underneath */
+@container book (max-width: 480px) {
+  .cal-foot { flex-direction: column-reverse; align-items: center; gap: 10px; }
+  .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; }
+  .ticket { width: 100%; max-width: 360px; flex: none; }
 }
 @container book (min-width: 761px) {
   .cal-nav { width: auto !important; }

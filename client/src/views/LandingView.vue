@@ -274,7 +274,7 @@ onBeforeUnmount(() => { clearInterval(heroTimer); clearInterval(mtTimer) })
           </div>
           <div><h4>Get started</h4><ul><li><RouterLink :to="signup">Sign up</RouterLink></li><li><RouterLink :to="{ name: 'auth' }">Log in</RouterLink></li></ul></div>
           <div><h4>Explore</h4><ul><li><button type="button" @click="scrollTo('features')">Garden tools</button></li><li><button type="button" @click="scrollTo('focus')">Focus</button></li></ul></div>
-          <div><h4>About</h4><ul><li><button type="button" @click="scrollTo('about')">Why Sproutly</button></li><li><button type="button" @click="scrollTo('how')">How it works</button></li></ul><p style="font-size: .8rem; margin-top: 12px">Built with Vue 3, Express and Supabase. Garden Radio music from open-lofi (CC0).</p></div>
+          <div><h4>About</h4><ul><li><button type="button" @click="scrollTo('about')">Why Sproutly</button></li><li><button type="button" @click="scrollTo('how')">How it works</button></li></ul></div>
         </div>
         <div class="foot-base"><span>© 2026 Sproutly. A student project.</span><span class="sp-hand">Study a little, grow a lot.</span></div>
       </div>
@@ -492,6 +492,9 @@ footer { padding-block: 60px 40px; }
   .stack { height: 400px; transform: scale(.82); transform-origin: top center; margin-bottom: -60px; }
   .pcard.c-garden { left: 26%; }
   .anno.a1 { display: none; }
+  .foot-base { margin-top: 40px; padding-top: 20px; border-top: 1.5px dashed var(--line); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; font-size: .82rem; color: var(--ink-soft); }
+  .foot-grid > div:not(:first-child) { text-align: center; }
+  .foot-grid > div:not(:first-child) ul { justify-items: center; }
 }
 @media (max-width: 460px) {
   .stack { transform: scale(.66); margin-bottom: -130px; width: 150%; margin-left: -25%; }

@@ -170,13 +170,13 @@ function drawBand(ctx, cam, palette, props, { span, horizonY, firstDepth, lastDe
 
 let backdrop = null
 
-function drawSprite(ctx, sprite, x, baseline, width, height, fill, shade, highlight, tree2) {
+function drawSprite(ctx, sprite, x, baseline, width, height, fill, shade, highlight, tree2, alpha = 1) {
   ctx.save()
   ctx.translate(x - width / 2, baseline - height)
   ctx.scale(width / sprite.width, height / sprite.height)
   ctx.translate(-sprite.x, -sprite.y)
   for (const item of sprite.paths) {
-    ctx.globalAlpha = item.opacity
+        ctx.globalAlpha = item.opacity * alpha
     const color = item.tone === 'shade'
       ? shade
       : item.tone === 'highlight' ? highlight
@@ -212,20 +212,32 @@ function buildBackdrop(viewWidth, horizonY) {
     return pts[pts.length - 1][1]
   }
   const sizeK = Math.min(1, Math.max(0.45, room / 160))
+  
+  const span = viewWidth + 2 * pad
+  // back row: lots of trees standing behind the ridge, drawn pale and see-through so they read as far away
+  const far = []
+  for (let t = 0; t < Math.round(span / 60); t++) {
+    const x = -pad + rand() * span
+    const s = (.9 + rand() * .6) * sizeK
+    far.push({ x, baseline: yAt(near, x) + 6 * s, width: 82 * s, height: 72 * s })
+  }
+  // front row: big trees and bushes standing on the ridge
   const trees = []
-  for (let t = 0; t < Math.round((viewWidth + 2 * pad) / 40); t++) {
-    const x = -pad + rand() * (viewWidth + 4* pad)
-    const y = yAt(near, x) +10
-    const s = (.5 + rand()) * sizeK
-    
-    const type = rand() < 0.3 ? 'shrub' : 'tree'
+  for (let t = 0; t < Math.round(span / 110); t++) {
+    const x = -pad + rand() * span
+    // stand on the ridge; where the ridge dips behind the field, stand just behind the field's top edge
+    // (feet tucked in, trunk still showing) instead of floating or sinking
+    const y = Math.min(yAt(near, x) + 6, horizonY + 8)
+    const s = (.8 + rand() * .6) * sizeK
+    const type = rand() < 0.4 ? 'shrub' : 'tree'
     trees.push({
       type, x, baseline: y,
-      width: (type === 'shrub' ? 45 : 82) * s,
-      height: (type === 'shrub' ? 25 : 72) * s,
+      width: (type === 'shrub' ? 50 : 82) * s,
+      height: (type === 'shrub' ? 30 : 72) * s,
     })
   }
-  return { key: `${viewWidth}|${horizonY}`, near, trees, bottom: horizonY + 4 }
+
+    return { key: `${viewWidth}|${horizonY}`, near, far, trees, bottom: horizonY + 4 }
 }
 
 function tracePath(ctx, pts, bottom) {
@@ -249,6 +261,13 @@ function drawBackdrop(ctx, camera, palette) {
 
   ctx.save()
   ctx.translate(-panX * BACKDROP_PARALLAX, 0)
+  for (const tree of backdrop.far) {
+    drawSprite(
+      ctx, SPRITES.tree, tree.x, tree.baseline, tree.width, tree.height,
+      palette.ramp(0.3), palette.ramp(0.5), palette.ramp(0.15),
+      palette.tree2, 0.5,
+    )
+  }
   ctx.fillStyle = palette.ramp(0); tracePath(ctx, backdrop.near, backdrop.bottom); ctx.fill()
   for (const tree of backdrop.trees) {
     drawSprite(
