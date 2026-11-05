@@ -214,8 +214,8 @@ onBeforeUnmount(() => { clearInterval(heroTimer); clearInterval(mtTimer) })
             <p class="sp-lede" style="margin-top: 14px">Set your own focus and break, or pick 25 on and 5 off. While you focus, night falls over the meadow and the fireflies come out. On a break, the sun comes back.</p>
             <ul class="feat-list">
               <li><img :src="focusArt" alt="" />Your own rhythm, classic or deep work</li>
-              <li><img :src="coinArt" alt="" />+ coins for every focus round you finish</li>
-              <li><img :src="plannerArt" alt="" />"Focus on this" straight from your planner</li>
+              <li><img :src="coinArt" alt="" />+ coins for 20+ minutes of focus</li>
+              <li><img :src="plannerArt" alt="" />Today's planner tasks, ready in your to-do list</li>
             </ul>
           </div>
           <div class="mini-timer">
@@ -447,6 +447,7 @@ section { position: relative; }
 .how-art { width: 140px; height: 140px; border-radius: 50%; background: radial-gradient(circle at 50% 40%, #fff, var(--sheet-2)); box-shadow: var(--shadow-1); display: grid; place-items: end center; overflow: hidden; position: relative; }
 .how-art img { width: 120px; height: 120px; }
 .how-art img.s { transform: scale(1.9); transform-origin: 50% 92%; }
+.how-art img:not(.s) { width: 100px; height: 100px; } /* leaves room for the word above the flower */
 .how-art .n { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-family: var(--f-display); font-style: italic; font-weight: 600; color: var(--berry); }
 .how-step h3 { font-size: 1.4rem; margin: 0; }
 .how-step p { margin: 0; color: var(--ink-soft); max-width: 32ch; }

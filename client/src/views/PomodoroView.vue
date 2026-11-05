@@ -229,7 +229,7 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
             <br />You ticked off {{ tasksDone }} task{{ tasksDone === 1 ? '' : 's' }}.
           </template>
         </p>
-        <button v-burst type="button" class="sp-btn border-0 text-button justify-content-center mx-auto" @click="pomo.endSession()">
+        <button v-burst type="button" class="sp-btn border-0 text-button justify-content-center mx-auto" @click="pomo.endSession({ keepTasks: true })">
           Start another
         </button>
       </section>
@@ -293,6 +293,7 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
 @media (min-width: 1200px) {
   .session {
     grid-template-columns: 1fr auto 1fr;
+    grid-template-rows: auto 1fr; /* a long to-do list stretches the last row, so the settings stay under the radio */
     grid-template-areas: "tasks timer side" "tasks timer settings"; /* settings under Garden Radio */
     align-items: start;
     gap: 40px;

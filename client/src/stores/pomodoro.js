@@ -153,7 +153,7 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
   // End early: with a focus block finished, show the done card (and pay coins) for the finished part;
   // with none finished, go straight back to the settings
   function endEarly() {
-    if (!focusDoneSeconds.value) return endSession()
+    if (!focusDoneSeconds.value) return endSession({ keepTasks: true })
     pause()
     blocks.value = blocks.value.slice(0, index.value) // keep only the finished blocks
     phase.value = 'done'
@@ -161,12 +161,13 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     awardCoins()
   }
 
-  // back to the settings for a new session (the number of rounds is kept)
-  function endSession() {
+  // back to the settings for a new session (the number of rounds is kept);
+  // keepTasks carries unfinished typed tasks over, and logging out leaves it off so the next user starts empty
+  function endSession({ keepTasks = false } = {}) {
     pause()
     useToastStore().dismiss(roundToast)
     if (phase.value === 'running') awardCoins() // pays for focus blocks already finished
-    tasks.value = [] // cleared here, not on Start, so tasks added before Start stay
+    tasks.value = keepTasks ? tasks.value.filter(t => !t.seedId && !t.done) : [] // reviews load fresh next session
     offeredSeedIds = [] // next session gets fresh recommendations
     hiddenPlannerIds.value = [] // and shows hidden planner tasks again
     // clear the old blocks so the ring goes back to its focus look
@@ -298,7 +299,12 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
   /* ---------- keep the session through a page refresh (sessionStorage is cleared when the tab closes) ---------- */
   function save() {
     try {
-      if (phase.value === 'setup') return sessionStorage.removeItem(STORAGE_KEY)
+      if (phase.value === 'setup') {
+        // before Start: only the tasks the user typed need saving (reviews and planner tasks load again by themselves)
+        const typed = tasks.value.filter(t => !t.seedId)
+        if (!typed.length) return sessionStorage.removeItem(STORAGE_KEY)
+        return sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ tasks: typed, nextTaskId }))
+      }
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
         phase: phase.value, blocks: blocks.value, index: index.value,
         running: running.value, endsAt, remaining: remaining.value, tasks: tasks.value, nextTaskId, offeredSeedIds,
@@ -315,13 +321,14 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     if (phase.value !== 'setup') return // a session is already going
     let saved
     try { saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY)) } catch { return }
-    if (!saved?.blocks?.length) return
+    if (!saved) return
+    tasks.value = saved.tasks
+    nextTaskId = saved.nextTaskId
+    if (!saved.blocks?.length) return // saved before Start: just the typed tasks
     phase.value = saved.phase
     blocks.value = saved.blocks
     index.value = saved.index
     remaining.value = saved.remaining
-    tasks.value = saved.tasks
-    nextTaskId = saved.nextTaskId
     offeredSeedIds = saved.offeredSeedIds ?? []
     focusDoneSeconds.value = saved.focusDoneSeconds ?? 0
     doneAtStart.value = saved.doneAtStart ?? []

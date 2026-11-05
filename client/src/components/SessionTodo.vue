@@ -1,16 +1,17 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { usePomodoroStore, coinsFor, MIN_COIN_MINUTES } from '@/stores/pomodoro'
 import { usePlannerStore, isoDay } from '@/stores/planner'
 import { burst } from '@/lib/burst'
 
 // To-do card on the Focus page, with the coin line:
 // - today's planner tasks (ticking one here ticks it in the planner; × only hides it for this session)
-// - this session's tasks: recommended reviews and the user's own (cleared when the session ends)
+// - this session's tasks: recommended reviews, and the user's own (unfinished ones carry over to the next session)
 const pomo = usePomodoroStore()
 const planner = usePlannerStore()
 planner.load()
 const draft = ref('')
+const showInfo = ref(false)
 const removing = ref(new Set())
 
 // planner tasks first, then this session's; ticked ones at the bottom
@@ -43,9 +44,13 @@ function remove(task) {
   }, 350)
 }
 
-function add() {
+// a long list scrolls inside the card, so show the new task (it sits after the other unticked ones)
+const listEl = ref(null)
+async function add() {
   pomo.addTask(draft.value)
   draft.value = ''
+  await nextTick()
+  listEl.value?.children[list.value.filter(t => !t.done).length - 1]?.scrollIntoView({ block: 'nearest' })
 }
 
 const coinIcon = new URL('../assets/ui/coin.svg', import.meta.url).href
@@ -65,11 +70,21 @@ const reward = computed(() => {
   <section aria-labelledby="todo-title" data-testid="session-todo">
     <!-- header: label on the left, count on the right -->
     <div class="d-flex justify-content-between align-items-baseline gap-2 mb-2">
-      <span id="todo-title" class="text-label-caption text-berry-deep" data-testid="todo-heading">To-do list</span>
+      <span class="d-flex align-items-center gap-1">
+        <span id="todo-title" class="text-label-caption text-berry-deep" data-testid="todo-heading">To-do list</span>
+        <!-- how long typed tasks last: shows on hover or keyboard focus, and on tap for phones -->
+        <span class="info-wrap">
+          <button
+            type="button" class="info" :aria-expanded="showInfo" aria-label="About typed tasks" data-testid="todo-info"
+            @click="showInfo = !showInfo" @blur="showInfo = false"
+          >i</button>
+          <span class="info-tip" :class="{ open: showInfo }" role="tooltip" data-testid="todo-info-tip">Tasks typed here clear when you close this tab or log out. Use the planner to keep them.</span>
+        </span>
+      </span>
       <span v-if="list.length" class="text-body-small" data-testid="todo-count">{{ doneCount }} / {{ list.length }} done</span>
     </div>
 
-    <ul v-if="list.length" class="list-unstyled sp-rows mb-3">
+    <ul v-if="list.length" ref="listEl" class="todo-list list-unstyled sp-rows mb-3">
       <li
         v-for="task in list" :key="task.key"
         class="task sp-task-row d-flex align-items-center gap-2"
@@ -110,6 +125,15 @@ const reward = computed(() => {
 </template>
 
 <style scoped>
+/* the i next to the title and its message */
+.info-wrap { position: relative; display: inline-flex; }
+.info { width: 16px; height: 16px; display: grid; place-items: center; padding: 0; border: 1.5px solid var(--ink-faint); border-radius: 50%; background: none; color: var(--ink-soft); font-size: 11px; font-weight: 800; line-height: 1; }
+.info:hover, .info:focus-visible { border-color: var(--leaf); color: var(--leaf); }
+.info-tip { position: absolute; z-index: 5; top: calc(100% + 6px); left: -70px; width: 220px; padding: 8px 10px; border-radius: var(--r-sm); background: var(--ink); color: var(--sheet); font-size: var(--fs-xs); font-weight: 600; line-height: 1.35; opacity: 0; visibility: hidden; transition: opacity .15s, visibility .15s; }
+.info:hover + .info-tip, .info:focus-visible + .info-tip, .info-tip.open { opacity: 1; visibility: visible; }
+
+/* long lists scroll here, so Add a task and the coin line stay in view */
+.todo-list { max-height: 420px; overflow-x: hidden; overflow-y: auto; }
 /* the current task gets a soft butter highlight (label and dashed rows from theme.css) */
 .task { padding: 8px; border-radius: var(--r-sm); }
 .task.current { background: var(--butter-soft); }
