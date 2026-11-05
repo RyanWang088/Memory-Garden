@@ -167,7 +167,7 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     useToastStore().dismiss(roundToast)
     if (phase.value === 'running') awardCoins() // pays for focus blocks already finished
     tasks.value = [] // cleared here, not on Start, so tasks added before Start stay
-    reviewsAdded = false // next session gets fresh recommendations
+    offeredSeedIds = [] // next session gets fresh recommendations
     hiddenPlannerIds.value = [] // and shows hidden planner tasks again
     // clear the old blocks so the ring goes back to its focus look
     blocks.value = []
@@ -198,15 +198,15 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
   function hidePlannerTask(id) {
     hiddenPlannerIds.value.push(id)
   }
-  // adds the garden's "!" seeds as "Review: ..." tasks, once per session (a removed one doesn't come back);
-  // a seed already reviewed today comes in ticked
-  let reviewsAdded = false
+  // adds the garden's "!" seeds as "Review: ..." tasks, plus seeds reviewed today, ticked: a reviewed seed has left
+  // the "!" list but stays on the to-do list until tomorrow. Each seed is offered once per session, so a removed one
+  // doesn't come back, but a seed that moves up the list after a review joins it
+  let offeredSeedIds = []
   function addReviewTasks(seeds) {
-    if (reviewsAdded) return
-    reviewsAdded = true
     for (const seed of seeds) {
-      if (tasks.value.some(t => t.seedId === seed.id)) continue
       const reviewedToday = !!seed.last_reviewed && isoDay(seed.last_reviewed) === isoDay(Date.now())
+      if (offeredSeedIds.includes(seed.id) || (!seed.alert && !reviewedToday)) continue
+      offeredSeedIds.push(seed.id)
       tasks.value.push({ id: nextTaskId++, text: `Review: ${seed.title}`, done: reviewedToday, seedId: seed.id })
     }
   }
@@ -301,7 +301,7 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
       if (phase.value === 'setup') return sessionStorage.removeItem(STORAGE_KEY)
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
         phase: phase.value, blocks: blocks.value, index: index.value,
-        running: running.value, endsAt, remaining: remaining.value, tasks: tasks.value, nextTaskId,
+        running: running.value, endsAt, remaining: remaining.value, tasks: tasks.value, nextTaskId, offeredSeedIds,
         focusDoneSeconds: focusDoneSeconds.value, doneAtStart: doneAtStart.value,
         hiddenPlannerIds: hiddenPlannerIds.value,
       }))
@@ -322,6 +322,7 @@ export const usePomodoroStore = defineStore('pomodoro', () => {
     remaining.value = saved.remaining
     tasks.value = saved.tasks
     nextTaskId = saved.nextTaskId
+    offeredSeedIds = saved.offeredSeedIds ?? []
     focusDoneSeconds.value = saved.focusDoneSeconds ?? 0
     doneAtStart.value = saved.doneAtStart ?? []
     hiddenPlannerIds.value = saved.hiddenPlannerIds ?? []

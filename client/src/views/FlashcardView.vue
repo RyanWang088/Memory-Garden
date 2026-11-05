@@ -11,10 +11,9 @@ import { useAuthStore } from '@/stores/auth'
 import { foliageUrl } from '@/lib/plantSprites'
 
 // "Flashcard Mode" review session: flip flashcards, up to 20 cards from one seed.
-// Forgot brings the card back soon; Hard and Easy finish it for today.
-// (The server then schedules each card's next review: forgot today, hard in 1 day, easy in 3 days.)
+// Forgot sends the card to the end of the deck for one retry; any rating on the retry finishes it, and only the
+// first rating is saved. (The server then schedules its next review: forgot in 1 day, hard in 1 day, easy in 3 days.)
 const MAX_CARDS = 20
-const FORGOT_GAP = 3 // a forgotten card is shown again after this many other cards
 const RATINGS = [
   { value: 'forgot', label: 'Forgot', next: 'again today', cls: '' },
   { value: 'hard', label: 'Hard', next: 'again in 1 day', cls: 'sp-btn-butter' },
@@ -126,15 +125,14 @@ function rate(rating) {
   const card = current.value
   if (!card || !flipped.value || turning.value) return
   studyTimer.mark()
-  if (!firstRatings.has(card.id)) {
+  if (!card.retry) {
     firstRatings.set(card.id, rating)
     counts.value[rating]++
   }
   const rest = queue.value.slice(1)
-  if (rating === 'forgot') {
-    // put the card back further down the queue; a new uid makes it come back unflipped
-    const position = Math.min(FORGOT_GAP, rest.length)
-    rest.splice(position, 0, { ...card, uid: nextUid++ })
+  if (rating === 'forgot' && !card.retry) {
+    // one retry at the end of the deck; a new uid makes it come back unflipped
+    rest.push({ ...card, uid: nextUid++, retry: true })
   } else {
     doneCount.value++
   }
@@ -218,7 +216,7 @@ function backToGarden() {
             <button v-for="(r, i) in RATINGS" :key="r.value" type="button" class="sp-btn rate flex-fill" :class="r.cls"
               :data-testid="`rate-${r.value}`" :aria-keyshortcuts="String(i + 1)" @click.stop="rate(r.value)">
               <span class="rate-label">{{ r.label }}</span>
-              <span class="rate-next">{{ r.next }}</span>
+              <span class="rate-next">{{ current.retry ? 'again in 1 day' : r.next }}</span>
             </button>
           </div>
         </div>

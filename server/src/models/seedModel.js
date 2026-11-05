@@ -6,8 +6,10 @@ const SEED_WITH_RELATIONS = '*, subjects(name, shelf_slot), exams!seeds_exam_fke
 const DAY = 86_400_000
 
 
+// Flashcards send only a card's first rating. A forgotten card is requeued in the session, but its retry earns
+// nothing and is never saved, so it always ends up due in 1 day.
 export const RATING_RULES = {
-  forgot: { points: -5, days: 0 },
+  forgot: { points: -5, days: 1 },
   hard: { points: 2, days: 1 },
   easy: { points: 5, days: 3 },
   correct: { points: 5, days: 1 },

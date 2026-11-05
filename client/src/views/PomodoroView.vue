@@ -40,16 +40,16 @@ const showError = ref(false) // the error only shows after Start is pressed
 function openOnCustom() {
   if (!pomo.preset) pomo.choosePreset('custom')
 }
-// add the garden's "!" seeds (most worth revising) to the to-do list before each session
+// add the garden's "!" seeds (most worth revising) to the to-do list. Also runs on the way back from a review,
+// so the next seed in line joins the list
 async function suggestReviews() {
   try { await garden.fetchSeeds() } catch { return } // can't load them: the list just has the other tasks
-  const due = garden.seeds.filter(s => s.alert).sort((a, b) => b.priority - a.priority)
-  pomo.addReviewTasks(due)
+  pomo.addReviewTasks([...garden.gardenSeeds].sort((a, b) => b.priority - a.priority))
 }
 
 onMounted(() => {
   openOnCustom()
-  if (idle.value) suggestReviews()
+  suggestReviews()
 })
 
 // back at the settings after a session: hide the error and get fresh review suggestions
