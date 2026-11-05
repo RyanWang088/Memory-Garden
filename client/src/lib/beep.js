@@ -1,6 +1,4 @@
 // Timer sounds made with the Web Audio API, so no sound file is needed:
-//   beep - short soft beep (countdown)
-//   ting - small bell (time's up)
 // Sounds are booked ahead (`at` = seconds from now), which keeps them exactly in time and still on
 // time when the tab is in the background. `at` is converted to the moment you'd hear it (audioTimeIn).
 let ctx = null
