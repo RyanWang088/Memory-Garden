@@ -24,7 +24,7 @@ const current = computed(() => NAV_ITEMS.findIndex((i) => route.matched.some((r)
     <div class="topbar-inner">
       <RouterLink :to="{ name: 'garden' }" class="brand" aria-label="Sproutly, go to your garden">
         <img :src="potArt" alt="" width="38" height="38" />
-        <span><span class="brand-name">Sproutly</span><span class="brand-sub d-none d-md-block">study garden &amp; planner</span></span>
+        <span><span class="brand-name">Sproutly</span><span class="brand-sub d-none d-lg-block">study garden &amp; planner</span></span>
       </RouterLink>
 
       <ul class="navlinks d-none d-md-flex">
@@ -113,4 +113,5 @@ const current = computed(() => NAV_ITEMS.findIndex((i) => route.matched.some((r)
   .brand img { width: 32px; height: 32px; }
   .bar-right { gap: 5px; }
 }
+@media (max-width: 340px) { .brand-name { display: none; } } /* the smallest phones: just the logo */
 </style>

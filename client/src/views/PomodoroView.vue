@@ -338,7 +338,7 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
 /* timer ring: night look while focusing, paper and green on a break */
 .ring {
   --disc: rgba(16, 24, 56, .55); --ring-fg: #fdf3d6; --track: rgba(255,255,255,.14); --fill: var(--butter);
-  --ring: min(390px, 84vw, calc(100dvh - 290px));
+  --ring: min(390px, 84vw, max(260px, calc(100dvh - 290px))); /* 260px floor: short landscape screens scroll instead of shrinking it */
   position: relative; width: var(--ring); aspect-ratio: 1; border-radius: 50%;
   background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--disc) 70%, transparent), var(--disc));
   backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
@@ -373,10 +373,10 @@ const focusTime = computed(() => lengthText(pomo.blocks.filter(b => b.type === '
 .sp-btn { width: auto; min-width: 140px; order: 0; } /* global .sp-btn has order: 4 */
 @media (prefers-reduced-motion: reduce) {
   .blocks img.now, .ring.paused .text-timer { animation: none; }
+}
 
 /* text inside the ring is sized from the ring's width, so it always fits inside the circle */
 .ring .text-timer { font-size: calc(var(--ring) * .19); }
-}
 
 
 </style>
