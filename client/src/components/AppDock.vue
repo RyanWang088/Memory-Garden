@@ -33,7 +33,7 @@ const isHere = (name) => route.matched.some((r) => r.name === name)
 .dock {
   z-index: 1030; bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   padding: 6px 8px;
-  background: color-mix(in srgb, var(--sheet) 86%, transparent);
+  background: color-mix(in srgb, var(--sheet) 82%, transparent);
   backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
   box-shadow: var(--shadow-1);
 }

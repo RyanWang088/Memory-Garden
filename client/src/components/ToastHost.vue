@@ -50,7 +50,7 @@ toast.show({
 
 <style scoped>
 .toast-stack {
-  z-index: 1100; top: calc(70px + env(safe-area-inset-top, 0px));
+  z-index: 1100; top: 84px;
   max-width: 408px; padding: 0 var(--s-4); gap: var(--s-3);
 }
 /* sp-card supplies the paper, shadow and grain; this only tweaks its shape */
@@ -82,5 +82,8 @@ toast.show({
 @media (max-width: 575.98px) {
   .toast-stack { padding: 0 var(--s-3); }
   .title { font-size: 1.2rem; }
+}
+@media (max-width: 767.98px) {
+  .toast-stack { top: 74px; }
 }
 </style>

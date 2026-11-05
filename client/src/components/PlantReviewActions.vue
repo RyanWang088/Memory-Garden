@@ -7,8 +7,6 @@ import structuredArt from '@/assets/ui/ssq.svg'
 
 const emit = defineEmits(['review'])
 
-// tilt: how far each paper tag leans (deg); dy: how far it sinks (px) so the three form a hand of cards
-// tape: sp-tape colour variant ('' = the default tape); hint: one line shown on the sign for the picked tag
 const reviewModes = [
   { label: 'Flashcard', route: 'flashcard', art: flashcardArt, tilt: -7, dy: 4, tape: 'is-butter', hint: 'Flip through up to 20 cards' },
   { label: 'Multiple Choice Quiz', route: 'multiple-choice-quiz', art: quizArt, tilt: 0, dy: 0, tape: '', hint: 'Up to 10 quick questions' },
@@ -20,7 +18,6 @@ const armed = ref(null) // touch only: the tag that was tapped once and now open
 const tags = ref(null)
 let wheelAt = 0
 
-// a mouse or keyboard opens straight away; a finger or pen taps once to pick (the sign shows the name), again to open
 function onReviewClick(mode, index, event) {
   const touch = event.pointerType === 'touch' || event.pointerType === 'pen'
   if (touch && armed.value !== index) {
@@ -29,6 +26,11 @@ function onReviewClick(mode, index, event) {
     return
   }
   emit('review', mode.route)
+}
+
+// the slip under the cards opens whichever mode is currently picked (also the confirm tap on touch)
+function openSelected() {
+  emit('review', reviewModes[selected.value].route)
 }
 
 function spin(direction) {
@@ -60,14 +62,14 @@ function onKey(event) {
     @wheel.prevent.stop="onWheel"
     @keydown.stop="onKey"
   >
-    <!-- a garden marker: a wooden sign on a stake, solid so it reads the same in sun, rain or night -->
+    <!-- a frosted-glass panel, same material as the top bar and the dock -->
     <div class="sign position-absolute start-0 d-flex flex-column align-items-center rounded-4">
       <div ref="tags" class="tags d-flex justify-content-center align-items-end">
         <button
           v-for="(mode, i) in reviewModes"
           :key="mode.route"
           type="button"
-          class="review-action position-relative d-flex align-items-center justify-content-center rounded-3 p-0"
+          class="review-action position-relative d-flex align-items-center justify-content-center rounded-3 p-0 overflow-hidden"
           :class="{ 'is-on': selected === i }"
           :style="{ '--i': i, '--r': `${mode.tilt}deg`, '--dy': `${mode.dy}px` }"
           :data-testid="`review-${mode.route}`"
@@ -77,26 +79,30 @@ function onKey(event) {
           @focus="selected = i"
           @click.stop="onReviewClick(mode, i, $event)"
         >
-          <span :class="['sp-tape', mode.tape]" aria-hidden="true"></span>
-          <span class="art-tile d-flex align-items-center justify-content-center rounded-2" aria-hidden="true">
+          <span :class="['sp-tape', 'tape-bg', mode.tape]" aria-hidden="true"></span>
+          <span class="art-tile position-relative d-flex align-items-center justify-content-center rounded-2" aria-hidden="true">
             <img :src="mode.art" alt="" width="34" height="34" class="ico" />
           </span>
         </button>
       </div>
 
-      <!-- one shared label, so long names never push past the sign and clip the plants beside it -->
-      <p class="slip m-0 w-100 text-center rounded-2 d-flex flex-column justify-content-center" aria-live="polite">
+      <!-- the label doubles as a button: it opens the mode that is currently picked -->
+      <button
+        type="button"
+        class="slip w-100 text-center rounded-3 d-flex flex-column justify-content-center"
+        :aria-label="`Start ${reviewModes[selected].label}`"
+        data-testid="review-open-selected"
+        @click.stop="openSelected"
+      >
         <span :key="selected" class="name">{{ reviewModes[selected].label }}</span>
         <span class="hint">{{ reviewModes[selected].hint }}</span>
-      </p>
+      </button>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* zero-size anchor sitting above the plant; the sign grows upward from it */
 .plant-review-actions {
-  --plank: var(--bark);
   position: absolute;
   left: 0;
   bottom: var(--plant-overlay-bottom, 170px);
@@ -105,91 +111,99 @@ function onKey(event) {
   pointer-events: auto;
 }
 
-/* fixed, narrow width: never wider than the plant beds beside it */
 .sign {
-  --stake: 24px;
-  bottom: calc(var(--stake) + 8px);
+  bottom: 14px;
   translate: -50% 0;
   width: 192px;
-  padding: 10px 12px 10px;
+  padding: 12px 12px 12px;
   gap: 8px;
-  background:
-    repeating-linear-gradient(92deg, rgba(255, 255, 255, .06) 0 2px, transparent 2px 7px),
-    repeating-linear-gradient(88deg, rgba(0, 0, 0, .1) 0 1px, transparent 1px 11px),
-    var(--plank);
-  /* paper-coloured halo = sticker outline: separates the sign from any sky, clouds or foliage */
-  box-shadow: 0 0 0 3px var(--paper), 0 8px 14px 3px rgba(30, 20, 10, .4);
-  animation: sign-in .6s var(--spring) backwards;
+  background: color-mix(in srgb, var(--sheet) 82%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .7) inset, var(--shadow-1);
+  animation: copy-in .6s var(--spring) backwards;
 }
 
-/* the stake: halo piece first, wood piece on top so it joins the plank */
-.sign::before,
-.sign::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  clip-path: polygon(0 0, 100% 0, 100% 55%, 50% 100%, 0 55%);
-}
-.sign::before { top: 100%; width: 22px; height: var(--stake); margin-left: -11px; background: var(--paper); }
-.sign::after { top: calc(100% - 4px); width: 16px; height: calc(var(--stake) - 2px); margin-left: -8px; background: var(--plank); }
+.tags { width: 100%; padding-top: 8px; }
 
-.tags { width: 100%; padding-top: 10px; }
-
-/* a hand of cards: overlapping so three tags fit in ~160px */
 .review-action {
   flex: 0 0 auto;
   width: 60px;
   height: 70px;
-  background: var(--paper);
-  border: 2px solid var(--ink);
-  box-shadow: 0 3px 0 rgba(0, 0, 0, .35);
+  background: color-mix(in srgb, var(--paper) 95%, transparent);
+  border: 1px solid color-mix(in srgb, var(--bark) 30%, transparent);
+  box-shadow: 0 3px 8px -3px color-mix(in srgb, var(--bark) 45%, transparent);
   cursor: pointer;
   transform: translateY(var(--dy)) rotate(var(--r));
   animation: deal .5s var(--spring) backwards;
   animation-delay: calc(var(--i) * 80ms + 150ms);
-  transition: transform .35s var(--spring), background .2s, box-shadow .2s;
+  transition: transform .35s var(--spring), background .2s, box-shadow .2s, border-color .2s;
 }
 .review-action + .review-action { margin-left: -10px; }
 
-.review-action .sp-tape {
+.tape-bg {
   position: absolute;
-  top: -11px;
-  left: 50%;
-  margin-left: -22px;
-  transform: rotate(calc(var(--r) * -1.5));
+  inset: 0;
+  width: auto;
+  height: auto;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  clip-path: none;
+  transform: none;
+  rotate: 0deg;
+  scale: 1;
+  opacity: 1;
+  z-index: 0;
   pointer-events: none;
+  transition: opacity .25s;
+}
+.tape-bg::before { display: none; }
+.tape-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
 }
 
 .art-tile {
+  z-index: 1;
   width: 44px;
   height: 44px;
-  background: var(--cream);
+  background: color-mix(in srgb, var(--cream) 95%, transparent);
+  transition: background .25s;
 }
+.review-action.is-on .art-tile { background: color-mix(in srgb, var(--cream) 78%, transparent); }
 
 .review-action:hover { transform: translateY(calc(var(--dy) - 3px)) rotate(var(--r)); }
-.review-action:active { transform: translateY(2px) rotate(var(--r)); box-shadow: 0 1px 0 rgba(0, 0, 0, .35); }
+.review-action:active { transform: translateY(1px) rotate(var(--r)); box-shadow: 0 1px 3px -1px color-mix(in srgb, var(--bark) 45%, transparent); }
 .review-action.is-on,
 .review-action.is-on:hover {
   z-index: 2;
   background: var(--butter-soft);
-  transform: translateY(-8px) rotate(0deg) scale(1.1);
-  box-shadow: 0 0 0 2px var(--butter), 0 7px 0 rgba(0, 0, 0, .35);
+  border-color: color-mix(in srgb, var(--bark) 22%, transparent);
+  transform: translateY(-6px) rotate(0deg) scale(1.1);
+  box-shadow: 0 8px 12px -4px color-mix(in srgb, var(--bark) 45%, transparent);
 }
-.review-action:focus-visible { outline: 3px solid var(--butter); outline-offset: 3px; }
+.review-action:focus-visible { outline: 2px solid var(--berry); outline-offset: 3px; }
 
 .ico { transition: transform .35s var(--spring); }
 .review-action.is-on .ico { transform: scale(1.08); animation: boing .5s var(--spring); }
 .review-action:active .ico { transform: scale(.9); }
 
-/* the label: a handwritten paper slip pinned across the bottom of the sign */
+/* a real <button>, reset to look like the slip it always was */
 .slip {
   min-height: 52px;
   padding: 5px 8px 6px;
-  background: var(--sheet);
+  font: inherit;
+  background: color-mix(in srgb, var(--sheet-2) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
   color: var(--ink);
-  box-shadow: inset 0 0 0 1.5px var(--ink);
   line-height: 1.15;
+  transition: background .2s, transform .2s var(--spring);
 }
+.slip:hover { background: color-mix(in srgb, var(--sheet-2) 92%, transparent); }
+.slip:active { transform: translateY(1px); }
+.slip:focus-visible { outline: 2px solid var(--berry); outline-offset: 2px; }
 .slip .name {
   font-family: var(--f-hand);
   font-size: 1.1rem;
@@ -198,7 +212,6 @@ function onKey(event) {
 }
 .slip .hint { font-size: .7rem; font-weight: 700; color: var(--ink-soft); }
 
-@keyframes sign-in { from { opacity: 0; transform: translateY(14px) scale(.9); } }
 @keyframes deal { from { opacity: 0; transform: translateY(18px) rotate(0deg) scale(.7); } }
 @keyframes slip-swap { from { opacity: 0; transform: translateY(4px); } }
 @keyframes boing {
@@ -210,5 +223,6 @@ function onKey(event) {
 /* kept: no Bootstrap equivalent for reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   .sign, .review-action, .ico, .slip .name { animation: none; }
+  .tape-bg, .art-tile, .slip { transition: none; }
 }
 </style>

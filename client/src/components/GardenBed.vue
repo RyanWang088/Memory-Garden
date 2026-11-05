@@ -25,7 +25,6 @@ const PLANT_SPRITE_SIZE = 170
 // Opening the garden: only the plant we are scrolling to keeps a pending stage-up. Runs before the first render,
 // so plants never flash their new stage early.
 garden.keepOnlyGrowth(route.query.scrollTo)
-console.log('[growth] garden opened', route.query.scrollTo, JSON.stringify(garden.growthRecords))
 const cam = createGardenCamera()
 const { camera, measure: measureCamera, updateScroll: updateCameraScroll, worldToScreen, screenToCell, screenPoint } = cam
 
@@ -35,9 +34,9 @@ const plantingSeedId = ref(null)
 const plantElements = new Map()
 const plantInfoElements = new Map()
 const plantOverlayElements = new Map()
-let renderQueued = false, resizeObserver, scrollIdleTimer, hoverHideTimer
+let renderQueued = false, resizeObserver, scrollIdleTimer, hoverHideTimer, settleCapTimer
+const settlingSeedId = ref(typeof route.query.scrollTo === 'string' ? route.query.scrollTo : null)
 
-// the canvas, the plants and the critters all follow the same look as the sky (mood + weather), and crossfade with it
 const { look } = storeToRefs(useWeatherStore())
 const { palette } = useMeadowPalette(look, requestRender)
 
@@ -46,10 +45,9 @@ const registerPlant = (id, el) => (el ? plantElements.set(id, el) : plantElement
 const registerPlantInfo = (id, el) => (el ? plantInfoElements.set(id, el) : plantInfoElements.delete(id))
 const registerPlantOverlay = (id, el) => (el ? plantOverlayElements.set(id, el) : plantOverlayElements.delete(id))
 
-// Only one plant label is open at a time: a hovered plant wins over the selected one.
 const hoveredPlantId = ref(null)
 const isPlantInfoVisible = id => hoveredPlantId.value === id || ui.selectedGardenSeedId === id
-const areReviewActionsVisible = id => ui.selectedGardenSeedId === id
+const areReviewActionsVisible = id => ui.selectedGardenSeedId === id && settlingSeedId.value !== id
 const isPlantGrowing = id => Boolean(garden.growthRecords[id])
 const isPlantAlertVisible = seed => seed.alert && !areReviewActionsVisible(seed.id) && !isPlantGrowing(seed.id)
 const isPlantOverlayVisible = seed => isPlantInfoVisible(seed.id) || areReviewActionsVisible(seed.id) || isPlantAlertVisible(seed)
@@ -107,7 +105,6 @@ function render() {
   for (const seed of garden.gardenSeeds) {
     const el = plantElements.get(seed.id)
     if (el) placeSprite(el, seed.col, seed.row)
-    // the name bubble only needs a position while it is showing
     if (isPlantInfoVisible(seed.id)) {
       const infoEl = plantInfoElements.get(seed.id)
       if (infoEl) placePlantInfo(infoEl, seed.col, seed.row)
@@ -121,8 +118,6 @@ function render() {
   updateGhost()
 }
 
-// What was last written to each sprite. Only `transform` changes every frame; display, z-index and the clip
-// are written when they actually change, so scrolling doesn't invalidate style on every plant every frame.
 const placed = new WeakMap()
 
 function placedState(el) {
@@ -130,7 +125,6 @@ function placedState(el) {
   return placed.get(el)
 }
 
-// every show/hide goes through here so the cache above never disagrees with the DOM
 function setDisplay(el, display) {
   const last = placedState(el)
   if (last.display === display) return
@@ -218,6 +212,7 @@ function scrollSettled(el, { idleMs = 500, maxMs = 2000 } = {}) {
 // Plays the plant's stage-up once the camera has stopped, so the celebration happens in front of the user
 async function revealGrowth(seedId) {
   await scrollSettled(scrollerEl.value)
+  if (settlingSeedId.value === seedId) settlingSeedId.value = null
   garden.releaseGrowth(seedId)
 }
 
@@ -334,7 +329,7 @@ watch(() => garden.gardenSeeds, () => {
 }, { deep: true, flush: 'post' })
 watch(() => route.query.scrollTo, scrollToSeed, { flush: 'post' })
 // a plant label or its review controls that just started showing needs its position before it fades in
-watch([hoveredPlantId, () => ui.selectedGardenSeedId], requestRender, { flush: 'post' })
+watch([hoveredPlantId, () => ui.selectedGardenSeedId, settlingSeedId], requestRender, { flush: 'post' })
 
 onMounted(() => {
   resizeObserver = new ResizeObserver(measureView)
@@ -345,11 +340,13 @@ onMounted(() => {
   updateScroll()
   render()
   scrollToSeed()
+  settleCapTimer = setTimeout(() => { settlingSeedId.value = null }, 4000) // never leave the controls hidden
 })
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()
   clearTimeout(scrollIdleTimer)
   clearTimeout(hoverHideTimer)
+  clearTimeout(settleCapTimer)
   garden.clearGrowth()
 })
 </script>

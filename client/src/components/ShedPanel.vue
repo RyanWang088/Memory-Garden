@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
 import { useToastStore } from '@/stores/toast'
@@ -19,10 +19,9 @@ const tabs = [
   { id: 'weed', label: 'Weed', img: 'shovel',help:'Delete study materials', action: true, tool: 'shovel' },
   { id: 'edit', label: 'Prune', img: 'shears',help:'Edit study materials', action: true, tool: 'shears' },
 ]
-const selectedTabId = ref(tabs.find(item => item.action && item.tool === ui.activeTool)?.id ?? ui.shedTab)
+const selectedTabId = computed(() => tabs.find(item => item.action && item.tool === ui.activeTool)?.id ?? ui.shedTab)
 
 function selectTab(tabId) {
-  selectedTabId.value = tabId
   const tab = tabs.find(item => item.id === tabId)
   if (tab?.action) {
     ui.setTool(tab.tool)

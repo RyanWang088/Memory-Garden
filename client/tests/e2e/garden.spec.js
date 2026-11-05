@@ -112,7 +112,7 @@ const { defaultBrowserType, ...pixel7 } = devices['Pixel 7']
 test.describe('Garden on a phone @mobile', () => {
   test.use({ ...pixel7 }) // phone viewport, touch events, mobile user agent
 
-  test('finds a seed by tag, scrolls to it, and starts a flashcard review', async ({ page }) => {
+  test('finds a seed by tag, auto scrolls to it, and starts a flashcard review', async ({ page }) => {
     const decoy = makeSeed({ id: 'mobile-decoy', title: 'Mobile decoy' })
     decoy.row = 2
     const target = makeSeed({ id: 'mobile-tagged', title: 'Mobile tagged seed' })
@@ -137,17 +137,24 @@ test.describe('Garden on a phone @mobile', () => {
       await expect(openButton(page, target.title)).toBeInViewport()
     })
 
-await test.step('And the first tap shows the study mode label, the second starts it', async () => {
-  await tapPlant(page, target.title)
+    await test.step('And the first tap shows the study mode label, the second starts it', async () => {
+      await tapPlant(page, target.title)
 
-  const flashcard = page.getByTestId('review-flashcard')
-  await expect(flashcard).toBeVisible()
+      const flashcard = page.getByTestId('review-flashcard')
+      const slip = page.getByTestId('review-open-selected')
+      await expect(flashcard).toBeVisible() // auto-waits: the controls now appear once the camera has settled
 
-await tapButton(page, flashcard) // first tap: label
-await expect(flashcard.locator('.tip:visible')).toHaveCSS('opacity', '1')
-  await tapButton(page, flashcard) // second tap: enter the session
-  await expect(page.getByTestId('show-answer')).toBeVisible()
-})
+      // the default pick is Multiple Choice, so "Flashcard" only shows once the first tap has selected it
+      await expect(slip).not.toContainText('Flashcard')
+
+      await tapButton(page, flashcard) // first tap: arms the mode and shows its label
+      await expect(flashcard).toHaveAttribute('aria-pressed', 'true')
+      await expect(slip).toContainText('Flashcard')
+      await expect(page.getByTestId('show-answer')).toBeHidden() // still in the garden
+
+      await tapButton(page, flashcard) // second tap: enter the session
+      await expect(page.getByTestId('show-answer')).toBeVisible()
+    })
   })
 })
 

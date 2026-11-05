@@ -232,18 +232,18 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
             <!-- 5 review -->
             <div v-else-if="i === 4" key="a4" class="art a-seeds">
               <div class="seeds-art">
-                <!-- the wooden sign that opens above a clicked plant (same look as PlantReviewActions) -->
+                <!-- the review sign that opens above a clicked plant -->
                 <div class="review-sign">
                   <div class="sign">
                     <div class="tags">
-                      <span class="tag"><span class="sp-tape is-butter"></span><span class="art-tile"><img class="tag-ico" :src="flashcardArt" alt="" width="34" height="34" /></span></span>
-                      <span class="tag"><span class="sp-tape"></span><span class="art-tile"><img class="tag-ico" :src="quizArt" alt="" width="34" height="34" /></span></span>
-                      <span class="tag"><span class="sp-tape is-leaf"></span><span class="art-tile"><img class="tag-ico" :src="structuredArt" alt="" width="34" height="34" /></span></span>
+                      <span class="review-action"><span class="art-tile"><img class="ico" :src="flashcardArt" alt="" width="34" height="34" /></span></span>
+                      <span class="review-action"><span class="art-tile"><img class="ico" :src="quizArt" alt="" width="34" height="34" /></span></span>
+                      <span class="review-action"><span class="art-tile"><img class="ico" :src="structuredArt" alt="" width="34" height="34" /></span></span>
                     </div>
                     <div class="slip">
-                      <span class="slip-line"><b>Flashcard</b><small>Flip through up to 20 cards</small></span>
-                      <span class="slip-line"><b>Multiple Choice Quiz</b><small>Up to 10 quick questions</small></span>
-                      <span class="slip-line"><b>Short Structured Mode</b><small>Prove you've mastered it</small></span>
+                      <span class="slip-line"><span class="name">Flashcard</span><span class="hint">Flip through up to 20 cards</span></span>
+                      <span class="slip-line"><span class="name">Multiple Choice Quiz</span><span class="hint">Up to 10 quick questions</span></span>
+                      <span class="slip-line"><span class="name">Short Structured Mode</span><span class="hint">Prove you've mastered it</span></span>
                     </div>
                   </div>
                 </div>
@@ -462,42 +462,66 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
 @keyframes glow { from { opacity: .15; } to { opacity: 1; } }
 /* art 5 */
 .seeds-art { position: relative; width: min(420px, 96%); height: 300px; }
-/* wooden sign: opens after the click with Flashcard chosen, then the choice moves along the three cards */
+/* sign opens after the click with Flashcard chosen, then the choice moves along the three cards */
 .review-sign { position: absolute; z-index: 3; left: 50%; bottom: 92px; width: 0; height: 0; }
 .sign {
-  --stake: 24px;
-  position: absolute; left: 0; bottom: calc(var(--stake) + 8px); translate: -50% 0; width: 192px; padding: 10px 12px;
-  display: flex; flex-direction: column; align-items: center; gap: 8px; border-radius: var(--r-md);
-  background: repeating-linear-gradient(92deg, rgba(255, 255, 255, .06) 0 2px, transparent 2px 7px), var(--ink);
-  box-shadow: 0 0 0 3px var(--paper), var(--shadow-2);
+  position: absolute; left: 0; bottom: 14px; translate: -50% 0; width: 192px; padding: 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px; border-radius: 1rem;
+  background: color-mix(in srgb, var(--sheet) 82%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .7) inset, var(--shadow-1);
   animation: sign-show 5s var(--spring) infinite backwards;
 }
-.sign::before, .sign::after { content: ""; position: absolute; left: 50%; clip-path: polygon(0 0, 100% 0, 100% 55%, 50% 100%, 0 55%); }
-.sign::before { top: 100%; width: 22px; height: var(--stake); margin-left: -11px; background: var(--paper); }
-.sign::after { top: calc(100% - 4px); width: 16px; height: calc(var(--stake) - 2px); margin-left: -8px; background: var(--ink); }
-.tags { display: flex; justify-content: center; align-items: flex-end; width: 100%; padding-top: 10px; }
-.tag {
-  position: relative; flex: none; display: grid; place-items: center; width: 60px; height: 70px;
-  border: 2px solid var(--ink); border-radius: var(--r-sm); background: var(--paper); box-shadow: 0 3px 0 rgba(0, 0, 0, .35);
+.tags { display: flex; justify-content: center; align-items: flex-end; width: 100%; padding-top: 8px; }
+.review-action {
+  position: relative; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; overflow: hidden;
+  width: 60px; height: 70px; padding: 0;
+  border: 1px solid color-mix(in srgb, var(--bark) 30%, transparent); border-radius: .5rem;
+  background: color-mix(in srgb, var(--paper) 95%, transparent);
+  box-shadow: 0 3px 8px -3px color-mix(in srgb, var(--bark) 45%, transparent);
   transform: translateY(var(--dy)) rotate(var(--r));
   animation: tag-on 5s var(--spring) calc(var(--i) * 950ms) infinite;
 }
-.tag + .tag { margin-left: -10px; }
-.tag:nth-child(1) { --i: 0; --r: -7deg; --dy: 4px; }
-.tag:nth-child(2) { --i: 1; --r: 0deg; --dy: 0px; }
-.tag:nth-child(3) { --i: 2; --r: 7deg; --dy: 4px; }
-.tag .sp-tape { top: -11px; left: 50%; margin-left: -22px; transform: rotate(calc(var(--r) * -1.5)); }
-.art-tile { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 8px; background: var(--sheet); }
-.tag-ico { animation: ico-on 5s var(--spring) calc(var(--i) * 950ms) infinite; }
-.slip { display: grid; width: 100%; min-height: 52px; padding: 5px 8px 6px; border-radius: var(--r-sm); background: var(--sheet); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); text-align: center; line-height: 1.15; }
+.review-action + .review-action { margin-left: -10px; }
+.review-action:nth-child(1) { --i: 0; --r: -7deg; --dy: 4px; }
+.review-action:nth-child(2) { --i: 1; --r: 0deg; --dy: 0px; }
+.review-action:nth-child(3) { --i: 2; --r: 7deg; --dy: 4px; }
+.review-action:nth-child(1) {
+  background-image:
+    radial-gradient(circle at 6px 6px, rgba(255, 255, 255, .55) 2px, transparent 2.5px),
+    linear-gradient(color-mix(in srgb, var(--butter) 70%, transparent), color-mix(in srgb, var(--butter) 70%, transparent));
+  background-size: 12px 12px, auto;
+}
+.review-action:nth-child(2) {
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, .35) 0 6px, transparent 6px 12px),
+    linear-gradient(color-mix(in srgb, var(--berry) 45%, transparent), color-mix(in srgb, var(--berry) 45%, transparent));
+}
+.review-action:nth-child(3) {
+  background-image:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, .3) 0 4px, transparent 4px 10px),
+    linear-gradient(color-mix(in srgb, var(--leaf) 45%, transparent), color-mix(in srgb, var(--leaf) 45%, transparent));
+}
+.art-tile {
+  position: relative; z-index: 1; display: grid; place-items: center; width: 44px; height: 44px;
+  border-radius: .375rem; background: color-mix(in srgb, var(--cream) 95%, transparent); transition: background .25s;
+}
+.ico { transition: transform .35s var(--spring); animation: ico-on 5s var(--spring) calc(var(--i) * 950ms) infinite; }
+.slip {
+  display: grid; width: 100%; min-height: 52px; padding: 5px 8px 6px; border-radius: .5rem;
+  background: color-mix(in srgb, var(--sheet-2) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  color: var(--ink); text-align: center; line-height: 1.15;
+}
 .slip-line { grid-area: 1 / 1; display: flex; flex-direction: column; justify-content: center; opacity: 0; animation: slip-on 5s ease calc(var(--i) * 950ms) infinite; }
 .slip-line:nth-child(1) { --i: 0; } .slip-line:nth-child(2) { --i: 1; } .slip-line:nth-child(3) { --i: 2; }
-.slip-line b { font-family: var(--f-hand); font-size: 1.1rem; font-weight: 700; }
-.slip-line small { font-size: .7rem; font-weight: 700; color: var(--ink-soft); }
+.slip .name { font-family: var(--f-hand); font-size: 1.1rem; font-weight: 700; }
+.slip .hint { font-family: inherit; font-size: .7rem; font-weight: 700; color: var(--ink-soft); white-space: normal; }
 @keyframes sign-show { 0%, 24% { opacity: 0; transform: translateY(14px) scale(.9); } 30%, 88% { opacity: 1; transform: none; } 94%, 100% { opacity: 0; transform: none; } }
 @keyframes tag-on {
-  0%, 28%, 50%, 100% { z-index: 1; background: var(--paper); transform: translateY(var(--dy)) rotate(var(--r)); box-shadow: 0 3px 0 rgba(0, 0, 0, .35); }
-  31%, 47% { z-index: 2; background: var(--butter-soft); transform: translateY(-8px) scale(1.1); box-shadow: 0 0 0 2px var(--butter), 0 7px 0 rgba(0, 0, 0, .35); }
+  0%, 28%, 50%, 100% { z-index: 1; background-color: var(--paper); transform: translateY(var(--dy)) rotate(var(--r)); box-shadow: 0 3px 0 rgba(0, 0, 0, .35); }
+  31%, 47% { z-index: 2;  transform: translateY(-8px) scale(1.1); box-shadow: 0 7px 0 rgba(0, 0, 0, .35); }
 }
 @keyframes slip-on { 0%, 28%, 50%, 100% { opacity: 0; } 31%, 47% { opacity: 1; } }
 @keyframes ico-on { 0%, 28%, 50%, 100% { scale: 1; rotate: 0deg; } 30% { scale: .8; rotate: -10deg; } 33% { scale: 1.25; rotate: 6deg; } 36%, 47% { scale: 1.08; rotate: 0deg; } }

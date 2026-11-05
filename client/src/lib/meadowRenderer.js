@@ -74,7 +74,7 @@ export function drawMeadow(ctx, cam, palette) {
   const aFront = floorAngle(firstDepth)
   const frame = {
     span, horizonY, firstDepth, lastDepth, floorAngle, x0, x1, viewWidth,
-    treeFill: palette.tree, treeShade: palette.ramp(1), treeHighlight: palette.ramp(0.6),
+    treeFill: palette.ramp(1), treeShade: palette.tree, treeHighlight: palette.ramp(0.6),
   }
 
   for (let hill = Math.ceil((lastDepth + 100) / HILL_GAP); hill >= Math.floor(firstDepth / HILL_GAP); hill--) {

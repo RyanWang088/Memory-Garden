@@ -121,7 +121,7 @@ async function deleteAccount() {
 
         <div class="setting">
           <div class="setting-row">
-            <span class="setting-ic" aria-hidden="true">🔑</span>
+            <span class="setting-ic" aria-hidden="true"><img src="../assets/ui/key.svg"></span>
             <span class="flex-fill"><b>Change password</b><small>Use at least 8 characters.</small></span>
             <button type="button" class="sp-btn sp-btn-ghost sp-btn-sm" :aria-expanded="pw.open" data-testid="settings-password" @click="pw.open = !pw.open; pw.error = ''; pw.done = false">
               {{ pw.open ? 'Cancel' : 'Change' }}
@@ -139,7 +139,7 @@ async function deleteAccount() {
 
         <div class="setting">
           <div class="setting-row">
-            <span class="setting-ic" aria-hidden="true">👋</span>
+            <span class="setting-ic" aria-hidden="true"><img src="../assets/ui/logout.svg" alt="" width="20" height="20" /></span>
             <span class="flex-fill"><b>Log out</b><small>You can log back in any time.</small></span>
             <button type="button" class="sp-btn sp-btn-ghost sp-btn-sm" data-testid="logout" @click="logout">Log out</button>
           </div>
@@ -147,7 +147,7 @@ async function deleteAccount() {
 
         <div class="setting danger">
           <div class="setting-row">
-            <span class="setting-ic" aria-hidden="true">🗑️</span>
+            <span class="setting-ic" aria-hidden="true"><img src="../assets/ui/trash.svg" alt="" width="20" height="20" /></span>
             <span class="flex-fill"><b>Delete account</b><small>Removes your garden, seeds and progress for good.</small></span>
             <button type="button" class="sp-btn sp-btn-sm" data-testid="settings-delete" @click="openDelete">Delete</button>
           </div>
@@ -209,7 +209,7 @@ async function deleteAccount() {
 .setting-row { display: flex; align-items: center; gap: 10px; }
 .setting-row b { display: block; font-weight: 800; font-size: .95rem; }
 .setting-row small { display: block; color: var(--ink-soft); font-size: .78rem; line-height: 1.3; }
-.setting-ic { width: 34px; height: 34px; flex: none; display: grid; place-items: center; border-radius: 10px; background: var(--sheet-2); font-size: 1.05rem; }
+.setting-ic { width: 34px; height: 34px; flex: none; display: grid; place-items: center; border-radius: 10px; font-size: 1.05rem; }
 .setting.danger { border-color: color-mix(in srgb, var(--berry) 45%, var(--line)); background: color-mix(in srgb, var(--berry-soft) 45%, #fff); }
 .setting.danger b { color: var(--berry-deep); }
 .setting-form { display: grid; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1.5px dashed var(--line); }

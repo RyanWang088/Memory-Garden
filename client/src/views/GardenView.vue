@@ -106,9 +106,9 @@ onBeforeUnmount(() => {
       <div class="garden-hud" aria-live="polite">
         <h1 class="sp-greet on-sky">{{ hud.hello }} <span>{{ hud.line }}</span></h1>
         <div class="hud-chips">
-          <button v-if="hud.thirsty" type="button" class="hud-chip is-alert" @click="openStudy"><img src="../assets/ui/wateringCanIcon.svg" alt="" width="18" height="18" />{{ hud.thirsty }} plant{{ hud.thirsty === 1 ? '' : 's' }} need a quiz</button>
+          <button v-if="hud.thirsty" type="button" class="hud-chip is-alert d-none d-md-inline-flex" @click="openStudy"><img src="../assets/ui/droplet.svg" alt="" width="18" height="18" />{{ hud.thirsty }} plant{{ hud.thirsty === 1 ? '' : 's' }} need a quiz</button>
           <span v-if="hud.next" class="hud-chip"><img src="../assets/ui/planner.svg" alt="" width="18" height="18" />Next: {{ hud.next }}</span>
-          <span class="hud-chip"><img src="../assets/ui/sprout.svg" alt="" width="18" height="18" />{{ hud.planted }} planted</span>
+          <span class="hud-chip d-none d-md-inline-flex"><img src="../assets/ui/sprout.svg" alt="" width="18" height="18" />{{ hud.planted }} planted</span>
         </div>
       </div>
       <div class="scroller position-absolute top-0 start-0 w-100 h-100 overflow-auto">
