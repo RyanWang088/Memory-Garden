@@ -138,6 +138,7 @@ You can also run the tests from VS Code with the **Playwright Test for VS Code**
     - HTML canvas rendering achieved with AI assistance
 - **Jit Wei:** Used AI to:
     - the parsing of documents to generate the question answer pair
+    - Figuring out a function's syntax, then manually cross checked with documentation for open source items
 - **Ryan:** Used AI to:
     - Help build and restyle the review modes (Flashcard, Multiple Choice and Short Structured) based on my requirements. (I made the feature and design decisions, tested them in the app, and reviewed the code.)
     - Created custom made icon for the Flashcard Mode, Multiple choice and short structured in review features.
