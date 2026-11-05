@@ -7,7 +7,6 @@ import { foliageUrl } from '@/lib/plantSprites'
 import { vBurst } from '@/lib/burst'
 import potArt from '@/assets/ui/pot.svg'
 import canArt from '@/assets/ui/wateringcan.png'
-import sproutArt from '@/assets/ui/sprout.svg'
 import targetArt from '@/assets/ui/target.svg'
 import writingHandArt from '@/assets/ui/writing-hand.svg'
 import SproutIcon from '@/components/SproutIcon.vue'
@@ -232,17 +231,11 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
             <!-- 5 review -->
             <div v-else-if="i === 4" key="a4" class="art a-seeds">
               <div class="seeds-art">
-                <!-- mini review-mode pop-up -->
-                <div class="goal-mini">
-                  <div class="goal-dialog">
-                    <span class="btn-close align-self-end"></span>
-                    <img class="goal-hero" :src="sproutArt" alt="" />
-                    <h2 class="goal-title">Choose a goal for this session</h2>
-                    <p class="goal-sub">Statistics · 12 cards · Mastery 40%</p>
-                    <span class="goal-option pick"><span class="goal-icon"><SproutIcon name="flashcard" :size="34" /></span><span class="goal-text"><span class="goal-name">Flashcard Mode</span><span class="goal-sub">Flip through up to 20 flashcards.</span></span></span>
-                    <span class="goal-option"><span class="goal-icon"><img :src="targetArt" alt="" width="28" height="28" /></span><span class="goal-text"><span class="goal-name">Multiple Choice Quiz</span><span class="goal-sub">Up to 10 quick multiple-choice questions.</span></span></span>
-                    <span class="goal-option"><span class="goal-icon"><img :src="writingHandArt" alt="" width="28" height="28" /></span><span class="goal-text"><span class="goal-name">Short Structured Mode</span><span class="goal-sub">Think you've mastered 'em all? Try this out</span></span></span>
-                  </div>
+                <!-- the three review buttons that fan out above a clicked plant (same look as PlantReviewActions) -->
+                <div class="review-ring">
+                  <span class="mode"><SproutIcon name="flashcard" :size="34" /><b>Flashcard</b></span>
+                  <span class="mode"><img :src="targetArt" alt="" width="28" height="28" /><b>Multiple Choice Quiz</b></span>
+                  <span class="mode"><img :src="writingHandArt" alt="" width="28" height="28" /><b>Short Structured Mode</b></span>
                 </div>
                 <div class="bed"><img class="s" :src="foliageUrl('sprout')" alt="" /><img :src="foliageUrl('tulip-3')" alt="" /><img :src="foliageUrl('tulip-red-4')" alt="" /></div>
                 <img class="tap-can" :src="canArt" alt="" />
@@ -291,7 +284,7 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
               <span class="sp-eyebrow">Focus</span>
               <h1>Grow with <em>focus</em></h1>
               <p>Short focus rounds with breaks in between, like 25 minutes on and 5 off. Night falls over the meadow while you work.</p>
-              <ul class="points"><li>Earn coins for every focus round you finish.</li><li>Keep a small to-do list for the session.</li><li>Play Garden Radio: calm lo-fi picked to match the weather.</li></ul>
+              <ul class="points"><li>Earn coins for 20+ minutes of focus.</li><li>Today's planner tasks and reviews are ready in your to-do list.</li><li>Play Garden Radio: calm lo-fi picked to match the weather.</li></ul>
             </div>
             <div v-else-if="i === 3" key="s3" class="slide">
               <span class="sp-eyebrow">Planting</span>
@@ -303,7 +296,7 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
               <span class="sp-eyebrow">Reviewing</span>
               <h1>Review to help it <em>grow</em></h1>
               <p>Click a seed or flower in your garden to review its content. Review it when it's due and it grows from sprout to flower by your exam date.</p>
-              <ul class="points"><li>Pick Flashcard Mode, a Multiple Choice Quiz or Short Structured Mode.</li><li>Forget to water a seed and it starts to wilt.</li><li>After the exam, you have the choice to keep your flower on a collection shelf.</li></ul>
+              <ul class="points"><li>Pick Flashcard, Multiple Choice Quiz or Short Structured Mode.</li><li>Forget to water a seed and it starts to wilt.</li><li>After the exam, you have the choice to keep your flower on a collection shelf.</li></ul>
             </div>
             <div v-else-if="i === 5" key="s5" class="slide form-slide">
               <span class="sp-eyebrow">About you</span>
@@ -459,21 +452,25 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
 @keyframes glow { from { opacity: .15; } to { opacity: 1; } }
 /* art 5 */
 .seeds-art { position: relative; width: min(420px, 96%); height: 300px; }
-/* mini review-mode pop-up, shrunk to fit */
-.goal-mini { position: absolute; z-index: 3; left: 50%; top: -14px; width: 440px; transform: translateX(-50%) scale(.56); transform-origin: top center; }
-.goal-dialog { display: flex; flex-direction: column; gap: 16px; padding: 24px; border-radius: 1rem; background: var(--paper); box-shadow: var(--shadow-2); opacity: 0; animation: goal-open 5s var(--spring) infinite; }
-.goal-title { margin: 0; text-align: center; font-family: var(--f-display); font-weight: 600; font-size: 1.75rem; line-height: 1.3; letter-spacing: -.01em; }
-.goal-sub { margin: 0; font-size: 14px; line-height: 22px; color: var(--ink-soft); }
-.goal-dialog > .goal-sub { margin-top: -12px; text-align: center; }
-.goal-option { display: flex; align-items: center; gap: 16px; padding: 16px 20px; border: 1.5px solid var(--line); border-radius: 16px; background: #fff; color: var(--ink); }
-.goal-option.pick { animation: goal-pick 5s ease infinite; }
-.goal-icon { display: grid; place-items: center; flex: 0 0 48px; height: 48px; border-radius: 50%; background: var(--sheet-2); font-size: 24px; }
-.goal-text { display: flex; flex-direction: column; }
-.goal-name { font-family: var(--f-body); font-weight: 600; font-size: 1.05rem; line-height: 1.4; }
-@keyframes goal-open { 0%, 24% { opacity: 0; transform: translateY(24px) scale(.94); } 30%, 88% { opacity: 1; transform: none; } 94%, 100% { opacity: 0; transform: translateY(10px); } }
-@keyframes goal-pick { 0%, 46%, 84%, 100% { transform: none; } 52%, 80% { transform: translateX(3px); border-color: var(--ink-faint); } }
-.goal-hero { width: 72px; height: 72px; margin: -16px auto -8px; animation: goal-bob 2.4s ease-in-out infinite; }
-@keyframes goal-bob { 50% { transform: translateY(-4px) rotate(-3deg); } }
+/* review buttons: fan out after the click, then each one is pointed at in turn */
+.review-ring { position: absolute; z-index: 3; left: 50%; bottom: 92px; width: 0; height: 0; }
+.mode {
+  position: absolute; left: calc(var(--x) - 34px); top: calc(var(--y) - 34px); width: 68px; height: 68px;
+  display: grid; place-items: center; border-radius: 50%; background: var(--paper);
+  box-shadow: var(--shadow-1), inset 0 0 0 3px var(--linen);
+  animation: mode-in 5s var(--spring) calc(var(--i) * 90ms) infinite backwards, mode-on 5s ease calc(var(--i) * 800ms) infinite;
+}
+.mode b {
+  position: absolute; left: 50%; bottom: calc(100% + 6px); translate: -50% 0; padding: .2em .65em; border-radius: 8px;
+  background: var(--ink); color: var(--sheet); font-size: .72rem; font-weight: 800; white-space: nowrap; opacity: 0;
+  animation: tip-on 5s ease calc(var(--i) * 800ms) infinite;
+}
+.mode:nth-child(1) { --i: 0; --x: -77px; --y: -85px; }
+.mode:nth-child(2) { --i: 1; --x: 0px; --y: -115px; }
+.mode:nth-child(3) { --i: 2; --x: 77px; --y: -85px; }
+@keyframes mode-in { 0%, 24% { opacity: 0; translate: 0 14px; } 30%, 88% { opacity: 1; translate: 0 0; } 94%, 100% { opacity: 0; translate: 0 0; } }
+@keyframes mode-on { 0%, 33%, 50%, 100% { scale: 1; background: var(--paper); z-index: 1; } 36%, 47% { scale: 1.15; background: var(--butter-soft); z-index: 2; } }
+@keyframes tip-on { 0%, 33%, 50%, 100% { opacity: 0; } 36%, 47% { opacity: 1; } }
 .bed { position: absolute; left: 0; right: 0; bottom: 0; height: 120px; border-radius: 50% 50% 18px 18px / 30% 30% 18px 18px; background: linear-gradient(#8a5a3f, #6e4532); display: flex; justify-content: space-around; align-items: flex-end; padding: 0 20px 34px; }
 .bed img { width: 80px; height: 80px; margin-bottom: -6px; animation: pop-in .6s var(--spring) both; }
 .bed img.s { transform: scale(1.7); transform-origin: 50% 90%; animation-name: pop-in-s; }
@@ -482,7 +479,7 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
 @keyframes pop-in-s { from { transform: scale(0); } to { transform: scale(1.7); } }
 /* cursor (plant) */
 .cursor { color: var(--sheet); filter: drop-shadow(0 0 1px var(--ink)) drop-shadow(0 0 1px var(--ink)) drop-shadow(0 3px 3px rgba(74, 54, 46, .4)); }
-/* watering can (the garden's Study cursor) glides onto the middle plant and clicks it, then the pop-up opens */
+/* watering can (the garden's Study cursor) glides onto the middle plant and clicks it, then the review buttons open */
 .tap-can { position: absolute; z-index: 2; left: calc(50% - 4px); bottom: 60px; width: 52px; height: auto; transform-origin: 10% 40%; filter: drop-shadow(0 3px 3px rgba(74, 54, 46, .3)); animation: tap-can 5s ease-in-out infinite; }
 @keyframes tap-can { 0% { transform: translate(70px, 30px); opacity: 0; } 4% { opacity: 1; } 14%, 19% { transform: none; } 21% { transform: scale(.85); } 23% { transform: none; opacity: 1; } 30%, 100% { transform: none; opacity: 0; } }
 /* art 4: tap packet → pick purple → drag straight to the soil → planted as a seed (6.5s loop) */
