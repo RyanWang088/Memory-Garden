@@ -6,11 +6,11 @@ import { seedsController } from '../controllers/seedsController.js'
 
 const router = Router()
 
-// one study document per request, kept in memory (never written to disk)
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024, files: 1 } }).single('file')
+// one study document per request, kept in memory (never written to disk); 4MB fits under Vercel's 4.5MB body limit
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 4 * 1024 * 1024, files: 1 } }).single('file')
 const uploadFile = (req, res, next) => upload(req, res, (err) => {
   if (!err) return next()
-  res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'This file is over 25MB.' : 'The upload failed. Try again.' })
+  res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'This file is over 4MB.' : 'The upload failed. Try again.' })
 })
 
 router.use(requireAuth)

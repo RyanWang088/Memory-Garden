@@ -146,7 +146,7 @@ const trapCount = computed(() => (tileTraps.value ? cleanTraps(tileTraps.value, 
 
 // Upload a file: each file is sent to the server, which returns AI-written pairs
 const ACCEPTED = ['pdf', 'pptx', 'docx']
-const MAX_MB = 25
+const MAX_MB = 4 // Vercel rejects request bodies over 4.5MB
 const fileInput = ref(null)
 const files = ref([]) // [{ id, file, name, size, status: 'generating' | 'done' | 'failed', error, requested, count, confirming }]
 const controllers = new Map() // file id -> AbortController for its running request
