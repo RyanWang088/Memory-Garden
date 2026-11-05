@@ -1,0 +1,39 @@
+<svg width="87" height="83" viewBox="0 0 87 83" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="blade" x1="8" y1="6" x2="46" y2="42" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F4F7F7"/>
+      <stop offset="1" stop-color="#9DB0B6"/>
+    </linearGradient>
+    <linearGradient id="grip" x1="44" y1="42" x2="80" y2="78" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F59A4E"/>
+      <stop offset="1" stop-color="#D9482F"/>
+    </linearGradient>
+    <radialGradient id="bolt" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(41 38) scale(7)">
+      <stop stop-color="#FFE08A"/>
+      <stop offset="1" stop-color="#D9921A"/>
+    </radialGradient>
+  </defs>
+
+  <!-- spring between the handles -->
+  <path d="M54 49L61 50L58 56L66 56L63 62L70 62" stroke="#4D3C2C" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M54 49L61 50L58 56L66 56L63 62L70 62" stroke="#F7C948" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- lower half: left blade, handle sweeping right -->
+  <path d="M46 42C60 42 72 44 80 51" stroke="#4D3C2C" stroke-width="13" stroke-linecap="round"/>
+  <path d="M46 42C60 42 72 44 80 51" stroke="url(#grip)" stroke-width="8" stroke-linecap="round"/>
+  <path d="M3 39C17 29 34 27 48 34L44 48C30 42 16 40 3 39Z" fill="url(#blade)" stroke="#4D3C2C" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- upper half: top blade, handle sweeping down -->
+  <path d="M42 46C43 58 48 69 58 76" stroke="#4D3C2C" stroke-width="13" stroke-linecap="round"/>
+  <path d="M42 46C43 58 48 69 58 76" stroke="url(#grip)" stroke-width="8" stroke-linecap="round"/>
+  <path d="M6 4C22 8 39 20 49 34L37 44C25 33 13 19 6 4Z" fill="url(#blade)" stroke="#4D3C2C" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- shine along the blade and grips -->
+  <path d="M14 11C23 16 32 23 39 31" stroke="white" stroke-opacity="0.85" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M60 41C66 41.500 71 43 75 45.500" stroke="white" stroke-opacity="0.55" stroke-width="2" stroke-linecap="round"/>
+  <path d="M46.500 56C47.500 60 49.500 64 52 67" stroke="white" stroke-opacity="0.55" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- pivot bolt -->
+  <circle cx="42" cy="39" r="6.500" fill="url(#bolt)" stroke="#4D3C2C" stroke-width="3"/>
+  <circle cx="42" cy="39" r="1.800" fill="#8A5A12"/>
+</svg>

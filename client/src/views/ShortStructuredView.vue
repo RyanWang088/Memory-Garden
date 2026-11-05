@@ -266,7 +266,7 @@ function backToGarden() {
             <b :data-testid="st.testid">{{ st.value }}</b>
           </article>
         </div>
-        <p v-if="!reward" class="sp-hand sub m-0">Average 60% or more to earn coins (1.5× for typed answers).</p>
+        <p v-if="!reward" class="sp-hand sub m-0">Average 60% or more to earn coins.</p>
         <p v-if="error" class="text-berry-deep fw-bold m-0" role="alert">{{ error }}</p>
         <button type="button" class="sp-btn sp-claim-btn" data-testid="short-claim" :disabled="claiming" @click="claim">
           {{ claiming ? 'Claiming…' : 'Claim Rewards' }} <span class="arrow">→</span>

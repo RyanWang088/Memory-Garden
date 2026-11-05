@@ -11,10 +11,10 @@ import { useAuthStore } from '@/stores/auth'
 import { foliageUrl } from '@/lib/plantSprites'
 
 // "Flashcard Mode" review session: flip flashcards, up to 20 cards from one seed.
-// Forgot brings the card back soon, Hard brings it back later; Easy finishes it for today.
+// Forgot brings the card back soon; Hard and Easy finish it for today.
 // (The server then schedules each card's next review: forgot today, hard in 1 day, easy in 3 days.)
 const MAX_CARDS = 20
-const REQUEUE_GAP = { forgot: 3, hard: 6 } // shown again after this many other cards
+const FORGOT_GAP = 3 // a forgotten card is shown again after this many other cards
 const RATINGS = [
   { value: 'forgot', label: 'Forgot', next: 'again today', cls: '' },
   { value: 'hard', label: 'Hard', next: 'again in 1 day', cls: 'sp-btn-butter' },
@@ -131,12 +131,12 @@ function rate(rating) {
     counts.value[rating]++
   }
   const rest = queue.value.slice(1)
-  if (rating === 'easy') {
-    doneCount.value++
-  } else {
+  if (rating === 'forgot') {
     // put the card back further down the queue; a new uid makes it come back unflipped
-    const position = Math.min(REQUEUE_GAP[rating], rest.length)
+    const position = Math.min(FORGOT_GAP, rest.length)
     rest.splice(position, 0, { ...card, uid: nextUid++ })
+  } else {
+    doneCount.value++
   }
   queue.value = rest
   flipped.value = false

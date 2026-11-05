@@ -94,7 +94,7 @@ img {height:100%;}
 }
 .stage[data-tool="shears"],
 .stage[data-tool="shears"] * {
-  cursor: url('../assets/ui/shears.svg') 12 61, auto;
+  cursor: url('../assets/ui/shears-cursor.svg') 6 4, auto;
 }
 
 /* ---------- buttons (keeps the app's tactile "pressable" button, refined) ---------- */

@@ -85,6 +85,7 @@ function appendFoliage(parent, type, x, baseline, width, height) {
   parent.append(group);
 }
 
+const BUSH_SCALE = 1.3; // size of the bush clusters on the far ridge
 const FLOWER_COLORS = ['#ffffff', '#ffffff', '#f9c9d3', '#f7d86e', '#cdb9f2', '#f2899b', '#fde7b0'];
 const TULIPS = ['tulip-pink-4', 'tulip-red-4', 'tulip-purple-4', 'tulip-yellow-4', 'tulip-white-4', 'tulip-pink-3'];
 
@@ -120,12 +121,13 @@ function drawLand(root, opts) {
     }
     const n = 3 + Math.floor(rand() * 3);
     for (let k = 0; k < n; k++) {
-      const radius = (13 + rand() * 9) * s;
+      const baseRadius = (13 + rand() * 9) * s;
+      const radius = baseRadius * BUSH_SCALE;
       const shrubHeight = radius * 2 * 100 / 170;
       appendFoliage(
         trees, 'shrub',
-        x + (k - n / 2) * 11 * s + rand() * 6,
-        y - (12 + rand() * 22) * s + radius,
+        x + (k - n / 2) * 11 * s * BUSH_SCALE + rand() * 6,
+        y - (12 + rand() * 22) * s + baseRadius, // baseRadius, so bigger bushes grow upward and stay on the ridge
         radius * 2, shrubHeight,
       );
     }
