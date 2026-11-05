@@ -94,7 +94,7 @@ img {height:100%;}
 }
 .stage[data-tool="shears"],
 .stage[data-tool="shears"] * {
-  cursor: url('../assets/ui/shears.svg') 12 61, auto;
+  cursor: url('../assets/ui/shears-cursor.svg') 6 4, auto;
 }
 
 /* ---------- buttons (keeps the app's tactile "pressable" button, refined) ---------- */
@@ -548,11 +548,11 @@ h1 em, h2 em, h3 em { font-style: italic; font-weight: 500; color: var(--berry);
 /* Moods: sky/land/tree hexes untouched. Only --mood-filter (plant sprites) changed.
    All five filters share one function list so they interpolate. Each rim-light (drop-shadow)
    borrows that mood's own --glow, so plants keep an edge and read as clickable at night. */
-[data-mood="day"] { --s-top: #8fcbea; --s-mid: #d8eff1; --s-bot: #f3f4df; --sun: #fffbe8; --glow: rgba(255, 246, 205, .9); --h1: #b3d5a9; --h2: #8fc373; --h3: #69ad55; --h4: #4b9446; --h5: #377c3a; --tree: #3f7f45; --tree2: #2f6b3a; --cloud: #ffffff; --fl-o: 1; --mood-filter: brightness(1) saturate(1) sepia(0) hue-rotate(0deg) }
-[data-mood="morning"] { --s-top: #a9d6ec; --s-mid: var(--berry-soft); --s-bot: var(--butter-soft); --sun: #fff6dc; --glow: rgba(255, 214, 170, .95); --h1: #bcd6ae; --h2: #9cc67f; --h3: #79b25e; --h4: #589c4c; --h5: #3f833f; --tree: #4b8a4d; --tree2: #36723f; --cloud: #fff7f2; --fl-o: 1; --mood-filter: brightness(1.02) saturate(1.04) sepia(.06) hue-rotate(-4deg) }
-[data-mood="blush"] { --s-top: #f2b9c4; --s-mid: #f9dcd2; --s-bot: #fbeee0; --sun: #fff8ea; --glow: rgba(255, 226, 205, .95); --h1: #c8d3b0; --h2: #a9c48c; --h3: #86b26c; --h4: #669c58; --h5: #4d8549; --tree: #5b8f56; --tree2: #467a48; --cloud: #fff3f3; --fl-o: 1; --mood-filter: brightness(1.02) saturate(1.05) sepia(.05) hue-rotate(-6deg) }
-[data-mood="dusk"] { --s-top: #6f6aa6; --s-mid: #e9a3a3; --s-bot: #f6c99e; --sun: #ffe3b5; --glow: rgba(255, 190, 140, .85); --h1: #8b8f8e; --h2: #6e8b66; --h3: #557a50; --h4: #3f6741; --h5: #2f5534; --tree: #3b5c3e; --tree2: #2d4a32; --cloud: #f7d3d6; --fl-o: .85; --mood-filter: brightness(.96) saturate(1.05) sepia(.12) hue-rotate(-10deg) }
-[data-mood="night"] { --s-top: #0f1736; --s-mid: #27325f; --s-bot: #3d3f6b; --sun: #fdf6dd; --glow: rgba(150, 175, 255, .35); --h1: #2a3a55; --h2: #223a45; --h3: #1b3537; --h4: #152d2b; --h5: #0f2420; --tree: #14302a; --tree2: #0f261f; --cloud: #3b4673; --fl-o: .55; --mood-filter: brightness(.8) saturate(.8) sepia(0) hue-rotate(8deg)}
+[data-mood="day"] { --s-top: #8fcbea; --s-mid: #d8eff1; --s-bot: #f3f4df; --sun: #fffbe8; --glow: rgba(255, 246, 205, .9); --h1: #b3d5a9; --h2: #8fc373; --h3: #69ad55; --h4: #4b9446; --h5: #377c3a; --tree: #3f7f45; --tree2: #B47C4F; --cloud: #ffffff; --fl-o: 1; --mood-filter: brightness(1) saturate(1) sepia(0) hue-rotate(0deg) }
+[data-mood="morning"] { --s-top: #a9d6ec; --s-mid: var(--berry-soft); --s-bot: var(--butter-soft); --sun: #fff6dc; --glow: rgba(255, 214, 170, .95); --h1: #bcd6ae; --h2: #9cc67f; --h3: #79b25e; --h4: #589c4c; --h5: #3f833f; --tree: #4b8a4d; --tree2: #C18A5F; --cloud: #fff7f2; --fl-o: 1; --mood-filter: brightness(1.02) saturate(1.04) sepia(.06) hue-rotate(-4deg) }
+[data-mood="blush"] { --s-top: #f2b9c4; --s-mid: #f9dcd2; --s-bot: #fbeee0; --sun: #fff8ea; --glow: rgba(255, 226, 205, .95); --h1: #c8d3b0; --h2: #a9c48c; --h3: #86b26c; --h4: #669c58; --h5: #4d8549; --tree: #5b8f56; --tree2: #A96E55; --cloud: #fff3f3; --fl-o: 1; --mood-filter: brightness(1.02) saturate(1.05) sepia(.05) hue-rotate(-6deg) }
+[data-mood="dusk"] { --s-top: #6f6aa6; --s-mid: #e9a3a3; --s-bot: #f6c99e; --sun: #ffe3b5; --glow: rgba(255, 190, 140, .85); --h1: #8b8f8e; --h2: #6e8b66; --h3: #557a50; --h4: #3f6741; --h5: #2f5534; --tree: #3b5c3e; --tree2: #6D514C; --cloud: #f7d3d6; --fl-o: .85; --mood-filter: brightness(.96) saturate(1.05) sepia(.12) hue-rotate(-10deg) }
+[data-mood="night"] { --s-top: #0f1736; --s-mid: #27325f; --s-bot: #3d3f6b; --sun: #fdf6dd; --glow: rgba(150, 175, 255, .35); --h1: #2a3a55; --h2: #223a45; --h3: #1b3537; --h4: #152d2b; --h5: #0f2420; --tree: #14302a; --tree2: #38405A; --cloud: #3b4673; --fl-o: .55; --mood-filter: brightness(.8) saturate(.8) sepia(0) hue-rotate(8deg)}
 
 /* ---- weather grades the mood in colour space; there are no veil or tint layers ---- */
 @property --wx-k     { syntax: '<percentage>'; inherits: true; initial-value: 0%; }
@@ -619,8 +619,12 @@ h1 em, h2 em, h3 em { font-style: italic; font-weight: 500; color: var(--berry);
 .scenery svg.land .h1 { fill: var(--g-h1); } .scenery svg.land .h2 { fill: var(--g-h2); }
 .scenery svg.land .h3 { fill: var(--g-h3); } .scenery svg.land .h4 { fill: var(--g-h4); }
 .scenery svg.land .h5 { fill: var(--g-h5); }
-.scenery svg.land .tr { fill: var(--g-tree); } .scenery svg.land .tr2 { fill: var(--g-tree2); }
-.scenery svg.land path, .scenery svg.land circle, .scenery svg.land ellipse { transition: fill var(--fade, 2.5s) ease; }
+.scenery svg.land .foliage-fill { fill: var(--g-h5); }
+.scenery svg.land .foliage-shade { fill: var(--g-h3); }
+.scenery svg.land .foliage-highlight { fill: var(--g-h1); }
+.scenery svg.land .trunk { transition: fill var(--fade, 2.5s) ease, filter var(--fade, 2.5s) ease; }
+.scenery svg.land .trunk {fill:var(--tree2)}
+.scenery svg.land path, .scenery svg.land circle, .scenery svg.land ellipse { transition: fill var(--fade, 2.5s) ease, stroke var(--fade, 2.5s) ease, filter var(--fade, 2.5s) ease; }
 .scenery svg.land .fl { opacity: var(--fl-o); transition: opacity var(--fade, 2.5s); }
 .scenery .tulip { position: absolute; transform-origin: 50% 100%; animation: sway 5s ease-in-out infinite alternate; filter: var(--mood-filter) var(--wx-filter); transition: filter var(--fade, 2.5s), opacity var(--fade, 2.5s); }
 @keyframes sway { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }

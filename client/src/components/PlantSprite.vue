@@ -5,17 +5,17 @@ import { usePlantGrowth } from '@/composables/usePlantGrowth'
 import PlantSparkle from './PlantSparkle.vue'
 
 const props = defineProps({
+  label: String,
   stage: Number,
   flower: String,
   color: String,
   wilting: Boolean,
   ghost: Boolean,
   blocked: Boolean,
-  alert: Boolean,
   planting: Boolean,
   growth: Object, // a stage-up waiting to be played: { from, to, phase } (garden store)
 })
-const emit = defineEmits(['grown', 'planted'])
+const emit = defineEmits(['grown', 'planted', 'select'])
 
 // A plant with a pending stage-up keeps its old look until the garden releases it, then plays the celebration
 const { shownStage, growing, reviving, transitionName, tier, fx, burstDone } = usePlantGrowth(props, emit)
@@ -30,11 +30,19 @@ const src = computed(() => props.ghost ? plantSpriteUrl(1) : plantSpriteUrl(show
     :data-wilting="wilting || undefined"
     data-testid="plant"
   >
-    <div class="sprite" :class="{ 'is-squashing': fx.squash, 'is-drinking': fx.drink }">
+    <div
+      class="sprite"
+      :class="{ 'is-squashing': fx.squash, 'is-drinking': fx.drink }"
+      role="button"
+      :aria-label="label"
+      tabindex="0"
+      @keydown.enter.space.prevent.stop="emit('select', $event)"
+    >
       <Transition :name="transitionName">
         <img :key="src" class="art" :class="ghost ? '' : `st-${shownStage}`" :src="src" alt="" draggable="false" />
       </Transition>
     </div>
+
     <!-- effects live beside the sprite, not in it, so they don't sway with the plant -->
     <div v-if="growing || planting" class="fx">
       <PlantSparkle v-if="fx.water" watering :burst="false" />
@@ -47,7 +55,7 @@ const src = computed(() => props.ghost ? plantSpriteUrl(1) : plantSpriteUrl(show
       />
       <PlantSparkle v-else-if="growing && fx.burst" :tier="tier" :color="color" :flash="reviving" @done="burstDone" />
     </div>
-    <span v-if="alert && !ghost && !growing" class="alert-mark" title="Revise this soon" data-testid="plant-alert"><img src="../assets/ui/droplet.svg" alt=""></span>
+
   </div>
 </template>
 
@@ -66,7 +74,7 @@ const src = computed(() => props.ghost ? plantSpriteUrl(1) : plantSpriteUrl(show
   75% { transform: rotate(-3deg); }
   100% { transform: rotate(0deg); }
 }
-.sprite{
+.sprite {
   position: absolute; left: -85px; bottom: 0; width: 170px; height: 170px;
   transform-origin: 50% 96%; cursor: pointer;
   transition: filter .9s ease;                      /* the sprout browns gradually, not in a snap */
@@ -76,6 +84,7 @@ const src = computed(() => props.ghost ? plantSpriteUrl(1) : plantSpriteUrl(show
 
 .art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; transform-origin: 50% 96%; }
 .is-highlighted .art { filter: brightness(1.05) drop-shadow(0 0 20px var(--glow)) drop-shadow(0 0 10px var(--sun)); }
+
 /* ---- stage change: the new picture fades + springs in ON TOP of the old one, then the old one is removed.
         (old stays opaque until the new one has arrived, so you never see two stems at half opacity) ---- */
 .stage-enter-active { transition: opacity .5s ease, transform .7s cubic-bezier(.34, 1.56, .64, 1); }
@@ -129,39 +138,11 @@ const src = computed(() => props.ghost ? plantSpriteUrl(1) : plantSpriteUrl(show
   .grow-enter-active, .perk-enter-active, .perk-leave-active, .sprite.is-squashing .art { animation: none; }
 }
 
-.plant[data-stage="2"][data-wilting] .sprite,.plant[data-stage="3"][data-wilting] .sprite { 
-  filter: sepia(.7) saturate(.75) brightness(.88); 
+.plant[data-stage="2"][data-wilting] .sprite,
+.plant[data-stage="3"][data-wilting] .sprite {
+  filter: sepia(.7) saturate(.75) brightness(.88);
 }
 
-.alert-mark {
-  position: absolute; 
-  left: -25px; 
-  bottom: 170px; 
-  width: 50px; 
-  height: 50px; 
-  border-radius: 50%;
-  animation: alertBob 1.6s ease-in-out infinite;
-}
-.plant[data-stage="1"] .alert-mark,
-.plant[data-stage="8"] .alert-mark { 
-  bottom: 40px; 
-}
-.plant[data-stage="2"] .alert-mark,
-.plant[data-stage="7"] .alert-mark { 
-  bottom: 65px; 
-}
-.plant[data-stage="3"] .alert-mark,
-.plant[data-stage="6"] .alert-mark { 
-  bottom: 110px; 
-}
-.plant[data-stage="4"] .alert-mark,
-.plant[data-stage="5"] .alert-mark { 
-  bottom: 170px; /* Full bloom height */
-}
-@keyframes alertBob {
-  50% { transform: translateY(-4px); }
-}
-:global(.is-scrolling) .alert-mark { animation-play-state: paused; }
 .ghost { pointer-events: none; z-index: 9000 !important; }
 .ghost::before { pointer-events: none; }
 .ghost .sprite { opacity: .6; }

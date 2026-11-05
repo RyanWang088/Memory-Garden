@@ -8,6 +8,8 @@ import { vBurst } from '@/lib/burst'
 import potArt from '@/assets/ui/pot.svg'
 import canArt from '@/assets/ui/wateringcan.png'
 import sproutArt from '@/assets/ui/sprout.svg'
+import targetArt from '@/assets/ui/target.svg'
+import writingHandArt from '@/assets/ui/writing-hand.svg'
 import SproutIcon from '@/components/SproutIcon.vue'
 
 // Onboarding tour (journal look): five short "how it works" steps, an About-you step, then Ready.
@@ -230,7 +232,7 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
             <!-- 5 review -->
             <div v-else-if="i === 4" key="a4" class="art a-seeds">
               <div class="seeds-art">
-                <!-- mini "Choose a goal" pop-up (same look as SeedReviewView) -->
+                <!-- mini review-mode pop-up -->
                 <div class="goal-mini">
                   <div class="goal-dialog">
                     <span class="btn-close align-self-end"></span>
@@ -238,8 +240,8 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
                     <h2 class="goal-title">Choose a goal for this session</h2>
                     <p class="goal-sub">Statistics · 12 cards · Mastery 40%</p>
                     <span class="goal-option pick"><span class="goal-icon"><SproutIcon name="flashcard" :size="34" /></span><span class="goal-text"><span class="goal-name">Flashcard Mode</span><span class="goal-sub">Flip through up to 20 flashcards.</span></span></span>
-                    <span class="goal-option"><span class="goal-icon">🎯</span><span class="goal-text"><span class="goal-name">Multiple Choice Quiz</span><span class="goal-sub">Up to 10 quick multiple-choice questions.</span></span></span>
-                    <span class="goal-option"><span class="goal-icon">✍️</span><span class="goal-text"><span class="goal-name">Short Structured Mode</span><span class="goal-sub">Think you've mastered 'em all? Try this out</span></span></span>
+                    <span class="goal-option"><span class="goal-icon"><img :src="targetArt" alt="" width="28" height="28" /></span><span class="goal-text"><span class="goal-name">Multiple Choice Quiz</span><span class="goal-sub">Up to 10 quick multiple-choice questions.</span></span></span>
+                    <span class="goal-option"><span class="goal-icon"><img :src="writingHandArt" alt="" width="28" height="28" /></span><span class="goal-text"><span class="goal-name">Short Structured Mode</span><span class="goal-sub">Think you've mastered 'em all? Try this out</span></span></span>
                   </div>
                 </div>
                 <div class="bed"><img class="s" :src="foliageUrl('sprout')" alt="" /><img :src="foliageUrl('tulip-3')" alt="" /><img :src="foliageUrl('tulip-red-4')" alt="" /></div>
@@ -457,7 +459,7 @@ const narrow = typeof window !== 'undefined' && window.innerWidth < 600
 @keyframes glow { from { opacity: .15; } to { opacity: 1; } }
 /* art 5 */
 .seeds-art { position: relative; width: min(420px, 96%); height: 300px; }
-/* mini goal pop-up: SeedReviewView's dialog at full size, shrunk to fit */
+/* mini review-mode pop-up, shrunk to fit */
 .goal-mini { position: absolute; z-index: 3; left: 50%; top: -14px; width: 440px; transform: translateX(-50%) scale(.56); transform-origin: top center; }
 .goal-dialog { display: flex; flex-direction: column; gap: 16px; padding: 24px; border-radius: 1rem; background: var(--paper); box-shadow: var(--shadow-2); opacity: 0; animation: goal-open 5s var(--spring) infinite; }
 .goal-title { margin: 0; text-align: center; font-family: var(--f-display); font-weight: 600; font-size: 1.75rem; line-height: 1.3; letter-spacing: -.01em; }

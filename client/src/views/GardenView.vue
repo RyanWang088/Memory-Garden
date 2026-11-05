@@ -81,7 +81,7 @@ async function chooseExamOutcome(choice) {
 }
 
 function clearSeedSelectionOutsideCard(event) {
-  if (event.target instanceof Element && event.target.closest('.seed-card')) return
+  if (event.target instanceof Element && event.target.closest('.seed-card, .plant, .plant-info')) return
   ui.clearGardenSeedSelection()
 }
 

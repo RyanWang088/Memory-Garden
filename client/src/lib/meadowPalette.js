@@ -29,7 +29,7 @@ export function lookVector(read) {
   }
   const hills = Array.from({ length: HILL_COLORS }, (_, i) => rgb(`--g-h${i + 1}`)).flat()
   const alpha = parseFloat(read('--fl-o'))
-  return Float64Array.from([...hills, ...rgb('--g-tree'), ...rgb('--g-tree2'), Number.isFinite(alpha) ? alpha : 1])
+  return Float64Array.from([...hills, ...rgb('--g-tree'), ...rgb('--tree2'), Number.isFinite(alpha) ? alpha : 1])
 }
 
 // ---- browser readers (theme.css is the single source of truth) ----

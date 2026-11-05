@@ -11,10 +11,10 @@ import { useAuthStore } from '@/stores/auth'
 import { foliageUrl } from '@/lib/plantSprites'
 
 // "Flashcard Mode" review session: flip flashcards, up to 20 cards from one seed.
-// Forgot brings the card back soon, Hard brings it back later; Easy finishes it for today.
+// Forgot brings the card back soon; Hard and Easy finish it for today.
 // (The server then schedules each card's next review: forgot today, hard in 1 day, easy in 3 days.)
 const MAX_CARDS = 20
-const REQUEUE_GAP = { forgot: 3, hard: 6 } // shown again after this many other cards
+const FORGOT_GAP = 3 // a forgotten card is shown again after this many other cards
 const RATINGS = [
   { value: 'forgot', label: 'Forgot', next: 'again today', cls: '' },
   { value: 'hard', label: 'Hard', next: 'again in 1 day', cls: 'sp-btn-butter' },
@@ -131,12 +131,12 @@ function rate(rating) {
     counts.value[rating]++
   }
   const rest = queue.value.slice(1)
-  if (rating === 'easy') {
-    doneCount.value++
-  } else {
+  if (rating === 'forgot') {
     // put the card back further down the queue; a new uid makes it come back unflipped
-    const position = Math.min(REQUEUE_GAP[rating], rest.length)
+    const position = Math.min(FORGOT_GAP, rest.length)
     rest.splice(position, 0, { ...card, uid: nextUid++ })
+  } else {
+    doneCount.value++
   }
   queue.value = rest
   flipped.value = false
@@ -217,7 +217,6 @@ function backToGarden() {
           <div class="d-flex gap-2">
             <button v-for="(r, i) in RATINGS" :key="r.value" type="button" class="sp-btn rate flex-fill" :class="r.cls"
               :data-testid="`rate-${r.value}`" :aria-keyshortcuts="String(i + 1)" @click.stop="rate(r.value)">
-              <span class="keycap" aria-hidden="true">{{ i + 1 }}</span>
               <span class="rate-label">{{ r.label }}</span>
               <span class="rate-next">{{ r.next }}</span>
             </button>
@@ -276,7 +275,6 @@ function backToGarden() {
 .rate { position: relative; flex-direction: column; gap: 2px; min-height: 84px; padding: .6em .4em; white-space: normal; line-height: 1.1; }
 .rate-label { font-size: 1.05rem; }
 .rate-next { font-family: var(--f-hand); font-weight: 600; font-size: 1.15rem; opacity: .9; }
-.keycap { position: absolute; top: 6px; right: 9px; font-size: .65rem; opacity: .6; }
 
 /* hand-drawn underline: the path draws itself (pathLength=1 makes dash maths independent of its real length) */
 .sp-scribble { display: block; width: min(100%, 260px); height: 10px; margin-top: 6px; fill: none; stroke: var(--berry); stroke-width: 3; stroke-linecap: round; overflow: visible; }

@@ -12,6 +12,7 @@ import { drawMeadow } from '@/lib/meadowRenderer'
 import { useSeedDrag } from '@/composables/useSeedDrag'
 import { useMeadowPalette } from '@/composables/useMeadowPalette'
 import PlantSprite from './PlantSprite.vue'
+import PlantReviewActions from './PlantReviewActions.vue'
 import Modal from './Modal.vue'
 
 const garden = useGardenStore()   // garden.gardenSeeds: { id, col, row, mastery, last_reviewed }, the plants still in the garden
@@ -19,6 +20,7 @@ const ui = useUiStore()
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
+const PLANT_SPRITE_SIZE = 170
 
 // Opening the garden: only the plant we are scrolling to keeps a pending stage-up. Runs before the first render,
 // so plants never flash their new stage early.
@@ -32,7 +34,8 @@ const ghostBlocked = ref(false)
 const plantingSeedId = ref(null)
 const plantElements = new Map()
 const plantInfoElements = new Map()
-let renderQueued = false, resizeObserver, scrollIdleTimer
+const plantOverlayElements = new Map()
+let renderQueued = false, resizeObserver, scrollIdleTimer, hoverHideTimer
 
 // the canvas, the plants and the critters all follow the same look as the sky (mood + weather), and crossfade with it
 const { look } = storeToRefs(useWeatherStore())
@@ -41,16 +44,34 @@ const { palette } = useMeadowPalette(look, requestRender)
 const occupiedCells = computed(() => new Set(garden.gardenSeeds.map(seed => `${seed.col},${seed.row}`)))
 const registerPlant = (id, el) => (el ? plantElements.set(id, el) : plantElements.delete(id))
 const registerPlantInfo = (id, el) => (el ? plantInfoElements.set(id, el) : plantInfoElements.delete(id))
+const registerPlantOverlay = (id, el) => (el ? plantOverlayElements.set(id, el) : plantOverlayElements.delete(id))
 
-// Only one name bubble is open at a time: a hovered plant wins over the selected one.
+// Only one plant label is open at a time: a hovered plant wins over the selected one.
 const hoveredPlantId = ref(null)
 const isPlantInfoVisible = id => hoveredPlantId.value === id || ui.selectedGardenSeedId === id
+const areReviewActionsVisible = id => ui.selectedGardenSeedId === id
+const isPlantGrowing = id => garden.growthRecords[id]?.phase === 'playing'
+const isPlantAlertVisible = seed => seed.alert && !areReviewActionsVisible(seed.id) && !isPlantGrowing(seed.id)
+const isPlantOverlayVisible = seed => isPlantInfoVisible(seed.id) || areReviewActionsVisible(seed.id) || isPlantAlertVisible(seed)
+const plantOverlayBottom = stage => stage === 1 || stage === 8 ? 40 : stage === 2 || stage === 7 ? 65 : stage === 3 || stage === 6 ? 110 : 170
 function onPlantPointerEnter(id, event) {
-  if (event.pointerType !== 'touch') hoveredPlantId.value = id
+  if (event.pointerType !== 'touch') {
+    clearTimeout(hoverHideTimer)
+    hoveredPlantId.value = id
+  }
 }
 
-function onPlantPointerLeave(id) {
-  if (hoveredPlantId.value === id) hoveredPlantId.value = null
+function scheduleHoverClear(id) {
+  clearTimeout(hoverHideTimer)
+  hoverHideTimer = setTimeout(() => {
+    if (hoveredPlantId.value === id) hoveredPlantId.value = null
+  }, 180)
+}
+
+function onPlantPointerLeave(id, event) {
+  const next = event.relatedTarget
+  if (next instanceof Element && next.closest('.plant-review-actions')) return
+  scheduleHoverClear(id)
 }
 
 function measureView() {
@@ -91,6 +112,11 @@ function render() {
       const infoEl = plantInfoElements.get(seed.id)
       if (infoEl) placePlantInfo(infoEl, seed.col, seed.row)
     }
+    const overlayEl = plantOverlayElements.get(seed.id)
+    if (overlayEl) {
+      if (isPlantOverlayVisible(seed)) placePlantOverlay(overlayEl, seed.col, seed.row)
+      else hideSprite(overlayEl)
+    }
   }
   updateGhost()
 }
@@ -129,11 +155,20 @@ function placeSprite(el, col, row) {
 
 function placePlantInfo(el, col, row) {
   const visible = worldToScreen((col + 0.5) * CELL_SIZE, (row + 0.5) * CELL_SIZE)
-  el.style.display = visible ? 'flex' : 'none'
+  el.style.display = visible ? 'block' : 'none'
   if (!visible) return
-  const { x, y } = screenPoint
+  const { x, y, scale } = screenPoint
+  el.style.setProperty('--plant-height', `${scale * PLANT_SPRITE_SIZE}px`)
   el.style.transform = `translate3d(${x}px,${y + 8}px,0) translateX(-50%)`
   el.style.zIndex = 10000
+}
+
+function placePlantOverlay(el, col, row) {
+  const visible = worldToScreen((col + 0.5) * CELL_SIZE, (row + 0.5) * CELL_SIZE)
+  setDisplay(el, visible ? 'block' : 'none')
+  if (!visible) return
+  const { x, y, scale } = screenPoint
+  el.style.transform = `translate3d(${x}px,${y}px,0) scale(${scale})`
 }
 
 // the scrollLeft that centres the plant horizontally once the garden is scrolled to `top`
@@ -250,7 +285,11 @@ function onPlantClick(seed, event) {
     router.push({ name: 'seed-edit', params: { id: seed.id } })
     return
   }
-  router.push({ name: 'seed-review', params: { id: seed.id } })
+  ui.selectGardenSeed(seed.id)
+}
+
+function startReview(seedId, routeName) {
+  router.push({ name: routeName, params: { id: seedId } })
 }
 
 function cancelDelete() {
@@ -284,7 +323,7 @@ watch(() => garden.gardenSeeds, () => {
   scrollToSeed()
 }, { deep: true, flush: 'post' })
 watch(() => route.query.scrollTo, scrollToSeed, { flush: 'post' })
-// a name bubble that just started showing needs its position before it fades in
+// a plant label or its review controls that just started showing needs its position before it fades in
 watch([hoveredPlantId, () => ui.selectedGardenSeedId], requestRender, { flush: 'post' })
 
 onMounted(() => {
@@ -300,6 +339,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()
   clearTimeout(scrollIdleTimer)
+  clearTimeout(hoverHideTimer)
   garden.clearGrowth()
 })
 </script>
@@ -321,17 +361,17 @@ onBeforeUnmount(() => {
           :key="seed.id"
           :id="seed.id"
           :ref="c => registerPlant(seed.id, c?.$el)"
+          :label="`Open ${seed.title}`"
           :stage="garden.stageOf(seed)"
           :flower="seed.flower"
           :color="seed.color"
           :wilting="garden.isWilted(seed)"
-          :alert="seed.alert"
           :growth="garden.growthRecords[seed.id]"
           :planting="plantingSeedId === seed.id"
           :class="{ 'is-highlighted': ui.selectedGardenSeedId === seed.id }"
-          role="button" tabindex="0" :aria-label="`Open ${seed.title}`"
           @pointerenter="onPlantPointerEnter(seed.id, $event)"
-          @pointerleave="onPlantPointerLeave(seed.id)"
+          @pointerleave="onPlantPointerLeave(seed.id, $event)"
+          @select="onPlantClick(seed, $event)"
           @grown="garden.finishGrowth(seed.id)"
           @planted="finishPlanting(seed.id)"
           @click="onPlantClick(seed, $event)"
@@ -341,11 +381,36 @@ onBeforeUnmount(() => {
           v-for="seed in garden.gardenSeeds"
           :key="`info-${seed.id}`"
           :ref="el => registerPlantInfo(seed.id, el)"
+          :data-seed-id="seed.id"
           class="plant-info"
         >
-          <div class="plant-info-details" :class="{ 'is-visible': isPlantInfoVisible(seed.id) }" :aria-hidden="!isPlantInfoVisible(seed.id)">
-            <p class="p-1  text-center my-auto">{{ seed.title }}</p>
+          <div class="plant-info-content">
+            <div class="plant-info-details" :class="{ 'is-visible': isPlantInfoVisible(seed.id) }" :aria-hidden="!isPlantInfoVisible(seed.id)">
+              <p class="plant-title sp-display">{{ seed.title }}</p>
+              <em class="plant-mastery">Mastery {{ Math.round(seed.mastery ?? 0) }}%</em>
+            </div>
           </div>
+        </div>
+        <div
+          v-for="seed in garden.gardenSeeds"
+          :key="`overlay-${seed.id}`"
+          :ref="el => registerPlantOverlay(seed.id, el)"
+          class="plant-overlay"
+        >
+          <PlantReviewActions
+            v-if="areReviewActionsVisible(seed.id) && !isPlantGrowing(seed.id)"
+            :style="{ '--plant-overlay-bottom': `${plantOverlayBottom(garden.stageOf(seed))}px` }"
+            @review="startReview(seed.id, $event)"
+          />
+          <span
+            v-else-if="isPlantAlertVisible(seed)"
+            class="alert-mark"
+            title="Revise this soon"
+            data-testid="plant-alert"
+            :style="{ '--plant-overlay-bottom': `${plantOverlayBottom(garden.stageOf(seed))}px` }"
+          >
+            <img src="../assets/ui/droplet.svg" alt="">
+          </span>
         </div>
         <PlantSprite ref="ghostRef" ghost :blocked="ghostBlocked" />
       </div>
@@ -371,20 +436,41 @@ onBeforeUnmount(() => {
 canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 
 .plant-info { position: absolute; top: 0; left: 0; pointer-events: none; }
+.plant-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.alert-mark {
+  position: absolute;
+  left: -25px;
+  bottom: var(--plant-overlay-bottom, 170px);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  animation: alertBob 1.6s ease-in-out infinite;
+}
+@keyframes alertBob { 50% { transform: translateY(-4px); } }
+:global(.is-scrolling) .alert-mark { animation-play-state: paused; }
+.plant-info-content { position: absolute; top: 0; left: 0; width: 0; height: 0; }
 .plant-info-details {
-  position: absolute; top: 0; left: 50%; width: max-content; max-width: 200px;
-  padding: 6px 12px; border-radius: 999px; background: var(--sheet);
-  opacity: 0; visibility: hidden; transform: translate(-50%, -6px);
+  position: absolute; top: 0; left: 0; display: flex; flex-direction: column; align-items: center; gap: 1px;
+  width: max-content; max-width: min(240px, 80vw); padding: 5px 12px 6px;
+  border-radius: 12px; background: color-mix(in srgb, var(--sheet) 90%, transparent); box-shadow: var(--shadow-1);
+  opacity: 0; visibility: hidden; transform: translate(-50%, 6px);
   transition: opacity .2s ease, transform .35s var(--spring), visibility 0s linear .35s;
 }
 .plant-info-details.is-visible {
   opacity: 1; visibility: visible; transform: translate(-50%, 0);
   transition: opacity .2s ease, transform .35s var(--spring), visibility 0s;
 }
-.plant-info-details::after {
-  position: absolute; top: -7px; left: 50%; width: 0; height: 0;
-  border-bottom: 8px solid var(--sheet);
-  border-right: 8px solid transparent; border-left: 8px solid transparent;
-  content: ''; transform: translateX(-50%);
+.plant-title { max-width: 100%; font-size: .95rem; line-height: 1.25; text-align: center; overflow-wrap: anywhere; }
+.plant-mastery {
+  color: var(--ink-soft); font-family: var(--f-body); font-size: .65rem; font-style: normal;
+  font-weight: 800; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap;
 }
 </style>

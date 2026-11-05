@@ -133,9 +133,9 @@ You can also run the tests from VS Code with the **Playwright Test for VS Code**
 **Individual member breakdown:**
 
 - **Xiao Jing:** Used AI to:
-    - Implement opening-page animations and transitions, as well as character reactions to user input on the login page.
+    - AI was used to implement opening-page animations and transitions, as well as character reactions to user input on the login page.
 - **Yu Jia:** Used AI to:
-    - [what you used it for]
+    - HTML canvas rendering achieved with AI assistance
 - **Jit Wei:** Used AI to:
     - the parsing of documents to generate the question answer pair
 - **Ryan:** Used AI to:

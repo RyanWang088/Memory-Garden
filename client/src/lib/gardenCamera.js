@@ -7,6 +7,7 @@ export const BOTTOM_MARGIN = 24
 export const HALF_PI = Math.PI / 2
 export const FILL = 0.96
 export const MIN_SCALE = 0.6
+export const MOBILE_MIN_SCALE = 0.8
 export const FAR_SPREAD = 0.7
 export const FAR_SIZE = 0.35
 export const MEADOW_HEIGHT = 0.55 // share of the view the meadow fills below the horizon; the rest is open sky
@@ -57,7 +58,7 @@ export function createGardenCamera() {
   const measure = (viewWidth, viewHeight) => {
     camera.viewWidth = viewWidth
     camera.viewHeight = viewHeight
-    camera.scale = Math.max(MIN_SCALE, (viewWidth * FILL) / GRID_WIDTH)
+    camera.scale = Math.max(viewWidth < 600 ? MOBILE_MIN_SCALE : MIN_SCALE, (viewWidth * FILL) / GRID_WIDTH)
     camera.contentWidth = GRID_WIDTH * camera.scale + viewWidth * (1 - FILL)
     camera.frontY = viewHeight - BOTTOM_MARGIN
     camera.radius = camera.frontY * MEADOW_HEIGHT

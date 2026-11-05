@@ -3,6 +3,8 @@ import {
 } from './floorLayout.js'
 import { seeded } from './shuffle.js'
 import { HALF_PI, BOTTOM_MARGIN, FAR_SPREAD, FAR_SIZE } from './gardenCamera.js'
+import treeSvg from '@/assets/foliage/meadow-tree.svg?raw'
+import shrubSvg from '@/assets/foliage/meadow-shrub.svg?raw'
 
 const TAU = Math.PI * 2
 const BLADE_GAP = 25          // world units between grass blades along a crest
@@ -11,6 +13,26 @@ const FLOWER_START = -.1        // no flowers above this fraction of the way dow
 const FLOWER_FULL = 0.8         // every flower is drawn by here
 const FLOWER_NIGHT_MIX = 0.7    // at full night, how far flowers are mixed toward the hill colour (0..1)
 const FLOWER_MAX_MIX = 0.85     // never mix further than this, or the flowers vanish into the hill
+const SPRITES = {
+  tree: parseSprite(treeSvg),
+  shrub: parseSprite(shrubSvg),
+}
+
+function parseSprite(svg) {
+  const doc = new DOMParser().parseFromString(svg, 'image/svg+xml')
+  const root = doc.documentElement
+  const viewBox = root.getAttribute('viewBox').split(/\s+/).map(Number)
+  const paths = [...root.querySelectorAll('path[data-tone]')]
+    .filter(element => element.getAttribute('data-tone') !== 'outline'
+      && !(element.hasAttribute('stroke-width') && !element.hasAttribute('fill')))
+    .map(element => ({
+      path: new Path2D(element.getAttribute('d')),
+      tone: element.getAttribute('data-tone'),
+      fill: element.getAttribute('fill') !== 'none',
+      opacity: Number(element.getAttribute('opacity')) || 1,
+    }))
+  return { x: viewBox[0], y: viewBox[1], width: viewBox[2], height: viewBox[3], paths }
+}
 
 // ---- colour mixing ----
 const colorCache = new Map()
@@ -52,7 +74,7 @@ export function drawMeadow(ctx, cam, palette) {
   const aFront = floorAngle(firstDepth)
   const frame = {
     span, horizonY, firstDepth, lastDepth, floorAngle, x0, x1, viewWidth,
-    treeA: palette.tree, treeB: palette.tree2,
+    treeFill: palette.ramp(0.8), treeShade: palette.ramp(1), treeHighlight: palette.ramp(0.5),
   }
 
   for (let hill = Math.ceil((lastDepth + 100) / HILL_GAP); hill >= Math.floor(firstDepth / HILL_GAP); hill--) {
@@ -104,7 +126,7 @@ function drawFringe(ctx, cam, hill, { floorAngle, x0, x1 }) {
   ctx.fill()
 }
 
-function drawBand(ctx, cam, palette, props, { span, horizonY, firstDepth, lastDepth, viewWidth, treeA, treeB }, hillColor) {
+function drawBand(ctx, cam, palette, props, { span, horizonY, firstDepth, lastDepth, viewWidth, treeFill, treeShade, treeHighlight }, hillColor) {
   if (!props) return
   const { camera, depthToAngle, screenX, screenY, shrinkTo } = cam
   const { scale } = camera
@@ -139,15 +161,34 @@ function drawBand(ctx, cam, palette, props, { span, horizonY, firstDepth, lastDe
         ctx.fill()
       }
     } else {
-      for (const [dx, dy, rx, ry, alt] of p.blobs) {
-        ctx.fillStyle = alt ? treeB : treeA
-        ctx.beginPath(); ctx.ellipse(px + dx * u, py - dy * u, rx * u, ry * u, 0, 0, TAU); ctx.fill()
-      }
+      const width = 108 * u
+      const height = 64 * u
+      drawSprite(ctx, SPRITES.shrub, px, py, width, height, treeFill, treeShade, treeHighlight)
     }
   }
 }
 
 let backdrop = null
+
+function drawSprite(ctx, sprite, x, baseline, width, height, fill, shade, highlight, tree2) {
+  ctx.save()
+  ctx.translate(x - width / 2, baseline - height)
+  ctx.scale(width / sprite.width, height / sprite.height)
+  ctx.translate(-sprite.x, -sprite.y)
+  for (const item of sprite.paths) {
+    ctx.globalAlpha = item.opacity
+    const color = item.tone === 'shade'
+      ? shade
+      : item.tone === 'highlight' ? highlight
+        : item.tone === 'trunk' ? tree2 : fill
+    if (item.fill) {
+      ctx.fillStyle = color
+      ctx.fill(item.path)
+    }
+  }
+  ctx.globalAlpha = 1
+  ctx.restore()
+}
 
 function buildBackdrop(viewWidth, horizonY) {
   const rand = seeded(12)
@@ -177,16 +218,12 @@ function buildBackdrop(viewWidth, horizonY) {
     const y = yAt(near, x) + 10
     const s = (.5 + rand()) * sizeK
     
-    if (rand() < 0.22) { 
-      trees.push([x, y - 34 * s, 9 * s, 38 * s, 1])
-      continue 
-    }
-    
-    const n = 1 + Math.floor(rand() * 2) // slightly fewer cluster blobs for a cleaner look
-    for (let k = 0; k < n; k++) {
-      const r = (13 + rand() * 9) * s
-      trees.push([x + (k - n / 2) * 16 * s + rand() * 6, y - (12 + rand() * 22) * s, r, r, k % 2])
-    }
+    const type = rand() < 0.3 ? 'shrub' : 'tree'
+    trees.push({
+      type, x, baseline: y,
+      width: (type === 'shrub' ? 38 : 82) * s,
+      height: (type === 'shrub' ? 23 : 72) * s,
+    })
   }
   return { key: `${viewWidth}|${horizonY}`, near, trees, bottom: horizonY + 4 }
 }
@@ -213,14 +250,12 @@ function drawBackdrop(ctx, camera, palette) {
   ctx.save()
   ctx.translate(-panX * BACKDROP_PARALLAX, 0)
   ctx.fillStyle = palette.ramp(0); tracePath(ctx, backdrop.near, backdrop.bottom); ctx.fill()
-  for (const alt of [0, 1]) {
-    ctx.fillStyle = alt ? palette.tree2 : palette.tree
-    ctx.beginPath()
-    for (const [cx, cy, rx, ry, a] of backdrop.trees) {
-      if (a !== alt) continue
-      ctx.moveTo(cx + rx, cy); ctx.ellipse(cx, cy, rx, ry, 0, 0, TAU)
-    }
-    ctx.fill()
+  for (const tree of backdrop.trees) {
+    drawSprite(
+      ctx, SPRITES[tree.type], tree.x, tree.baseline, tree.width, tree.height,
+      palette.ramp(0.7), palette.ramp(1), palette.ramp(0.5),
+      palette.tree2,
+    )
   }
   ctx.restore()
 }

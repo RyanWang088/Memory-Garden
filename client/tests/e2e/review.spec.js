@@ -23,22 +23,39 @@ test.describe('Review feature', () => {
     await page.getByTestId('auth-password').fill(PASSWORD)
     await page.getByTestId('auth-submit').click()
     await expect(page).toHaveURL(/\/garden/, { timeout: 15_000 }) // the login page waits a moment before moving on
-    const seedId = await page.getByRole('button', { name: `Open ${SEED}` }).getAttribute('id') // the plant's id is its seed's id
+    const seedId = await page.locator('.plant-info', { hasText: SEED }).getAttribute('data-seed-id')
     await page.goto(`/garden?scrollTo=${seedId}`)
     await expect(page).toHaveURL(/\/garden$/) // the garden drops ?scrollTo once it has scrolled
     await expect(plant(page)).toBeVisible()
   })
 
-  test('Test 1: open the goal page from a plant in garden view', async ({ page }) => {
-    // actions: click the plant
+  test('Test 1: show review controls above a selected plant', async ({ page }) => {
+    // actions: select the plant
     await openPlant(page)
 
-    // assert: the goal picker opens with all 3 modes
-    await expect(page).toHaveURL(/\/garden\/seeds\//)
-    await expect(page.getByText('Choose a goal for this session')).toBeVisible()
-    await expect(page.getByTestId('goal-flashcard')).toBeVisible()
-    await expect(page.getByTestId('goal-multiple-choice-quiz')).toBeVisible()
-    await expect(page.getByTestId('goal-short-structured')).toBeVisible()
+    // assert: the plant info and three floating review buttons appear in the garden
+    await expect(page).toHaveURL(/\/garden$/)
+    const plantInfo = page.locator('.plant-info-details.is-visible') // every plant has a label; only the selected one shows
+    await expect(plantInfo.locator('.plant-title')).toHaveText(SEED)
+    await expect(plantInfo.locator('.plant-mastery')).toHaveText(/Mastery \d+%/i)
+    const flashcard = page.getByTestId('review-flashcard')
+    await expect(flashcard).toBeVisible()
+    const actions = [
+      flashcard,
+      page.getByTestId('review-multiple-choice-quiz'),
+      page.getByTestId('review-short-structured'),
+    ]
+    for (const action of actions) {
+      await expect(action).toBeVisible()
+      const receivesPointer = await action.evaluate((button) => {
+        const rect = button.getBoundingClientRect()
+        const target = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)
+        return target === button || button.contains(target)
+      })
+      expect(receivesPointer).toBe(true)
+    }
+    await flashcard.hover()
+    await expect(flashcard.locator('.tip')).toHaveCSS('opacity', '1')
   })
 
   test('Test 2: should finish Flashcard Mode and water the plant', async ({ page }) => {
@@ -46,7 +63,7 @@ test.describe('Review feature', () => {
 
     // actions: open Flashcard Mode, flip each card and rate it Easy
     await openPlant(page)
-    await page.getByTestId('goal-flashcard').click()
+    await page.getByTestId('review-flashcard').click()
     const total = await totalOf(page.getByTestId('card-count')) // "Card 1 of N"
     for (let i = 0; i < total; i++) {
       await page.getByTestId('show-answer').click()
@@ -58,7 +75,7 @@ test.describe('Review feature', () => {
     // assert: back in the garden, the plant is watered (not wilting) and no coins were given
     await expect(page).toHaveURL(/\/garden/)
     await expect(page.getByText('Session saved')).toBeVisible()
-    await expect(page.getByRole('button', { name: `Open ${SEED}` })).not.toHaveAttribute('data-wilting')
+    await expect(page.locator('.plant').filter({ has: plant(page) })).not.toHaveAttribute('data-wilting')
     expect(await coins(page)).toBe(coinsBefore)
   })
 
@@ -67,7 +84,7 @@ test.describe('Review feature', () => {
 
     // actions: open the Multiple Choice Quiz and pick the correct answer for every question
     await openPlant(page)
-    await page.getByTestId('goal-multiple-choice-quiz').click()
+    await page.getByTestId('review-multiple-choice-quiz').click()
     const total = await totalOf(questionCount(page))
     for (let i = 0; i < total; i++) {
       const question = await page.locator('h2.question').innerText()
@@ -108,7 +125,7 @@ test.describe('Review feature', () => {
 
     // actions: open Short Structured Mode, type the correct answer to the first question and check it
     await openPlant(page)
-    await page.getByTestId('goal-short-structured').click()
+    await page.getByTestId('review-short-structured').click()
     const question = await page.locator('h2.question').innerText()
     await page.getByTestId('short-answer').fill(ANSWERS[question])
     const marking = page.waitForRequest('**/api/seeds/*/grade')
@@ -117,7 +134,8 @@ test.describe('Review feature', () => {
     // assert: the typed answer is sent for marking, and its score, feedback and the model answer are shown
     expect((await marking).postDataJSON().response).toBe(ANSWERS[question])
     const verdict = page.getByTestId('short-verdict')
-    await expect(verdict).toContainText('Correct · 100%')
+    await expect(verdict.locator('.verdict-title')).toHaveText('Correct')
+    await expect(verdict).toContainText('100%')
     await expect(verdict).toContainText('Spot on, well done!')
     await expect(page.getByText('Model answer')).toBeVisible()
     await expect(page.getByTestId('short-next')).toBeVisible()
@@ -164,7 +182,7 @@ test.describe('Review feature', () => {
 
     // actions: open the Multiple Choice Quiz, answer every question right except the last one
     await openPlant(page)
-    await page.getByTestId('goal-multiple-choice-quiz').click()
+    await page.getByTestId('review-multiple-choice-quiz').click()
     const total = await totalOf(questionCount(page))
     expect(total, '2 of 3 right is 67%, so this test needs the 3-card seed').toBe(3)
     for (let i = 0; i < total; i++) {
@@ -188,7 +206,7 @@ test.describe('Review feature', () => {
 // opens Short Structured Mode and answers every question, checking each faked mark shows the expected score
 async function answerAllShort(page, expectedScore) {
   await openPlant(page)
-  await page.getByTestId('goal-short-structured').click()
+  await page.getByTestId('review-short-structured').click()
   const total = await totalOf(questionCount(page))
   for (let i = 0; i < total; i++) {
     await page.getByTestId('short-answer').fill('My answer')
@@ -199,15 +217,16 @@ async function answerAllShort(page, expectedScore) {
   await expect(page.getByTestId('short-results')).toBeVisible()
 }
 
-// the "demo for prof" plant in the garden (its sprite: the plant's own box is 0x0, and a click must land on the sprite)
+// the "demo for prof" plant in the garden: its sprite is the button (the plant's own box is 0x0)
 function plant(page) {
-  return page.getByRole('button', { name: `Open ${SEED}` }).locator('.sprite')
+  return page.getByRole('button', { name: `Open ${SEED}` })
 }
 
 // clicks the plant low on its stem: the droplet badge in the middle of the sprite doesn't open it
+// (a raw mouse click: the sprite always sways, so locator.click() would wait forever for it to hold still)
 async function openPlant(page) {
   const box = await plant(page).boundingBox()
-  await plant(page).click({ position: { x: box.width / 2, y: box.height * 0.85 } })
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height * 0.85)
 }
 
 // answers the AI marking request (POST /api/seeds/:id/grade) with a fixed mark instead of calling the AI

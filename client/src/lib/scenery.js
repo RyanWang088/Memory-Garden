@@ -3,6 +3,8 @@
 // The sky, critters and moods live in SkyLayer / SceneCritters. Use this through <DrawnLand>.
 import { foliageUrl } from './plantSprites'
 import { seeded } from './shuffle'
+import treeSvg from '@/assets/foliage/meadow-tree.svg?raw'
+import shrubSvg from '@/assets/foliage/meadow-shrub.svg?raw'
 
 const NS = 'http://www.w3.org/2000/svg';
 
@@ -38,7 +40,52 @@ function yAt(pts, x) {
   return pts[pts.length - 1][1];
 }
 const el = (tag, attrs) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); return n; };
+const foliageSvg = { tree: treeSvg, shrub: shrubSvg };
+const foliageTemplates = new Map();
 
+function foliageTemplate(type) {
+  if (foliageTemplates.has(type)) return foliageTemplates.get(type);
+  const source = new DOMParser().parseFromString(foliageSvg[type], 'image/svg+xml').documentElement;
+  const template = {
+    viewBox: source.getAttribute('viewBox').split(/\s+/).map(Number),
+    paths: [...source.querySelectorAll('[data-tone]')]
+      .filter(path => path.getAttribute('data-tone') !== 'outline'
+        && !(path.hasAttribute('stroke-width') && !path.hasAttribute('fill')))
+      .map(path => {
+      const clone = path.cloneNode();
+      const tone = clone.getAttribute('data-tone');
+      clone.setAttribute('class', tone === 'trunk' ? 'trunk' : `foliage-${tone}`);
+      clone.removeAttribute('data-tone');
+      clone.removeAttribute('stroke-width');
+      clone.removeAttribute('stroke-linecap');
+      clone.removeAttribute('stroke-linejoin');
+      if (tone === 'trunk') {
+        clone.setAttribute('fill', 'var(--tree2)');
+        clone.style.filter = 'var(--mood-filter) var(--wx-filter)';
+      } else {
+        const color = tone === 'fill' ? 'var(--g-h4)'
+          : tone === 'shade' ? 'var(--g-h5)'
+            : 'var(--g-h3)';
+        clone.style.fill = color;
+      }
+      return clone;
+    }),
+  };
+  foliageTemplates.set(type, template);
+  return template;
+}
+
+function appendFoliage(parent, type, x, baseline, width, height) {
+  const { viewBox: [viewX, viewY, viewWidth, viewHeight], paths } = foliageTemplate(type);
+  const group = el('g', {
+    class: `foliage-${type}`,
+    transform: `translate(${x - width / 2} ${baseline - height}) scale(${width / viewWidth} ${height / viewHeight}) translate(${-viewX} ${-viewY})`,
+  });
+  for (const path of paths) group.append(path.cloneNode());
+  parent.append(group);
+}
+
+const BUSH_SCALE = 1.3; // size of the bush clusters on the far ridge
 const FLOWER_COLORS = ['#ffffff', '#ffffff', '#f9c9d3', '#f7d86e', '#cdb9f2', '#f2899b', '#fde7b0'];
 const TULIPS = ['tulip-pink-4', 'tulip-red-4', 'tulip-purple-4', 'tulip-yellow-4', 'tulip-white-4', 'tulip-pink-3'];
 
@@ -67,13 +114,22 @@ function drawLand(root, opts) {
     if (opts.clearCenter && Math.abs(x - W / 2) < W * 0.16 && rand() < .7) continue;
     const y = yAt(layers[0], x) + 6;
     const s = (0.6 + rand() * 0.9) * Math.min(1.4, Math.max(.7, span / 380));
-    const n = 3 + Math.floor(rand() * 3);
-    if (rand() < .22) { // poplar
-      trees.append(el('ellipse', { class: 'tr2', cx: x, cy: y - 34 * s, rx: 9 * s, ry: 38 * s }));
+    if (rand() < .22) {
+      const height = 76 * s;
+      appendFoliage(trees, 'tree', x, y, height * 260 / 236, height);
       continue;
     }
+    const n = 3 + Math.floor(rand() * 3);
     for (let k = 0; k < n; k++) {
-      trees.append(el('circle', { class: k % 2 ? 'tr' : 'tr2', cx: x + (k - n / 2) * 11 * s + rand() * 6, cy: y - (12 + rand() * 22) * s, r: (13 + rand() * 9) * s }));
+      const baseRadius = (13 + rand() * 9) * s;
+      const radius = baseRadius * BUSH_SCALE;
+      const shrubHeight = radius * 2 * 100 / 170;
+      appendFoliage(
+        trees, 'shrub',
+        x + (k - n / 2) * 11 * s * BUSH_SCALE + rand() * 6,
+        y - (12 + rand() * 22) * s + baseRadius, // baseRadius, so bigger bushes grow upward and stay on the ridge
+        radius * 2, shrubHeight,
+      );
     }
   }
 

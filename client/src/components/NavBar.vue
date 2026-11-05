@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import MusicToggle from '@/components/MusicToggle.vue'
 import potArt from '@/assets/ui/pot.svg'
+import houseArt from '@/assets/ui/house.svg'
 
 // App top bar (journal look): brand, the three places, then streak / coins / music / profile.
 // The bottom dock (AppDock) repeats the places as big icons, and is the main nav on phones.
@@ -47,7 +48,7 @@ const current = computed(() => NAV_ITEMS.findIndex((i) => route.matched.some((r)
         <RouterLink
           :to="{ name: 'profile' }" class="avatar" aria-label="Profile"
           :aria-current="route.name === 'profile' ? 'page' : undefined" title="Profile &amp; settings"
-        >🏡</RouterLink>
+        ><img :src="houseArt" alt="" width="22" height="22" /></RouterLink>
       </div>
     </div>
   </header>
