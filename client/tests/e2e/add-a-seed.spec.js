@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 const EMAIL = 'demo@smu.edu.sg'
 const PASSWORD = 'demo@smu.edu.sg'
 
+test.describe('Add seeds',() =>{
 test('Can navigate to add a seed', async ({ page }) => {
    await page.route('*/**/api/seeds', route => route.fulfill({ json: [{
         "id": "d8f12284-a12b-4178-9442-4dcb78e73c5a",
@@ -132,4 +133,5 @@ test('Can enter items into add a seed', async({page})=>{
   await page.getByTestId('card-add').click();
   await page.getByTestId('seed-save').click();
   await expect(page.getByTestId('plant-seed-form')).toBeHidden();
+})
 })
