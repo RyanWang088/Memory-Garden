@@ -141,8 +141,13 @@ You can also run the tests from VS Code with the **Playwright Test for VS Code**
 - **Planner:** a to-do list and calendar showing exams and reviews that are due.
 - **Focus timer:** Pomodoro-style focus rounds that earn coins for finished minutes.
 - **Profile & flower house:** stats and streaks. After an exam, a subject's flower can move to the flower house shelf.
-
 ---
+
+
+Note: This is not a feature, this is only intended for demo purposes only.
+- **Dev scrubber (for demo purposes only):** on the Garden page, press `*` (Shift + 8) to open a small panel with a time slider and Sunny / Cloudy / Rainy / Stormy buttons, so you can see how the garden animates at different times of day and in different weather. Press `*` again to close it. This is only for demonstrating the animations and is not part of the normal user experience.
+
+
 
 
 ## 🤖 5. Appendix: AI Usage Declaration
