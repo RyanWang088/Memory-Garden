@@ -16,7 +16,7 @@ onMounted(() => { if (!garden.loaded) garden.fetchSeeds().catch(() => {}) })
 </script>
 
 <template>
-  <main class="container py-3 mt-3" data-testid="planner">
+  <main class="container py-3 mt-3 mb-5 mb-md-0" data-testid="planner">
     <SceneryBackdrop
       mood="blush"
       :options="{ seed: 11, horizon: 0.56, tulips: narrow ? 2 : 8, butterflies: 2, veil: 'linear-gradient(180deg, rgba(252,246,236,0) 30%, rgba(252,246,236,.25) 100%)' }"
