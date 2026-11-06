@@ -41,17 +41,21 @@ To run this application locally, please follow these steps:
 
 
 Create client/.env.local (inside the client folder) with these 2 lines:
+```bash
 VITE_SUPABASE_URL=
 VITE_SUPABASE_PUBLISHABLE_KEY=
+```
 
 
 Create server/.env (inside the server folder) with these 6 lines:
+```bash
 PORT=
 SUPABASE_URL=
 SUPABASE_SECRET_KEY=
 OPENROUTER_API_KEY=
 OPENROUTER_MODEL=
 GROQ_API_KEY=
+```
 
 If the server stops with the error "supabaseUrl is required", server/.env is missing or misnamed.
 
@@ -108,12 +112,14 @@ The tests are in `client/tests/e2e/`. They log in as the demo account and click 
 
     Paste each command line one at a time:
 
+    ```bash
     pnpm exec playwright test tests/e2e/add-a-seed.spec.js
     pnpm exec playwright test tests/e2e/garden.spec.js
     pnpm exec playwright test tests/e2e/opening.spec.js
     pnpm exec playwright test tests/e2e/planner.spec.js
     pnpm exec playwright test tests/e2e/pomodoro.spec.js
     pnpm exec playwright test tests/e2e/review.spec.js
+    ```
 
 
     If a test fails at the login step, wait a few minutes and run it again.
