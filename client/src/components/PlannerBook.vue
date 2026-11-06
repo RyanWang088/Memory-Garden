@@ -446,8 +446,8 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
                     </div>
                   </div>
                   <div v-if="!compact" class="legend">
-                    <span v-for="s in src.subjects.slice(0, 6)" :key="s.name" class="tag" :style="{ '--c': s.color }">
-                      {{ s.name }}<template v-if="s.name !== src.LIFE && !demo"> · {{ src.readiness(s.name) }}%</template>
+                    <span v-for="s in src.subjects.slice(0, 6)" :key="s.name" class="tag" :style="{ '--c': s.color }" :title="s.name">
+                      <span class="tag-name">{{ s.name }}</span><span v-if="s.name !== src.LIFE && !demo" class="tag-pct"> · {{ src.readiness(s.name) }}%</span>
                     </span>
                   </div>
                 </div>
@@ -680,8 +680,12 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
 .ticket-actions { display: flex; flex-wrap: nowrap; gap: 6px; margin-top: 3px; }
 .ticket-body .sp-btn { min-width: 0; min-height: 26px; padding: .15em .75em; font-size: .7rem; line-height: 1.2; box-shadow: 0 2px 0 var(--edge); }
 .ticket-body button.sp-btn { margin: 0; }
-.legend .tag { white-space: normal; overflow-wrap: anywhere; }
-.legend { flex: 1 1 0; min-width: 0; display: grid; grid-auto-flow: column; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, auto); align-content: center; gap: 2px 16px; font-size: .7rem; font-weight: 700; color: var(--ink-soft); }
+/* one subject per line, never wrapped: a very long name is cut with … but its % stays visible */
+.legend .tag { display: flex; min-width: 0; max-width: 100%; white-space: nowrap; }
+.legend .tag::before { flex: none; }
+.tag-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.tag-pct { flex: none; }
+.legend { flex: 0 1 auto; min-width: 0; max-width: 40%; display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; gap: 2px; font-size: .7rem; font-weight: 700; color: var(--ink-soft); }
 
 /* corner curl = next month */
 .curl { position: absolute; z-index: 8; right: 0; bottom: 0; width: 46px; height: 46px; padding: 0; border: 0; background: linear-gradient(135deg, transparent 50%, #efe2cc 50%, #fbf5ea 72%, #e5d4b8 100%); border-radius: 0 0 10px 0; box-shadow: -3px -3px 6px -2px rgba(90, 60, 30, .25); transition: width .3s var(--spring), height .3s var(--spring); }
@@ -746,15 +750,10 @@ const filterIndex = computed(() => filters.findIndex((f) => f.key === state.filt
   .cal-foot { align-items: center; }
 }
 
-/* narrow single page: not enough room for two columns beside the ticket */
-@container book (max-width: 600px) {
-  .legend { grid-auto-flow: row; grid-template-rows: none; }
-}
-
 /* phones: subject list on top, ticket centred underneath */
 @container book (max-width: 480px) {
   .cal-foot { flex-direction: column-reverse; align-items: center; gap: 10px; }
-  .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; }
+  .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; max-width: 100%; }
   .ticket { width: 100%; max-width: 360px; flex: none; }
 }
 @container book (min-width: 761px) {
