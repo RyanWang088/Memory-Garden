@@ -8,7 +8,7 @@ import potArt from '@/assets/ui/pot.svg'
 import plannerArt from '@/assets/ui/planner.svg'
 import focusArt from '@/assets/ui/focus.svg'
 import coinArt from '@/assets/ui/coin.svg'
-
+import musicArt from '@/assets/ui/music.svg'
 // Public landing page (journal look). Static content; "Start growing" goes to sign-up, "Log in" to log-in.
 // Signed-in users never land here: the router guard sends them to the garden (or onboarding).
 const narrow = typeof window !== 'undefined' && window.innerWidth < 700
@@ -40,7 +40,7 @@ const FEATURES = [
     text: 'Set your focus time, break time and number of rounds. The ring counts down each round, and your to-do list stays beside it.', chips: ['Session to-do list', 'Mini timer on every page', 'Earn coins'], viz: 'ring' },
   { name: 'Memory seeds', icon: foliageUrl('tulip-pink-3'), eyebrow: 'Remember', title: 'Memory seeds', spec: 'Flashcards · Quizzes · Exam dates',
     text: 'Plant a seed for a topic with cards from your notes. Review it on time and it grows; leave it too long and it wilts. After the exam, it goes on your shelf.', chips: ['Multiple choice quizzes', 'Flashcards', 'Flower shelf'], viz: 'flash' },
-  { name: 'Garden Radio', icon: potArt, eyebrow: 'Listen', title: 'Garden Radio', spec: 'Calm lo-fi, matched to the weather',
+  { name: 'Garden Radio', icon: musicArt, eyebrow: 'Listen', title: 'Garden Radio', spec: 'Calm lo-fi, matched to the weather',
     text: 'Quiet music for studying that follows the sky: bright tracks on sunny days, softer ones when it rains.', chips: ['Weather-matched', 'Volume control', 'CC0 music'], viz: 'vinyl' },
   { name: 'Streaks & coins', icon: coinArt, eyebrow: 'Rewards', title: 'Streaks and coins', spec: 'Daily streak · Coins',
     text: 'Come back each day to grow your streak. Finishing focus rounds and quizzes earns coins to spend on new seeds in the garden shop.', chips: ['Daily streak', 'Garden shop'], viz: 'coins' },

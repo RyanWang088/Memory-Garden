@@ -188,14 +188,9 @@ async function deleteAccount() {
    The min-height keeps wide landscape phones (768px+) in one column. */
 .profile-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; align-items: start; }
 @media (min-width: 768px) and (min-height: 501px) {
-  .profile-layout { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); grid-template-rows: auto 1fr; row-gap: 1rem; }
+  .profile-layout { grid-template-columns: minmax(300px, 5fr) minmax(0, 7fr); grid-template-rows: auto 1fr; row-gap: 1rem; }
   .profile-shelf { grid-column: 2; grid-row: 1 / span 2; }
-}
-@media (min-width: 992px) and (min-height: 501px) {
-  .profile-layout { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); }
-}
-@media (min-width: 1200px) and (min-height: 501px) {
-  .profile-layout { grid-template-columns: minmax(0, 3fr) minmax(0, 9fr); }
+  .settings { align-self: end; }
 }
 .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .stat {
@@ -203,7 +198,7 @@ async function deleteAccount() {
   background: var(--paper); border: 2px solid var(--line); border-radius: 14px; box-shadow: 0 4px 0 var(--ink);
 }
 /* account & settings */
-.settings { display: grid; gap: 10px; padding: 18px; border-radius: 22px; background: var(--sheet); box-shadow: var(--shadow-2); }
+.settings { display: grid; width: 100%; height: fit-content; gap: 10px; padding: 18px; border-radius: 22px; background: var(--sheet); box-shadow: var(--shadow-2); }
 .settings-title { font-size: 1.3rem; margin: 0; }
 .setting { border-radius: 14px; background: #fff; border: 1.5px solid var(--line); padding: 10px 12px; }
 .setting-row { display: flex; align-items: center; gap: 10px; }
