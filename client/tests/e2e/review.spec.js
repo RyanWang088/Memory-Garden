@@ -11,10 +11,10 @@ const ANSWERS = {
   'What is the opposite of "Brave"?': 'Cowardly',
 }
 
-// the tests share one account and its coins, so run them one at a time
-test.describe.configure({ mode: 'serial' })
-
 test.describe('Review feature', () => {
+  // the tests share one account and its coins, so run them one at a time
+  test.describe.configure({ mode: 'serial' })
+
   // setup for every test: log in, then scroll the garden to the plant
   // (it sits at the back of the meadow, behind the hill, where it can't be clicked)
   test.beforeEach(async ({ page }) => {
@@ -23,7 +23,10 @@ test.describe('Review feature', () => {
     await page.getByTestId('auth-password').fill(PASSWORD)
     await page.getByTestId('auth-submit').click()
     await expect(page).toHaveURL(/\/garden/, { timeout: 15_000 }) // the login page waits a moment before moving on
-    const seedId = await page.locator('.plant-info', { hasText: SEED }).getAttribute('data-seed-id')
+    const seedInfo = page.locator('.plant-info').filter({
+      has: page.locator('.plant-title', { hasText: new RegExp(`^${SEED}$`) }),
+    })
+    const seedId = await seedInfo.getAttribute('data-seed-id')
     await page.goto(`/garden?scrollTo=${seedId}`)
     await expect(page).toHaveURL(/\/garden$/) // the garden drops ?scrollTo once it has scrolled
     await expect(plant(page)).toBeVisible()
@@ -199,7 +202,7 @@ async function answerAllShort(page, expectedScore) {
 
 // the "demo for prof" plant in the garden: its sprite is the button (the plant's own box is 0x0)
 function plant(page) {
-  return page.getByRole('button', { name: `Open ${SEED}` })
+  return page.getByRole('button', { name: `Open ${SEED}`, exact: true })
 }
 
 async function openPlant(page) {

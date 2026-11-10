@@ -87,7 +87,7 @@ function clearSeedSelectionOutsideCard(event) {
 
 onMounted(async () => {
   document.addEventListener('click', clearSeedSelectionOutsideCard)
-  await garden.fetchSeeds()
+  if (!garden.loaded) await garden.fetchSeeds()
   ui.pickDefaultTab(garden.hasPlants)
   openStudyForQuery()
 })

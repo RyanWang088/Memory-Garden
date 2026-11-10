@@ -74,7 +74,7 @@ export function drawMeadow(ctx, cam, palette) {
   const aFront = floorAngle(firstDepth)
   const frame = {
     span, horizonY, firstDepth, lastDepth, floorAngle, x0, x1, viewWidth,
-    treeFill: palette.ramp(1), treeShade: palette.tree, treeHighlight: palette.ramp(0.6),
+    treeFill: palette.ramp(.7), treeShade: palette.tree, treeHighlight: palette.ramp(0.5),
   }
 
   for (let hill = Math.ceil((lastDepth + 100) / HILL_GAP); hill >= Math.floor(firstDepth / HILL_GAP); hill--) {
@@ -272,7 +272,7 @@ function drawBackdrop(ctx, camera, palette) {
   for (const tree of backdrop.trees) {
     drawSprite(
       ctx, SPRITES[tree.type], tree.x, tree.baseline, tree.width, tree.height,
-      palette.ramp(.8), palette.tree, palette.ramp(0.6),
+      palette.ramp(.7), palette.tree, palette.ramp(0.5),
       palette.tree2,
     )
   }

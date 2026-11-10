@@ -133,5 +133,7 @@ test('Can enter items into add a seed', async({page})=>{
   await page.getByTestId('card-add').click();
   await page.getByTestId('seed-save').click();
   await expect(page.getByTestId('plant-seed-form')).toBeHidden();
+  const plants = page.locator('.plant:not(.ghost)')
+  await expect(plants).toHaveCount(2)
 })
 })

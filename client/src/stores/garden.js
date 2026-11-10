@@ -34,7 +34,9 @@ export const useGardenStore = defineStore('garden', () => {
   const loaded = ref(false)
 
   // Seeds of an exam moved to the flower house leave the garden (they stay in the database)
-  const gardenSeeds = computed(() => seeds.value.filter(s => !s.in_house))
+  const gardenSeeds = computed(() =>
+    seeds.value.filter(s => !s.in_house).sort((a, b) => (a.id < b.id ? -1 : 1))
+  )
   const hasPlants = computed(() => gardenSeeds.value.length > 0)
 
   // The flower house: one flower per housed subject, drawn as its highest-mastery seed's flower and colour
@@ -99,7 +101,6 @@ export const useGardenStore = defineStore('garden', () => {
   function applyReview(seed, updated) {
     const before = stageOf(seed)
     Object.assign(seed, updated)
-    console.log('[growth] applyReview', seed.id, before, '->', stageOf(seed), JSON.stringify(growthRecords.value))
     recordGrowth(seed.id, before, stageOf(seed))
   }
 
@@ -164,7 +165,6 @@ export const useGardenStore = defineStore('garden', () => {
   // or short_correct | short_partial | short_wrong (Short Structured)
   async function saveReview(seedId, ratings) {
     const seed = seeds.value.find(s => s.id === seedId)
-    console.log('[growth] 2 saveReview called')
     if (!seed) throw new Error('Seed not found. Refresh the garden and try again.')
     const updated = await apiFetch(`/api/seeds/${encodeURIComponent(seedId)}/reviews`, { method: 'POST', body: { ratings } })
     applyReview(seed, updated)
